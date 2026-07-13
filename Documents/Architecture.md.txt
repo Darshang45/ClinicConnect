@@ -1,0 +1,483 @@
+# 🏥 ClinicConnect Architecture
+
+## Overview
+
+ClinicConnect is a scalable Hospital Management System (HMS) built using the MERN Stack.
+
+The platform digitizes hospital workflows by connecting Patients, Doctors, Receptionists, Pharmacists, and Administrators through role-based dashboards.
+
+The architecture follows a modular approach, allowing each hospital module to be developed, tested, and scaled independently.
+
+---
+
+# System Architecture
+
+```
+                   Browser
+                      │
+          React + Tailwind (Client)
+                      │
+          React Router + Context API
+                      │
+        Axios REST API Requests
+                      │
+        Express.js + Node.js (Server)
+                      │
+      Business Logic & Authentication
+                      │
+                MongoDB Atlas
+                      │
+        Cloudinary (Reports & Images)
+```
+
+---
+
+# User Roles
+
+ClinicConnect currently supports five different user roles.
+
+1. Patient
+2. Doctor
+3. Receptionist
+4. Pharmacist
+5. Administrator
+
+Each role has its own dashboard and permissions.
+
+---
+
+# Application Flow
+
+## 1. Hospital Website
+
+```
+Landing Page
+
+↓
+
+View Doctors
+
+↓
+
+Book Appointment
+
+↓
+
+Patient Login
+
+↓
+
+Patient Dashboard
+```
+
+---
+
+## 2. Patient Flow
+
+```
+Patient Login
+
+↓
+
+Dashboard
+
+↓
+
+Book Appointment
+
+↓
+
+Appointment Confirmation
+
+↓
+
+Consult Doctor
+
+↓
+
+Receive Digital Prescription
+
+↓
+
+Visit Pharmacy
+
+↓
+
+Medicine Billing
+
+↓
+
+Download Invoice
+```
+
+---
+
+## 3. Doctor Flow
+
+```
+Staff Login
+
+↓
+
+Doctor Dashboard
+
+↓
+
+Today's Queue
+
+↓
+
+Open Patient Workspace
+
+↓
+
+Review Reports
+
+↓
+
+Write Notes
+
+↓
+
+Generate Prescription
+
+↓
+
+Send to Pharmacy
+
+↓
+
+Complete Consultation
+```
+
+---
+
+## 4. Receptionist Flow
+
+```
+Staff Login
+
+↓
+
+Reception Dashboard
+
+↓
+
+Register Patient
+
+↓
+
+Manage Queue
+
+↓
+
+Check-in Walk-ins
+
+↓
+
+Broadcast Notifications
+
+↓
+
+Assign Doctor
+```
+
+---
+
+## 5. Pharmacy Flow
+
+```
+Staff Login
+
+↓
+
+Prescription Queue
+
+↓
+
+Search Prescription
+
+↓
+
+Medicine Billing
+
+↓
+
+Generate Invoice
+
+↓
+
+Update Inventory
+```
+
+---
+
+## 6. Admin Flow
+
+```
+Staff Login
+
+↓
+
+Admin Dashboard
+
+↓
+
+Manage Users
+
+↓
+
+Manage Departments
+
+↓
+
+Hospital Analytics
+
+↓
+
+System Configuration
+```
+
+---
+
+# Folder Structure
+
+```
+ClinicConnect/
+
+client/
+server/
+docs/
+README.md
+```
+
+---
+
+## Client Structure
+
+```
+client/
+
+src/
+
+assets/
+
+components/
+
+common/
+landing/
+patient/
+doctor/
+reception/
+pharmacy/
+admin/
+
+layouts/
+
+LandingLayout.jsx
+PatientLayout.jsx
+DoctorLayout.jsx
+ReceptionLayout.jsx
+PharmacyLayout.jsx
+AdminLayout.jsx
+
+pages/
+
+Landing/
+Login/
+Patient/
+Doctor/
+Reception/
+Pharmacy/
+Admin/
+
+routes/
+
+services/
+
+hooks/
+
+context/
+
+utils/
+
+constants/
+
+App.jsx
+
+main.jsx
+```
+
+---
+
+## Server Structure
+
+```
+server/
+
+config/
+
+controllers/
+
+middleware/
+
+models/
+
+routes/
+
+services/
+
+sockets/
+
+utils/
+
+uploads/
+
+server.js
+```
+
+---
+
+# Tech Stack
+
+## Frontend
+
+- React 19
+- Vite
+- Tailwind CSS
+- React Router DOM
+- Axios
+- React Icons
+
+---
+
+## Backend
+
+- Node.js
+- Express.js
+- JWT Authentication
+- Multer
+- Cloudinary
+- Socket.io
+
+---
+
+## Database
+
+- MongoDB Atlas
+- Mongoose
+
+---
+
+## Authentication
+
+Patient
+
+- OTP Authentication (Future)
+
+Staff
+
+- Email + Password
+- JWT
+
+---
+
+## Notifications
+
+- In-App Notifications
+- Email Notifications
+- SMS (Future)
+- WhatsApp (Future)
+
+---
+
+## Pharmacy
+
+- Digital Prescriptions
+- Inventory Management
+- Medicine Billing
+- Invoice Generation
+- Stock Management
+
+---
+
+## AI Features (Future)
+
+- AI Symptom Checker
+- Medical Report Summarizer
+- Prescription OCR
+- Medicine Reminder
+- Follow-up Recommendation
+- Hospital Analytics
+
+---
+
+# Development Workflow
+
+```
+Feature Branch
+
+↓
+
+Code Review
+
+↓
+
+Merge into Develop
+
+↓
+
+Testing
+
+↓
+
+Merge into Main
+
+↓
+
+Production Deployment
+```
+
+---
+
+# Deployment
+
+Frontend
+
+- Vercel
+
+Backend
+
+- Render
+
+Database
+
+- MongoDB Atlas
+
+Media Storage
+
+- Cloudinary
+
+---
+
+# Project Status
+
+Current Phase
+
+✔ UI Design Completed
+
+⏳ React Conversion
+
+⏳ Backend Development
+
+⏳ Database Design
+
+⏳ API Development
+
+⏳ Authentication
+
+⏳ Deployment
+
+---
+
+Built with ❤️ using the MERN Stack.
