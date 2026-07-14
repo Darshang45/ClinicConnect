@@ -1,8 +1,19 @@
-function Card({ children, className = "", ...props }) {
+import "../../styles/doctor_dashboard.css";
+import "../../styles/patient_dashboard.css";
+
+function Card({
+  children,
+  className = "",
+  as: Component = "div",
+  ...props
+}) {
   return (
-    <section className={`pd-card ${className}`.trim()} {...props}>
+    <Component
+      className={`doc-card ${className}`.trim()}
+      {...props}
+    >
       {children}
-    </section>
+    </Component>
   );
 }
 
