@@ -44,7 +44,7 @@ function MetricCard({ stat }) {
 function StatsCards() {
   return (
     <>
-      <section className="doc-stats-banner" aria-label="Daily patient overview">
+      <section className="doc-stats-banner" aria-label="Daily patient overview" id="home">
         <div className="doc-welcome-banner">
           <div>
             <h1>Welcome Back, Dr. Julianne Moore</h1>

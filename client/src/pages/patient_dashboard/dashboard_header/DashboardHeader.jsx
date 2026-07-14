@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { FiArrowUp, FiBell, FiFileText, FiGrid, FiLogOut, FiMessageSquare, FiSearch, FiSettings, FiShield, FiUser, FiUsers } from "react-icons/fi";
 import patientPhoto from "../../../assets/images/hero/patient1.jpg";
+import NotificationList from "../../../components/common/NotificationList";
 import { notifications } from "../data/notifications";
 import "../../../styles/patient_dashboard.css";
 
@@ -42,7 +43,7 @@ function DashboardHeader() {
           <Link className={`pd-icon-button ${isInboxOpen ? "is-open" : ""}`} to={isInboxOpen ? "/patient/dashboard" : "/patient/inbox"} aria-label={isInboxOpen ? "Close inbox" : "Open inbox"}><FiMessageSquare /></Link>
           <div className="pd-navbar-menu">
             <button className={`pd-icon-button pd-notification-button ${openPanel === "notifications" ? "is-open" : ""}`} type="button" aria-label="Open notifications" aria-expanded={openPanel === "notifications"} onClick={() => togglePanel("notifications")}><FiBell /></button>
-            {openPanel === "notifications" && <div className="pd-navbar-popover" role="dialog" aria-label="Notifications"><div className="pd-popover-heading"><h2>Notifications</h2><span>Mark all read</span></div><div className="pd-notification-list">{notifications.map((notification) => <article className="pd-notification-item" key={notification.id}><span><FiBell /></span><div><h3>{notification.title}</h3><p>{notification.description}</p></div><time>{notification.time}</time></article>)}</div></div>}
+            {openPanel === "notifications" && <div className="pd-navbar-popover" role="dialog" aria-label="Notifications"><div className="pd-popover-heading"><h2>Notifications</h2><span>Mark all read</span></div><NotificationList items={notifications} /></div>}
           </div>
           <a className="pd-user-menu" href="#patient-profile"><span className="pd-user-copy"><strong>Atharva Srivastava</strong><small>Platinum Member</small></span><img src={patientPhoto} alt="Atharva Srivastava" /></a>
         </div>
