@@ -8,7 +8,8 @@ import PatientLogin from "../pages/Login/PatientLogin";
 import StaffLogin from "../pages/Login/StaffLogin";
 
 // Dashboards
-import PatientDashboard from "../pages/Patient/Dashboard";
+import PatientDashboard from "../pages/patient_dashboard/PatientDashboard";
+import PatientInbox from "../pages/patient_dashboard/inbox/Inbox";
 import DoctorDashboard from "../pages/Doctor/Dashboard";
 import ReceptionDashboard from "../pages/Reception/Dashboard";
 import PharmacyDashboard from "../pages/Pharmacy/Dashboard";
@@ -30,6 +31,11 @@ function AppRoutes() {
         <Route
           path="/patient/dashboard"
           element={<PatientDashboard />}
+        />
+
+        <Route
+          path="/patient/inbox"
+          element={<PatientInbox />}
         />
 
         <Route
