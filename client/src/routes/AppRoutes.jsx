@@ -9,7 +9,7 @@ import StaffLogin from "../pages/Login/StaffLogin";
 
 // Dashboards
 import PatientDashboard from "../pages/Patient/Dashboard";
-import DoctorDashboard from "../pages/Doctor/Dashboard";
+import DoctorDashboard from "../pages/doctor_dashboard/DoctorDashboard";
 import ReceptionDashboard from "../pages/Reception/Dashboard";
 import PharmacyDashboard from "../pages/Pharmacy/Dashboard";
 import AdminDashboard from "../pages/Admin/Dashboard";
