@@ -1,7 +1,1 @@
-function ReceptionDashboard() {
-  return (
-    <h1>Reception Dashboard</h1>
-  );
-}
-
-export default ReceptionDashboard;                                              
+export { default } from "../reception_dashboard/ReceptionDashboard";
