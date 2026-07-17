@@ -1,8 +1,15 @@
+import { useMemo, useState } from "react";
 import { MdCancel, MdEdit, MdLogin } from "react-icons/md";
 import Button from "../../../components/common/Button";
 import Card from "../../../components/common/Card";
 import "../../../styles/reception_dashboard.css";
-import appointments from "../data/appointments";
+import initialAppointments from "../data/appointments";
+
+const filters = [
+  { label: "All Appts", value: "all" },
+  { label: "Waiting", value: "waiting" },
+  { label: "Completed", value: "completed" },
+];
 
 export function AppointmentRow({ appointment }) {
   return (
@@ -39,15 +46,30 @@ export function AppointmentRow({ appointment }) {
   );
 }
 
-function AppointmentQueue() {
+function AppointmentQueue({ appointments = initialAppointments }) {
+  const [activeFilter, setActiveFilter] = useState("all");
+  const filteredAppointments = useMemo(
+    () => activeFilter === "all"
+      ? appointments
+      : appointments.filter((appointment) => appointment.status.toLowerCase() === activeFilter),
+    [activeFilter, appointments],
+  );
+
   return (
     <section className="rc-queue-section" id="queue">
       <div className="rc-section-heading rc-queue-heading">
         <h2>Appointment Queue</h2>
-        <div className="rc-filter-tabs">
-          <Button className="is-selected">All Appts</Button>
-          <Button>Waiting</Button>
-          <Button>Completed</Button>
+        <div className="rc-filter-tabs" aria-label="Filter appointments">
+          {filters.map((filter) => (
+            <Button
+              aria-pressed={activeFilter === filter.value}
+              className={activeFilter === filter.value ? "is-selected" : ""}
+              key={filter.value}
+              onClick={() => setActiveFilter(filter.value)}
+            >
+              {filter.label}
+            </Button>
+          ))}
         </div>
       </div>
       <Card className="rc-queue-card">
@@ -64,12 +86,14 @@ function AppointmentQueue() {
               </tr>
             </thead>
             <tbody>
-              {appointments.map((appointment) => <AppointmentRow appointment={appointment} key={appointment.patientId} />)}
+              {filteredAppointments.length > 0
+                ? filteredAppointments.map((appointment) => <AppointmentRow appointment={appointment} key={appointment.patientId} />)
+                : <tr><td className="rc-empty-queue" colSpan="6">No {activeFilter} appointments.</td></tr>}
             </tbody>
           </table>
         </div>
         <footer className="rc-table-footer">
-          <p>Showing 10 of 42 appointments</p>
+          <p>Showing {filteredAppointments.length} of {appointments.length} appointments</p>
           <div>
             <Button>Previous</Button>
             <Button>Next</Button>

@@ -1,7 +1,9 @@
-import "../../styles/reception_dashboard.css";
-
-function Card({ children, className = "" }) {
-  return <div className={`rc-card ${className}`.trim()}>{children}</div>;
+function Card({ as: Component = "div", children, className = "", ...props }) {
+  return (
+    <Component className={`common-card ${className}`.trim()} {...props}>
+      {children}
+    </Component>
+  );
 }
 
 export default Card;

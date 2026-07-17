@@ -6,13 +6,13 @@ import LandingPage from "../layouts/LandingLayout";
 // Login
 import PatientLogin from "../pages/Login/PatientLogin";
 import StaffLogin from "../pages/Login/StaffLogin";
-
-// Dashboards
-import PatientDashboard from "../pages/Patient/Dashboard";
-import DoctorDashboard from "../pages/Doctor/Dashboard";
-import ReceptionDashboard from "../pages/Reception/Dashboard";
-import PharmacyDashboard from "../pages/Pharmacy/Dashboard";
+import PatientDashboard from "../pages/patient_dashboard/PatientDashboard";
+import PatientInbox from "../pages/patient_dashboard/inbox/Inbox";
+import DoctorDashboard from "../pages/doctor_dashboard/DoctorDashboard";
+import ReceptionDashboard from "../pages/reception_dashboard/ReceptionDashboard";
+import PharmacyDashboard from "../pages/Pharmacy/PharmacyDashboard";
 import AdminDashboard from "../pages/Admin/Dashboard";
+import DoctorChatPanel from "../pages/doctor_dashboard/chat/DoctorChatPanel";
 
 function AppRoutes() {
   return (
@@ -33,12 +33,27 @@ function AppRoutes() {
         />
 
         <Route
+          path="/patient/inbox"
+          element={<PatientInbox />}
+        />
+
+        <Route
           path="/doctor/dashboard"
           element={<DoctorDashboard />}
         />
 
         <Route
+          path="/doctor/inbox"
+          element={<DoctorChatPanel/>}
+        />
+
+        <Route
           path="/reception/dashboard"
+          element={<ReceptionDashboard />}
+        />
+
+        <Route
+          path="/reception/inbox"
           element={<ReceptionDashboard />}
         />
 

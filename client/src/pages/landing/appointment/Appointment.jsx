@@ -1,6 +1,14 @@
+export function AppointmentForm({ children, className = "appointment-form", onSubmit }) {
+  return (
+    <form className={className} onSubmit={onSubmit}>
+      {children}
+    </form>
+  );
+}
+
 function Appointment() {
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const handleSubmit = (event) => {
+    event.preventDefault();
   };
 
   return (
@@ -29,7 +37,7 @@ function Appointment() {
             </div>
           </div>
 
-          <form className="appointment-form" onSubmit={handleSubmit}>
+          <AppointmentForm onSubmit={handleSubmit}>
             <div className="form-group">
               <label>Full Patient Name</label>
               <input type="text" placeholder="John Doe" />
@@ -73,7 +81,7 @@ function Appointment() {
                 Request Appointment
               </button>
             </div>
-          </form>
+          </AppointmentForm>
         </div>
       </div>
     </section>

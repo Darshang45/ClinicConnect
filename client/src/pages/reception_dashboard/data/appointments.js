@@ -1,6 +1,6 @@
 const appointments = [
   {
-    time: "09:00 AM",
+    time: "10:00 AM",
     waitTime: "IN 15 MINS",
     initials: "JM",
     patient: "Julianne Moore",
@@ -11,7 +11,7 @@ const appointments = [
     statusTone: "confirmed",
   },
   {
-    time: "09:30 AM",
+    time: "11:30 AM",
     initials: "RK",
     patient: "Robert King",
     patientId: "#PN-1182",

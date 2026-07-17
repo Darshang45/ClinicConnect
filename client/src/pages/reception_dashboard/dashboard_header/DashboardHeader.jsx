@@ -1,8 +1,10 @@
 import { useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 import { MdChatBubbleOutline, MdNotificationsNone, MdSearch } from "react-icons/md";
 import "../../../styles/reception_dashboard.css";
 import receptionistImage from "../../../assets/patients/elena-rodriguez.jpg";
 import logo from "../../../assets/logo/clinicconnect-logo.svg";
+import ReceptionNotificationPanel from "./ReceptionNotificationPanel";
 
 const navigation = [
   { label: "Dashboard", href: "#welcome" },
@@ -13,8 +15,11 @@ const navigation = [
   { label: "Broadcast", href: "#broadcast" },
 ];
 
-function DashboardHeader() {
+function DashboardHeader({ openPanel, onTogglePanel, notificationButtonRef, notificationPanelRef }) {
   const [activeLink, setActiveLink] = useState("#welcome");
+  const location = useLocation();
+  const isChatOpen = location.pathname === "/reception/inbox";
+  const isNotificationOpen = openPanel === "notifications";
 
   return (
     <header className="rc-dashboard-header">
@@ -39,17 +44,29 @@ function DashboardHeader() {
       </div>
 
       <div className="rc-header-actions">
-        <label className="rc-patient-search">
-          <MdSearch />
-          <input type="search" placeholder="Search patients..." aria-label="Search patients" />
-        </label>
+        
         <div className="rc-header-icon-group">
-          <button className="rc-header-icon has-notification" type="button" aria-label="Notifications">
-            <MdNotificationsNone />
-          </button>
-          <button className="rc-header-icon" type="button" aria-label="Open chat">
+          <div className="rc-navbar-menu">
+            <button
+              className={`rc-header-icon has-notification ${isNotificationOpen ? "is-open" : ""}`}
+              type="button"
+              aria-label={isNotificationOpen ? "Close notifications" : "Open notifications"}
+              aria-controls="reception-notifications"
+              aria-expanded={isNotificationOpen}
+              onClick={() => onTogglePanel("notifications")}
+              ref={notificationButtonRef}
+            >
+              <MdNotificationsNone />
+            </button>
+            {isNotificationOpen && <ReceptionNotificationPanel panelRef={notificationPanelRef} />}
+          </div>
+          <Link
+            className={`rc-header-icon ${isChatOpen ? "is-open" : ""}`}
+            to={isChatOpen ? "/reception/dashboard" : "/reception/inbox"}
+            aria-label={isChatOpen ? "Close inbox" : "Open inbox"}
+          >
             <MdChatBubbleOutline />
-          </button>
+          </Link>
         </div>
         <div className="rc-profile">
           <div className="rc-profile-copy">

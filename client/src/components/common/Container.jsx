@@ -1,7 +1,9 @@
-import "../../styles/reception_dashboard.css";
-
-function Container({ as: Component = "div", children, className = "" }) {
-  return <Component className={`rc-container ${className}`.trim()}>{children}</Component>;
+function Container({ as: Component = "div", children, className = "", ...props }) {
+  return (
+    <Component className={`common-container ${className}`.trim()} {...props}>
+      {children}
+    </Component>
+  );
 }
 
 export default Container;

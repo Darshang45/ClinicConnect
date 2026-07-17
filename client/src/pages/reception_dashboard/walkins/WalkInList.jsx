@@ -1,7 +1,7 @@
 import Button from "../../../components/common/Button";
 import Card from "../../../components/common/Card";
 import "../../../styles/reception_dashboard.css";
-import walkIns from "../data/walkins";
+import initialWalkIns from "../data/walkins";
 
 export function WalkInCard({ walkIn }) {
   return (
@@ -24,12 +24,12 @@ export function WalkInCard({ walkIn }) {
   );
 }
 
-function WalkInList() {
+function WalkInList({ walkIns = initialWalkIns }) {
   return (
     <section className="rc-walkin-section">
       <div className="rc-section-heading">
         <h2>Live Walk-in List</h2>
-        <span className="rc-count-badge">3 Current Walk-ins</span>
+        <span className="rc-count-badge">{walkIns.length} Current Walk-ins</span>
       </div>
       <Card className="rc-walkin-list">
         {walkIns.map((walkIn) => <WalkInCard walkIn={walkIn} key={walkIn.patient} />)}
