@@ -21,9 +21,9 @@ function MobileMenu({ isOpen, onClose }) {
     >
       <div className={`mobile-drawer-content ${isOpen ? "mobile-drawer-content-open" : ""}`}>
         <div className="mobile-drawer-header">
-          <span className="mobile-drawer-brand">LuxeHealth</span>
+          <span className="mobile-drawer-brand">Clinic Connect</span>
           <button type="button" onClick={onClose} aria-label="Close menu">
-            <span className="material-symbols-outlined">close</span>
+            <span className="material-symbols-w">close</span>
           </button>
         </div>
 
@@ -49,9 +49,9 @@ function MobileMenu({ isOpen, onClose }) {
           <a href="#book" className="btn btn-primary mobile-drawer-btn" onClick={(e) => handleLinkClick(e, "#book")}>
             Book Appointment
           </a>
-          <a href="#" className="btn btn-outline mobile-drawer-btn">
+          <Link to="/patient/login" className="btn btn-outline mobile-drawer-btn" onClick={onClose}>
             Login
-          </a>
+          </Link>
         </div>
       </div>
     </div>
@@ -59,3 +59,4 @@ function MobileMenu({ isOpen, onClose }) {
 }
 
 export default MobileMenu;
+import { Link } from "react-router-dom";
