@@ -1,5 +1,5 @@
-import ConversationWorkspace from "../../components/common/ConversationWorkspace";
-import { receptionConversations } from "./data/communications";
+import ConversationWorkspace from "../../../components/common/ConversationWorkspace";
+import { receptionConversations } from "../data/communications";
 
 function ReceptionChatPanel() {
   return (

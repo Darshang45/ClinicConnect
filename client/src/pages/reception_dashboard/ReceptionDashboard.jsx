@@ -11,7 +11,7 @@ import DoctorAvailability from "./doctor_availability/DoctorAvailability";
 import PatientDetails from "./patient_details/PatientDetails";
 import PatientRegistration from "./patient_registration/PatientRegistration";
 import QuickActions from "./quick_actions/QuickActions";
-import ReceptionChatPanel from "./ReceptionChatPanel";
+import ReceptionChatPanel from "./dashboard_header/ReceptionChatPanel";
 import StatsCards from "./stats/StatsCards";
 import WalkInList from "./walkins/WalkInList";
 import WelcomeSection from "./welcome/WelcomeSection";

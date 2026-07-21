@@ -1,7 +1,7 @@
 import React from 'react';
 
-import Navbar from './Navbar';
-import Footer from './Footer';
+import Navbar from '../pages/landing/navbar/Navbar';
+import Footer from '../pages/landing/footer/Footer';
 
 
 import Hero from "../pages/landing/hero/Hero";

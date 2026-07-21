@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import MobileMenu from "./MobileMenu";
 
 function Navbar() {
@@ -69,9 +70,9 @@ function Navbar() {
           </div>
 
           <div className="navbar-actions">
-            <a href="#" className="navbar-login">
+            <Link to="/patient/login" className="navbar-login">
               Login
-            </a>
+            </Link>
             <a href="#book" className="btn btn-primary navbar-book" onClick={(e) => handleLinkClick(e, "#book")}>
               Book Appointment
             </a>

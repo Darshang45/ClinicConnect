@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { MdChatBubbleOutline, MdNotificationsNone, MdSearch } from "react-icons/md";
+import SignOut from "../../../components/common/SignOut";
+import useAuth from "../../../hooks/useAuth";
 import "../../../styles/reception_dashboard.css";
 import receptionistImage from "../../../assets/patients/elena-rodriguez.jpg";
 import logo from "../../../assets/logo/clinicconnect-logo.svg";
@@ -17,6 +19,12 @@ const navigation = [
 
 function DashboardHeader({ openPanel, onTogglePanel, notificationButtonRef, notificationPanelRef }) {
   const [activeLink, setActiveLink] = useState("#welcome");
+  const { user } = useAuth();
+  const profile = user || {
+    name: "Elena Rodriguez",
+    roleTitle: "Lead Receptionist",
+    avatar: receptionistImage,
+  };
   const location = useLocation();
   const isChatOpen = location.pathname === "/reception/inbox";
   const isNotificationOpen = openPanel === "notifications";
@@ -68,13 +76,13 @@ function DashboardHeader({ openPanel, onTogglePanel, notificationButtonRef, noti
             <MdChatBubbleOutline />
           </Link>
         </div>
-        <div className="rc-profile">
+        <SignOut triggerClassName="rc-profile" user={profile}>
           <div className="rc-profile-copy">
-            <p>Elena Rodriguez</p>
-            <span>Lead Receptionist</span>
+            <p>{profile.name}</p>
+            <span>{profile.roleTitle || profile.role}</span>
           </div>
-          <img src={receptionistImage} alt="Elena Rodriguez" />
-        </div>
+          <img src={profile.avatar || receptionistImage} alt={profile.name} />
+        </SignOut>
       </div>
     </header>
   );

@@ -1,5 +1,7 @@
 import doctorImage from "../../../assets/images/doctors/doctor-6.jpg";
 import NotificationList from "../../../components/common/NotificationList";
+import SignOut from "../../../components/common/SignOut";
+import useAuth from "../../../hooks/useAuth";
 import { doctorNotifications } from "../data/communications";
 import "../../../styles/doctor_dashboard.css";
 // import { useEffect } from "react";
@@ -16,6 +18,12 @@ function DashboardHeader({
 }) {
   // const isChatOpen = openPanel === "chat";
   const location = useLocation();
+  const { user } = useAuth();
+  const profile = user || {
+    name: "Dr. Julianne Moore",
+    roleTitle: "Senior Cardiologist",
+    avatar: doctorImage,
+  };
   const isChatOpen = location.pathname === "/doctor/inbox";
   const isNotificationOpen = openPanel === "notifications";
   const [activeLink, setActiveLink] = useState("#");
@@ -83,13 +91,13 @@ function DashboardHeader({
               </section>
             )}
           </div>
-          <div className="doc-doctor-profile">
+          <SignOut triggerClassName="doc-doctor-profile" user={profile}>
             <div className="doc-doctor-details">
-              <strong>Dr. Julianne Moore</strong>
-              <span>Senior Cardiologist</span>
+              <strong>{profile.name}</strong>
+              <span>{profile.roleTitle || profile.role}</span>
             </div>
-            <img src={doctorImage} alt="Dr. Julianne Moore" />
-          </div>
+            <img src={profile.avatar || doctorImage} alt={profile.name} />
+          </SignOut>
         </div>
       </div>
     </header>

@@ -66,23 +66,30 @@ const normalisePatient = (patient) => ({
 });
 
 const profileTokens = {
-  "--pd-primary": "#006b2c",
-  "--pd-low": "#f2f4f3",
-  "--pd-muted": "#536052",
-  "--pd-text": "#191c1c",
+  "--pd-primary": "var(--primary)",
+  "--pd-low": "var(--surface-container-low)",
+  "--pd-muted": "var(--on-surface-variant)",
+  "--pd-text": "var(--on-surface)",
 };
 
-function PatientProfile({ isEditing: isEditingProp, onClose, isReceptionPanel = Boolean(onClose), onToggleEdit, onUpdate, patient }) {
+const normaliseCustomProfile = (profile, fields) => fields.reduce((draft, field) => ({
+  ...draft,
+  [field.key]: profile?.[field.key] || "",
+}), { ...profile });
+
+function PatientProfile({ className = "", editLabel = "Edit profile", fields, isEditing: isEditingProp, onClose, isReceptionPanel = Boolean(onClose), onToggleEdit, onUpdate, patient, profileDescription, saveLabel = "Save profile", title = "Patient Profile" }) {
   const isEditable = Boolean(patient && onUpdate);
   const isControlled = typeof isEditingProp === "boolean";
+  const isCustomProfile = Array.isArray(fields);
+  const formFields = fields || editableFields;
   const [localIsEditing, setLocalIsEditing] = useState(false);
   const isEditing = isControlled ? isEditingProp : localIsEditing;
-  const [draft, setDraft] = useState(() => normalisePatient(patient));
+  const [draft, setDraft] = useState(() => isCustomProfile ? normaliseCustomProfile(patient, formFields) : normalisePatient(patient));
 
   const saveChanges = () => {
     if (!isEditable) return;
 
-    onUpdate({
+    onUpdate(isCustomProfile ? { ...patient, ...draft } : {
       ...patient,
       ...draft,
       name: `${draft.firstName} ${draft.lastName}`.trim(),
@@ -106,21 +113,21 @@ function PatientProfile({ isEditing: isEditingProp, onClose, isReceptionPanel = 
     setLocalIsEditing(true);
   };
 
-  const displayedDetails = isControlled && !isEditing
+  const displayedDetails = isControlled && !isEditing && !isCustomProfile
     ? getSummaryProfileDetails(patient)
     : isEditable
-    ? editableFields.map((field) => ({ ...field, value: draft[field.key] || "Not provided" }))
+    ? formFields.map((field) => ({ ...field, value: draft[field.key] || "Not provided" }))
     : defaultProfileDetails;
-  const displayName = isEditable ? `${draft.firstName} ${draft.lastName}`.trim() : "Atharva Srivastava";
+  const displayName = isCustomProfile ? draft.name || patient?.name || "Administrator" : isEditable ? `${draft.firstName} ${draft.lastName}`.trim() : "Atharva Srivastava";
   const profileClassName = isReceptionPanel ? "rc-patient-profile" : "";
   const headerClassName = isReceptionPanel ? "rc-patient-profile-header" : "";
   const actionsClassName = isReceptionPanel ? "rc-patient-profile-actions" : "pd-profile-actions";
   const closeClassName = isReceptionPanel ? "rc-profile-close" : "pd-profile-close";
 
   return (
-    <Card className={`pd-profile-card ${profileClassName}`.trim()} id="patient-profile" style={isEditable ? profileTokens : undefined}>
+    <Card className={`pd-profile-card ${profileClassName} ${className}`.trim()} id="patient-profile" style={isEditable ? profileTokens : undefined}>
       <div className={`pd-section-heading ${headerClassName}`.trim()}>
-        <h2>Patient Profile</h2>
+        <h2>{title}</h2>
         {onClose ? (
           <div className={actionsClassName}>
             {isControlled ? <>
@@ -134,15 +141,15 @@ function PatientProfile({ isEditing: isEditingProp, onClose, isReceptionPanel = 
         ) : (
           <Button className="pd-profile-edit" onClick={handleEdit}>
             <FiEdit3 />
-            {isEditing ? "Save profile" : "Edit profile"}
+            {isEditing ? saveLabel : editLabel}
           </Button>
         )}
       </div>
       <div className="pd-profile-content">
         <div className="pd-profile-intro">
-          <img src={patient?.image || patientPhoto} alt={displayName} />
+          <img src={patient?.image || patient?.avatar || patientPhoto} alt={displayName} />
           <h3>{displayName}</h3>
-          <p>{isEditable ? `Patient ID: #${patient.id}` : "Platinum member"}</p>
+          <p>{profileDescription || (isEditable ? `Patient ID: #${patient.id}` : "Platinum member")}</p>
         </div>
         <dl className="pd-profile-details">
           {displayedDetails.map((detail) => (
