@@ -20,27 +20,61 @@ const appointmentSchema = new mongoose.Schema(
       required: true,
     },
 
-    appointmentDate: {
+    appointmentStart: {
       type: Date,
       required: true,
     },
 
-    appointmentTime: {
-      type: String,
+    appointmentEnd: {
+      type: Date,
       required: true,
     },
 
-    reason: String,
+    consultationDuration: {
+      type: Number,
+      default: 15,
+    },
+
+    consultationType: {
+      type: String,
+      enum: ["Offline", "Online"],
+      default: "Offline",
+    },
+
+    reason: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    symptoms: [
+      {
+        type: String,
+      },
+    ],
 
     status: {
       type: String,
       enum: [
-        "Pending",
-        "Confirmed",
+        "Scheduled",
+        "Checked-In",
+        "In Consultation",
         "Completed",
         "Cancelled",
+        "No Show",
       ],
-      default: "Pending",
+      default: "Scheduled",
+    },
+
+    bookedBy: {
+      type: String,
+      enum: ["Patient", "Receptionist"],
+      default: "Patient",
+    },
+
+    notes: {
+      type: String,
+      default: "",
     },
   },
   {
@@ -48,7 +82,4 @@ const appointmentSchema = new mongoose.Schema(
   }
 );
 
-export default mongoose.model(
-  "Appointment",
-  appointmentSchema
-);
+export default mongoose.model("Appointment", appointmentSchema);
