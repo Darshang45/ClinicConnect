@@ -7,6 +7,7 @@ import testRoutes from "../server/src/routes/test.routes.js";
 import appointmentRoutes from "./src/routes/appointment.routes.js";
 import userRoutes from "../server/src/routes/user.routes.js";
 import departmentRoutes from "./src/routes/department.routes.js";
+import doctorRoutes from "./src/routes/doctor.routes.js";
 
 
 
@@ -34,5 +35,6 @@ app.use("/api/test", testRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/appointments", appointmentRoutes);
 app.use("/api/departments", departmentRoutes);
+app.use("/api/doctors", doctorRoutes);
 
 export default app;
