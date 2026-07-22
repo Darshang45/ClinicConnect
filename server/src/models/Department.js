@@ -6,9 +6,36 @@ const departmentSchema = new mongoose.Schema(
       type: String,
       required: true,
       unique: true,
+      trim: true,
     },
 
-    description: String,
+    code: {
+      type: String,
+      required: true,
+      unique: true,
+      uppercase: true,
+      trim: true,
+    },
+
+    description: {
+      type: String,
+      default: "",
+    },
+
+    consultationDuration: {
+      type: Number,
+      default: 15,
+    },
+
+    consultationFee: {
+      type: Number,
+      default: 500,
+    },
+
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
   },
   {
     timestamps: true,
