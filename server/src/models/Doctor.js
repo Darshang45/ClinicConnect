@@ -6,22 +6,62 @@ const doctorSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
+      unique: true,
     },
 
     department: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Department",
+      required: true,
     },
 
-    specialization: String,
+    specialization: {
+      type: String,
+      required: true,
+      trim: true,
+    },
 
-    qualification: String,
+    qualification: {
+      type: String,
+      required: true,
+      trim: true,
+    },
 
-    experience: Number,
+    experience: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
 
-    consultationFee: Number,
+    consultationFee: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
 
-    available: {
+    licenseNumber: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+    },
+
+    bio: {
+      type: String,
+      default: "",
+    },
+
+    profilePhoto: {
+      type: String,
+      default: "",
+    },
+
+    isAvailable: {
+      type: Boolean,
+      default: true,
+    },
+
+    isActive: {
       type: Boolean,
       default: true,
     },
