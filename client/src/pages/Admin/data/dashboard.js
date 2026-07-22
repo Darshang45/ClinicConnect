@@ -6,8 +6,8 @@ export const adminUser = {
 };
 
 export const navigation = [
-  { label: "Dashboard", icon: "dashboard" }, { label: "Patients", icon: "person" }, { label: "Doctors", icon: "medical_services" },
-  { label: "Receptionists", icon: "support_agent" }, { label: "Pharmacy", icon: "medication" }, { label: "Settings", icon: "settings" },
+  { label: "Dashboard", icon: "dashboard", to: "/admin/dashboard" }, { label: "Patients", icon: "person", to: "/admin/patients" }, { label: "Doctors", icon: "medical_services", to: "/admin/doctors" },
+  { label: "Receptionists", icon: "support_agent", to: "/admin/receptionists" }, { label: "Pharmacy", icon: "medication", to: "/admin/pharmacy" }, { label: "Settings", icon: "settings", to: "/admin/profile" },
 ];
 
 export const analyticsCards = [
@@ -26,7 +26,7 @@ export const appointments = [
 ];
 
 export const quickActions = [
-  { id: "patient", label: "Patient", icon: "person_add" }, { id: "doctor", label: "Doctor", icon: "medical_services" }, { id: "appointment", label: "Appt.", icon: "assignment_add" }, { id: "pharmacy", label: "Pharmacy", icon: "inventory" }, { id: "reports", label: "Reports", icon: "lab_profile" },
+  { id: "patient", label: "Patient", icon: "person_add", to: "/admin/patients" }, { id: "doctor", label: "Doctor", icon: "medical_services", to: "/admin/doctors" }, { id: "appointment", label: "Appt.", icon: "assignment_add" }, { id: "pharmacy", label: "Pharmacy", icon: "inventory" }, { id: "reports", label: "Reports", icon: "lab_profile" },
 ];
 
 export const inventory = [
@@ -37,6 +37,6 @@ export const inventory = [
 export const departmentHeads = [
   { id: "david-miller", name: "Dr. David Miller", department: "Cardiology", status: "On Duty", statusTone: "success", image: "https://lh3.googleusercontent.com/aida-public/AB6AXuDgGcp7h_v3Tq7CoxHE1HEtcq_1j0Vau3V6CrcYhxAWS3WRGTWfdV5SNk6GKhO3E20u9rveDfQKvmav0uc4V4EE-86bSgqHSdf8GjNXJ552SpzA-suMGq84QLO6Ws78XAQ19P1KgSUqQyXSmNjxzK4s8j72g56OSwtWtDnb6_-WTzDQbuRMZeUbeCJEjkeKMGQzewzXlBdMsRALGub4PXmx29Ac7SBqRyR9IPElLPqvj3HRskVheDKc", alt: "Portrait of Dr. David Miller" },
   { id: "julia-wang", name: "Dr. Julia Wang", department: "Pediatrics", status: "On Duty", statusTone: "success", image: "https://lh3.googleusercontent.com/aida-public/AB6AXuA5lskUkG0R3AzgdPChCOpoeA0V7HsCPAH3MFB2p7VtFasR3yRYDPRUkCMs3lnMILiI0Kk1vDjCOTxL47QglR6JJLGcEgAigWi0vtFwFx_CgOp0KF8nOMmcxP4TY3oENuAoNd3nVhk4FcFSXJPwrw3D80CuZzxfIUx1RgPGHc0MToUqDgmL4LHxNr7XKiIl7MwaNMNxitnnF0BXYTvLNyQKpomSQg_GgtaKFp-rWokb4y_ugdXZZ4Yd", alt: "Portrait of Dr. Julia Wang" },
-  { id: "samuel-lee", name: "Dr. Samuel Lee", department: "Surgery", status: "In Surgery", statusTone: "neutral", image: "https://lh3.googleusercontent.com/aida-public/AB6AXuCd2-RArJ1qAIroA898QdcsZcFDaCfIyy1vxZa2f5ELLzKPid5eRRMWUDL1UxNRdYki28bl0y2nY5S75WQuYAM10KP1q7iwppFr67BtbJulxcJrpHxb8St0WoPBE1qEqAMClIXE_7EVz74D-YecfIEN_2yzMaLsQ4fpPB51xI9kyY7t3ahRPE0-P89U2macKeOkS7dgYI57VGj03QDlkS9In6iI3TUJ-68Z1tCI0kae78xBve1ig_R", alt: "Portrait of Dr. Samuel Lee" },
+  { id: "samuel-lee", name: "Dr. Samuel Lee", department: "Surgery", status: "In Surgery", statusTone: "neutral", image: "https://lh3.googleusercontent.com/aida-public/AB6AXuDgGcp7h_v3Tq7CoxHE1HEtcq_1j0Vau3V6CrcYhxAWS3WRGTWfdV5SNk6GKhO3E20u9rveDfQKvmav0uc4V4EE-86bSgqHSdf8GjNXJ552SpzA-suMGq84QLO6Ws78XAQ19P1KgSUqQyXSmNjxzK4s8j72g56OSwtWtDnb6_-WTzDQbuRMZeUbeCJEjkeKMGQzewzXlBdMsRALGub4PXmx29Ac7SBqRyR9IPElLPqvj3HRskVheDKc", alt: "Portrait of Dr. Samuel Lee" },
   { id: "sofia-rossi", name: "Dr. Sofia Rossi", department: "Diagnostics", status: "Off Duty", statusTone: "danger", image: "https://lh3.googleusercontent.com/aida-public/AB6AXuC_YvITlcblbVXmyVy49i_oc9wCIRke419cirZ_mCf0OXlBacN7_1nOUnhhAQrnKi5DWXR62wXL4a5SAXrYo1YnnMFlOJAIqSdw95udjRlmZQNnlN94qX2uFNMxaHHqgu68ogY5j8iFhqMo7TQtURwxc4wUATFIIhYMWijxy9qRSsJ_4b5VACStUa08m-Cs8ky2zo70sH2sR3zMAONfPP_Yc4xUFMJEfP6j4cS8ctrCMOg1am8KINNw", alt: "Portrait of Dr. Sofia Rossi" },
 ];

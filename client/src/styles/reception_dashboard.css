@@ -973,6 +973,12 @@
   color: #006b2c;
 }
 
+.rc-billing-back {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 24px;
+}
+
 .rc-refresh-button {
   display: inline-flex;
   align-items: center;
@@ -1622,6 +1628,14 @@
 
   .rc-patient-buttons {
     gap: 8px;
+  }
+
+  .rc-billing-actions {
+    flex-direction: column;
+  }
+
+  .rc-billing-actions .common-button {
+    width: 100%;
   }
 
   .rc-doctors-heading {

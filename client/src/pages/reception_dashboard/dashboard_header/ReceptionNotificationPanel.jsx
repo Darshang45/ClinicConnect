@@ -1,4 +1,4 @@
-import NotificationList from "../../../components/common/NotificationList";
+import Notification from "../../../components/common/Notification/Notification";
 import { receptionNotifications } from "../data/communications";
 
 function ReceptionNotificationPanel({ panelRef }) {
@@ -8,7 +8,7 @@ function ReceptionNotificationPanel({ panelRef }) {
         <h2>Notifications</h2>
         <span>Mark all read</span>
       </div>
-      <NotificationList items={receptionNotifications} />
+      <Notification items={receptionNotifications} />
     </section>
   );
 }

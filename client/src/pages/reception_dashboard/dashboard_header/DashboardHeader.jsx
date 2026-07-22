@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { MdChatBubbleOutline, MdNotificationsNone, MdSearch } from "react-icons/md";
+import Navbar from "../../../components/common/Navbar";
 import SignOut from "../../../components/common/SignOut";
 import useAuth from "../../../hooks/useAuth";
 import "../../../styles/reception_dashboard.css";
@@ -30,8 +31,10 @@ function DashboardHeader({ openPanel, onTogglePanel, notificationButtonRef, noti
   const isNotificationOpen = openPanel === "notifications";
 
   return (
-    <header className="rc-dashboard-header">
-      <div className="rc-brand-navigation">
+    <Navbar
+      className="rc-dashboard-header"
+      brand={(
+        <div className="rc-brand-navigation">
         <a className="rc-brand" href="#welcome">
           <img src={logo} alt="ClinicConnect" />
           <span>ClinicConnect</span>
@@ -49,9 +52,11 @@ function DashboardHeader({ openPanel, onTogglePanel, notificationButtonRef, noti
             </a>
           ))}
         </nav>
-      </div>
+        </div>
+      )}
 
-      <div className="rc-header-actions">
+      actions={(
+        <div className="rc-header-actions">
         
         <div className="rc-header-icon-group">
           <div className="rc-navbar-menu">
@@ -83,8 +88,9 @@ function DashboardHeader({ openPanel, onTogglePanel, notificationButtonRef, noti
           </div>
           <img src={profile.avatar || receptionistImage} alt={profile.name} />
         </SignOut>
-      </div>
-    </header>
+        </div>
+      )}
+    />
   );
 }
 

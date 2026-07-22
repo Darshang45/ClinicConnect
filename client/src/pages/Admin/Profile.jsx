@@ -1,5 +1,6 @@
 import { useState } from "react";
 import useAuth from "../../hooks/useAuth";
+import BackButton from "../../components/common/BackButton";
 import AdminLayout from "../../layouts/AdminLayout";
 import PatientProfile from "../patient_dashboard/profile/PatientProfile";
 import { adminProfileFields, createAdminProfile } from "./data/profile";
@@ -21,6 +22,9 @@ function AdminProfile() {
           title="Admin Profile"
           onUpdate={setProfile}
         />
+        <div className="admin-page-back">
+          <BackButton to="/admin/dashboard" />
+        </div>
       </div>
     </AdminLayout>
   );

@@ -21,6 +21,7 @@ import {
 import PharmacyBilling from "./Billing";
 import PharmacyInventory from "./Inventory";
 import PharmacyPrescription from "./Prescription";
+import Navbar from "../../components/common/Navbar";
 import "../../styles/pharmacy_dashboard.css";
 
 const initialPrescriptions = [
@@ -558,7 +559,7 @@ function PharmacyDashboard() {
 
   return (
     <div className="pharmacy-dashboard">
-      <nav className="ph-topnav">
+      <Navbar as="nav" className="ph-topnav">
         <div className="ph-brand">ClinicConnect</div>
         <div className={`ph-nav-links ${mobileNavOpen ? "is-open" : ""}`}>
           <button
@@ -704,7 +705,7 @@ function PharmacyDashboard() {
             )}
           </div>
         </div>
-      </nav>
+      </Navbar>
       <main className="ph-main">
         <section className="ph-command-center" id="Dashboard">
           <div>

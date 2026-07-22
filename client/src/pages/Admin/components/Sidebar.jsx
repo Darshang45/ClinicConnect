@@ -1,4 +1,5 @@
 import { navigation } from "../data/dashboard";
+import { NavLink } from "react-router-dom";
 import SignOut from "../../../components/common/SignOut";
 import { Button } from "./common";
 
@@ -11,13 +12,9 @@ function Sidebar({ className = "", onNavigate }) {
       </div>
       <nav className="sidebar-nav" aria-label="Admin navigation">
         {navigation.map((item) => (
-          <a
-            className={`sidebar-link ${item.label === "Dashboard" ? "active" : ""}`.trim()}
-            href={
-              item.label === "Dashboard"
-                ? "#dashboard"
-                : `#${item.label.toLowerCase()}`
-            }
+          <NavLink
+            className={({ isActive }) => `sidebar-link ${isActive ? "active" : ""}`.trim()}
+            to={item.to}
             key={item.label}
             onClick={onNavigate}
           >
@@ -25,7 +22,7 @@ function Sidebar({ className = "", onNavigate }) {
               {item.icon}
             </span>
             <span>{item.label}</span>
-          </a>
+          </NavLink>
         ))}
       </nav>
       <div className="sidebar-bottom">

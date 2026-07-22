@@ -70,7 +70,7 @@ function Navbar() {
           </div>
 
           <div className="navbar-actions">
-            <Link to="/patient/login" className="navbar-login">
+            <Link to="/login" className="navbar-login">
               Login
             </Link>
             <a href="#book" className="btn btn-primary navbar-book" onClick={(e) => handleLinkClick(e, "#book")}>

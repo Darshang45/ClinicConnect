@@ -33,8 +33,18 @@ const fields = [
   { label: "Weight", name: "weight", placeholder: "e.g. 68 kg", required: true },
 ];
 
-function PatientRegistration({ onRegister }) {
-  const [patientData, setPatientData] = useState(initialPatientData);
+function PatientRegistration({
+  additionalFields = [],
+  onRegister,
+  submitLabel = "Submit Registration",
+  title = "Patient Registration",
+}) {
+  const getInitialData = () => additionalFields.reduce(
+    (data, field) => ({ ...data, [field.name]: "" }),
+    { ...initialPatientData },
+  );
+  const [patientData, setPatientData] = useState(getInitialData);
+  const registrationFields = [...fields, ...additionalFields];
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -43,20 +53,20 @@ function PatientRegistration({ onRegister }) {
 
   const handleSubmit = (event) => {
     event.preventDefault();
-    onRegister(patientData);
-    setPatientData(initialPatientData);
+    onRegister?.(patientData);
+    setPatientData(getInitialData());
   };
 
   return (
     <section className="rc-registration-section">
       <div className="rc-section-heading rc-title-with-icon">
-        <h2>Patient Registration</h2>
+        <h2>{title}</h2>
         <span aria-label="Patient information">ⓘ</span>
       </div>
       <Card className="rc-registration-card">
         <AppointmentForm className="rc-registration-form" onSubmit={handleSubmit}>
           <div className="rc-form-grid">
-            {fields.map(({ options, ...field }) => (
+            {registrationFields.map(({ options, ...field }) => (
               <Input
                 {...field}
                 className="rc-form-field"
@@ -79,7 +89,7 @@ function PatientRegistration({ onRegister }) {
             value={patientData.symptoms}
             onChange={handleChange}
           />
-          <Button className="rc-form-submit" type="submit">Submit Registration</Button>
+          <Button className="rc-form-submit" type="submit">{submitLabel}</Button>
         </AppointmentForm>
       </Card>
     </section>

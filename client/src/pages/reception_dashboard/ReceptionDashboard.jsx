@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import Button from "../../components/common/Button";
 import "../../styles/reception_dashboard.css";
 import Container from "../../components/common/Container";
@@ -12,6 +12,7 @@ import PatientDetails from "./patient_details/PatientDetails";
 import PatientRegistration from "./patient_registration/PatientRegistration";
 import QuickActions from "./quick_actions/QuickActions";
 import ReceptionChatPanel from "./dashboard_header/ReceptionChatPanel";
+import ReceptionBilling from "./billing/ReceptionBilling";
 import StatsCards from "./stats/StatsCards";
 import WalkInList from "./walkins/WalkInList";
 import WelcomeSection from "./welcome/WelcomeSection";
@@ -52,7 +53,9 @@ function ReceptionDashboard() {
   const notificationButtonRef = useRef(null);
   const notificationPanelRef = useRef(null);
   const location = useLocation();
+  const navigate = useNavigate();
   const isInboxOpen = location.pathname === "/reception/inbox";
+  const isBillingOpen = location.pathname === "/reception/billing";
 
   useEffect(() => {
     if (!openPanel) return undefined;
@@ -113,14 +116,17 @@ function ReceptionDashboard() {
         notificationButtonRef={notificationButtonRef}
         notificationPanelRef={notificationPanelRef}
       />
-      {isInboxOpen ? <ReceptionChatPanel /> : (
+      {isInboxOpen ? <ReceptionChatPanel /> : isBillingOpen ? <ReceptionBilling /> : (
         <Container as="main" className="rc-dashboard-main">
           <WelcomeSection onNewPatient={scrollToRegistration} />
           <StatsCards />
           <AppointmentQueue appointments={appointments} />
           <div className="rc-dashboard-grid rc-walkin-actions" id="booking">
             <WalkInList walkIns={walkIns} />
-            <QuickActions onCheckAvailability={scrollToDoctorAvailability} />
+            <QuickActions
+              onCheckAvailability={scrollToDoctorAvailability}
+              onCollectBill={() => navigate("/reception/billing")}
+            />
           </div>
           <div id="registration">
             <PatientRegistration onRegister={registerPatient} />

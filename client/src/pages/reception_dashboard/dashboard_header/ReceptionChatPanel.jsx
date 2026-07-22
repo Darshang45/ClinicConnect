@@ -1,10 +1,10 @@
-import ConversationWorkspace from "../../../components/common/ConversationWorkspace";
+import Inbox from "../../../components/common/Inbox/Inbox";
 import { receptionConversations } from "../data/communications";
 
 function ReceptionChatPanel() {
   return (
     <main className="rc-inbox-page" aria-label="Reception inbox">
-      <ConversationWorkspace
+      <Inbox
         className="rc-inline-chat"
         threads={receptionConversations}
         conversationLabel="Inbox"

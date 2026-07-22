@@ -1271,4 +1271,46 @@ img {
   color: var(--on-surface);
 }
 
+.admin-page-back {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 24px;
+}
+
+.navbar {
+  min-width: 0;
+}
+
+.navbar-actions {
+  flex: 0 0 auto;
+  min-width: 0;
+  margin-left: auto;
+}
+
+.navbar-actions .cc-signout-menu,
+.profile-summary,
+.profile-copy {
+  min-width: 0;
+}
+
+.profile-name,
+.profile-role {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-chat-workspace,
+.admin-notification-dropdown {
+  --pd-primary: var(--primary);
+  --pd-low: var(--surface-container-low);
+  --pd-high: var(--surface-container-highest);
+  --pd-text: var(--on-surface);
+  --pd-muted: var(--on-surface-variant);
+}
+
+.admin-chat-workspace {
+  width: 100%;
+}
+
 }

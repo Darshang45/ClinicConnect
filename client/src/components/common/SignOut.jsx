@@ -58,7 +58,14 @@ function SignOut({
   if (direct) {
     return (
       <button className={className} type="button" onClick={handleLogout}>
-        {children || <><span className="material-symbols-outlined" aria-hidden="true">logout</span>Sign Out</>}
+        {children || (
+          <>
+            <span className="material-symbols-outlined" aria-hidden="true">
+              logout
+            </span>
+            Sign Out
+          </>
+        )}
       </button>
     );
   }
@@ -76,16 +83,47 @@ function SignOut({
         {children}
       </button>
       {isOpen && (
-        <section className={`cc-signout-dropdown ${dropdownClassName}`.trim()} id={menuId} aria-label="User account menu">
+        <section
+          className={`cc-signout-dropdown ${dropdownClassName}`.trim()}
+          id={menuId}
+          aria-label="User account menu"
+        >
           <div className="cc-signout-user">
-            <p className="cc-signout-heading"><span className="material-symbols-outlined" aria-hidden="true">person</span>Profile</p>
+            <p className="cc-signout-heading">
+              <span className="material-symbols-outlined" aria-hidden="true">
+                person
+              </span>
+              Profile
+            </p>
             <dl>
-              {details.map((detail) => <div key={detail.label}><dt>{detail.label}</dt><dd>{detail.value}</dd></div>)}
+              {details.map((detail) => (
+                <div key={detail.label}>
+                  <dt>{detail.label}</dt>
+                  <dd>{detail.value}</dd>
+                </div>
+              ))}
             </dl>
           </div>
-          {profileHref && <Link className="cc-signout-profile-action" to={profileHref} onClick={() => setIsOpen(false)}><span className="material-symbols-outlined" aria-hidden="true">settings</span>My Profile</Link>}
-          <button className="cc-signout-action" type="button" onClick={handleLogout}>
-            <span className="material-symbols-outlined" aria-hidden="true">logout</span>
+          {profileHref && (
+            <Link
+              className="cc-signout-profile-action"
+              to={profileHref}
+              onClick={() => setIsOpen(false)}
+            >
+              <span className="material-symbols-outlined" aria-hidden="true">
+                settings
+              </span>
+              My Profile
+            </Link>
+          )}
+          <button
+            className="cc-signout-action"
+            type="button"
+            onClick={handleLogout}
+          >
+            <span className="material-symbols-outlined" aria-hidden="true">
+              logout
+            </span>
             Sign Out
           </button>
         </section>
