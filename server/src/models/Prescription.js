@@ -5,38 +5,46 @@ const prescriptionSchema = new mongoose.Schema(
     appointment: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Appointment",
-    },
-
-    doctor: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Doctor",
+      required: true,
+      unique: true,
     },
 
     patient: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Patient",
+      required: true,
     },
 
-    medicines: [
-      {
-        medicineName: String,
+    doctor: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Doctor",
+      required: true,
+    },
 
-        dosage: String,
+    diagnosis: {
+      type: String,
+      required: true,
+      trim: true,
+    },
 
-        frequency: String,
+    notes: {
+      type: String,
+      default: "",
+    },
 
-        duration: String,
-      },
-    ],
+    followUpDate: {
+      type: Date,
+    },
 
-    notes: String,
+    status: {
+      type: String,
+      enum: ["Draft", "Issued", "Dispensed"],
+      default: "Issued",
+    },
   },
   {
     timestamps: true,
   }
 );
 
-export default mongoose.model(
-  "Prescription",
-  prescriptionSchema
-);
+export default mongoose.model("Prescription", prescriptionSchema);
