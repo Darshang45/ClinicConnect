@@ -6,45 +6,56 @@ const doctorAvailabilitySchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Doctor",
       required: true,
+      unique: true,
     },
 
-    date: {
-      type: Date,
-      required: true,
+    consultationDuration: {
+      type: Number,
+      default: 15,
     },
 
-    isAvailable: {
-      type: Boolean,
-      default: true,
-    },
+    schedule: [
+      {
+        day: {
+          type: String,
+          enum: [
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+            "Saturday",
+            "Sunday",
+          ],
+          required: true,
+        },
 
-    leaveType: {
-      type: String,
-      enum: [
-        "Full Day",
-        "Half Day",
-        "Emergency Leave",
-        "Vacation",
-        "Holiday",
-        "Other",
-      ],
-      default: "Full Day",
-    },
+        isAvailable: {
+          type: Boolean,
+          default: true,
+        },
 
-    startTime: {
-      type: String,
-      default: "09:00 AM",
-    },
+        startTime: {
+          type: String,
+          required: true,
+        },
 
-    endTime: {
-      type: String,
-      default: "05:00 PM",
-    },
+        endTime: {
+          type: String,
+          required: true,
+        },
 
-    reason: {
-      type: String,
-      trim: true,
-    },
+        breakStart: {
+          type: String,
+          default: "",
+        },
+
+        breakEnd: {
+          type: String,
+          default: "",
+        },
+      },
+    ],
   },
   {
     timestamps: true,
