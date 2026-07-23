@@ -72,6 +72,41 @@ const appointmentSchema = new mongoose.Schema(
       default: "Patient",
     },
 
+    tokenNumber: {
+      type: Number,
+      default: null,
+    },
+
+    cancelledBy: {
+      type: String,
+      enum: ["Patient", "Doctor", "Receptionist", "Admin"],
+      default: null,
+    },
+
+    cancellationReason: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+
+    followUpDate: {
+      type: Date,
+      default: null,
+    },
+
+    prescription: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Prescription",
+      default: null,
+    },
+
+    reports: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "MedicalReport",
+      },
+    ],
+
     notes: {
       type: String,
       default: "",
@@ -79,7 +114,7 @@ const appointmentSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 export default mongoose.model("Appointment", appointmentSchema);

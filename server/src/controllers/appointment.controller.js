@@ -122,29 +122,18 @@ export const bookAppointment = async (req, res) => {
     // Step 9: Prevent Double Booking
     // ==============================
 
-    const existingAppointment =
-      await Appointment.findOne({
-
-        doctor: doctorId,
-
-        status: {
-          $ne: "Cancelled",
-        },
-
-        appointmentStart: {
-          $lt: appointmentEnd,
-        },
-
-        appointmentEnd: {
-          $gt: appointmentStart,
-        },
-
-      });
+    const existingAppointment = await Appointment.findOne({
+      doctor,
+      appointmentStart,
+      status: {
+        $in: ["Scheduled", "Checked-In", "In Consultation"],
+      },
+    });
 
     if (existingAppointment) {
       return res.status(400).json({
         success: false,
-        message: "Selected slot is already booked.",
+        message: "This slot is already booked.",
       });
     }
 
