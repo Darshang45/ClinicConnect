@@ -5,12 +5,12 @@ import Department from "../models/Department.js";
 import DoctorAvailability from "../models/DoctorAvailability.js";
 
 import { validateAppointment } from "../validators/appointment.validator.js";
-
 import { calculateAppointmentTime } from "../services/appointment.service.js";
+import { generateSlots } from "../utils/slotGenerator.js";
+import { getDayName } from "../utils/dateHelper.js";
 
 export const bookAppointment = async (req, res) => {
   try {
-
     // ==============================
     // Step 1: Get Request Data
     // ==============================
@@ -82,12 +82,9 @@ export const bookAppointment = async (req, res) => {
     // Step 6: Calculate Start & End Time
     // ==============================
 
-    const {
-      appointmentStart,
-      appointmentEnd,
-    } = calculateAppointmentTime(
+    const { appointmentStart, appointmentEnd } = calculateAppointmentTime(
       appointmentDate,
-      appointmentTime
+      appointmentTime,
     );
 
     // ==============================
@@ -105,100 +102,168 @@ export const bookAppointment = async (req, res) => {
     // Step 8: Check Doctor Leave
     // ==============================
 
-    const leave = await DoctorAvailability.findOne({
+    // const leave = await DoctorAvailability.findOne({
+    //   doctor: doctorId,
+    //   date: new Date(appointmentDate),
+    //   isAvailable: false,
+    // });
+
+    // if (leave) {
+    //   return res.status(400).json({
+    //     success: false,
+    //     message: "Doctor is unavailable on this date.",
+    //   });
+    // }
+
+    // ==============================
+    // Step 8: Get Doctor Availability
+    // ==============================
+
+    const availability = await DoctorAvailability.findOne({
       doctor: doctorId,
-      date: new Date(appointmentDate),
-      isAvailable: false,
     });
 
-    if (leave) {
-      return res.status(400).json({
+    if (!availability) {
+      return res.status(404).json({
         success: false,
-        message: "Doctor is unavailable on this date.",
+        message: "Doctor availability not found.",
       });
     }
 
     // ==============================
-    // Step 9: Prevent Double Booking
+    // Step 9: Check Day Schedule
     // ==============================
 
-    const existingAppointment = await Appointment.findOne({
-      doctor,
-      appointmentStart,
+    const day = getDayName(appointmentDate);
+
+    const schedule = availability.schedule.find((item) => item.day === day);
+
+    if (!schedule || !schedule.isAvailable) {
+      return res.status(400).json({
+        success: false,
+        message: "Doctor is unavailable on this day.",
+      });
+    }
+
+    // ==============================
+    // Step 10: Generate Slots
+    // ==============================
+
+    const allSlots = generateSlots(
+      schedule.startTime,
+      schedule.endTime,
+      schedule.breakStart,
+      schedule.breakEnd,
+      availability.consultationDuration,
+    );
+
+    // ==============================
+    // Step 11: Get Booked Slots
+    // ==============================
+
+    const startOfDay = new Date(appointmentDate);
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date(appointmentDate);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const bookedAppointments = await Appointment.find({
+      doctor: doctorId,
+      appointmentStart: {
+        $gte: startOfDay,
+        $lte: endOfDay,
+      },
       status: {
         $in: ["Scheduled", "Checked-In", "In Consultation"],
       },
     });
 
-    if (existingAppointment) {
+    const bookedSlots = bookedAppointments.map((appointment) => {
+      const date = new Date(appointment.appointmentStart);
+
+      return date.toLocaleTimeString("en-IN", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+        timeZone: "Asia/Kolkata",
+      });
+    });
+
+    const availableSlots = allSlots.filter(
+      (slot) => !bookedSlots.includes(slot.start),
+    );
+
+    const selectedSlot = availableSlots.find(
+      (slot) => slot.start === appointmentTime,
+    );
+
+    if (!selectedSlot) {
       return res.status(400).json({
         success: false,
-        message: "This slot is already booked.",
+        message: "Selected slot is no longer available.",
       });
     }
 
     // ==============================
-    // Step 10: Create Appointment
+    // Step 13: Generate Token Number
     // ==============================
 
-    const appointment =
-      await Appointment.create({
+    const lastAppointment = await Appointment.findOne({
+      doctor: doctorId,
+      appointmentStart: {
+        $gte: startOfDay,
+        $lte: endOfDay,
+      },
+    }).sort({ tokenNumber: -1 });
 
-        patient: patientId,
+    const tokenNumber = lastAppointment ? lastAppointment.tokenNumber + 1 : 1;
+    const appointment = await Appointment.create({
+      patient: patientId,
 
-        doctor: doctorId,
+      doctor: doctorId,
 
-        department: departmentId,
+      department: departmentId,
 
-        appointmentStart,
+      appointmentStart,
 
-        appointmentEnd,
+      appointmentEnd,
 
-        consultationType,
+      consultationType,
 
-        reason,
+      reason,
 
-        symptoms,
+      symptoms,
 
-      });
+      tokenNumber,
+    });
 
     // ==============================
     // Step 11: Populate Details
     // ==============================
 
-    const populatedAppointment =
-      await Appointment.findById(
-        appointment._id
-      )
-        .populate("patient")
-        .populate("doctor")
-        .populate("department");
+    const populatedAppointment = await Appointment.findById(appointment._id)
+      .populate("patient")
+      .populate("doctor")
+      .populate("department");
 
     // ==============================
     // Step 12: Return Response
     // ==============================
 
     return res.status(201).json({
-
       success: true,
 
       message: "Appointment booked successfully.",
 
       appointment: populatedAppointment,
-
     });
-
   } catch (error) {
-
     console.error(error);
 
     return res.status(500).json({
-
       success: false,
 
       message: error.message,
-
     });
-
   }
 };
