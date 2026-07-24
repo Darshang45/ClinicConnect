@@ -8,6 +8,11 @@ import {
   deleteDoctor,
   searchDoctors,
   getDoctorsByDepartment,
+  getTodayAppointments,
+  getAppointmentDetails,
+  getPatientHistory,
+  startConsultation,
+  completeConsultation,
 } from "../controllers/doctor.controller.js";
 
 const router = express.Router();
@@ -25,5 +30,15 @@ router.get("/:id", getDoctorById);
 router.put("/:id", updateDoctor);
 
 router.delete("/:id", deleteDoctor);
+
+router.get("/today-appointments/:doctorId", getTodayAppointments);
+
+router.get("/appointment/:appointmentId", getAppointmentDetails);
+
+router.get("/patient-history/:patientId", getPatientHistory);
+
+router.put("/start-consultation/:appointmentId", startConsultation);
+
+router.put("/complete-consultation/:appointmentId", completeConsultation);
 
 export default router;
