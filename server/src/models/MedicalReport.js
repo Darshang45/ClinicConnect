@@ -2,6 +2,12 @@ import mongoose from "mongoose";
 
 const medicalReportSchema = new mongoose.Schema(
   {
+    appointment: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Appointment",
+      required: true,
+    },
+
     patient: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Patient",
@@ -14,40 +20,47 @@ const medicalReportSchema = new mongoose.Schema(
       required: true,
     },
 
-    appointment: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Appointment",
-    },
-
     reportType: {
       type: String,
       enum: [
         "Blood Test",
+        "Urine Test",
         "X-Ray",
         "MRI",
         "CT Scan",
+        "ECG",
         "Ultrasound",
-        "Prescription",
         "Other",
       ],
-    },
-
-    reportName: {
-      type: String,
       required: true,
     },
 
-    reportUrl: {
+    title: {
       type: String,
       required: true,
+      trim: true,
     },
 
-    uploadedBy: {
+    findings: {
       type: String,
-      enum: ["Patient", "Doctor"],
+      default: "",
     },
 
-    remarks: String,
+    remarks: {
+      type: String,
+      default: "",
+    },
+
+    reportFile: {
+      type: String,
+      default: "",
+    },
+
+    status: {
+      type: String,
+      enum: ["Pending", "Completed"],
+      default: "Completed",
+    },
   },
   {
     timestamps: true,

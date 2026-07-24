@@ -12,6 +12,9 @@ import patientRoutes from "./src/routes/patient.routes.js";
 import prescriptionRoutes from "./src/routes/prescription.routes.js";
 import medicineRoutes from "./src/routes/medicine.routes.js";
 import availabilityRoutes from "./src/routes/availability.routes.js";
+import medicalReportRoutes from "./src/routes/medicalReport.routes.js";
+import path from "path";
+
 import receptionistRoutes from "./src/routes/receptionist.routes.js";
 
 
@@ -45,6 +48,8 @@ app.use("/api/patients", patientRoutes);
 app.use("/api/prescriptions", prescriptionRoutes);
 app.use("/api/medicines", medicineRoutes);
 app.use("/api/availability", availabilityRoutes);
+app.use("/api/medical-reports",medicalReportRoutes);
+app.use("/uploads",express.static(path.join(process.cwd(), "uploads")));
 app.use("/api/receptionist", receptionistRoutes);
 
 
