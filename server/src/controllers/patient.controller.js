@@ -282,28 +282,55 @@ export const getPatientByPhone = async (req, res) => {
 
 export const searchPatients = async (req, res) => {
   try {
+    const keyword = req.query.keyword?.trim() || "";
 
-    const keyword = req.query.keyword || "";
+    if (!keyword) {
+      return res.status(400).json({
+        success: false,
+        message: "Search keyword is required.",
+      });
+    }
 
     const patients = await Patient.find({
       isActive: true,
-      fullName: {
-        $regex: keyword,
-        $options: "i",
-      },
-    });
+      $or: [
+        {
+          patientId: {
+            $regex: keyword,
+            $options: "i",
+          },
+        },
+        {
+          fullName: {
+            $regex: keyword,
+            $options: "i",
+          },
+        },
+        {
+          phone: {
+            $regex: keyword,
+            $options: "i",
+          },
+        },
+      ],
+    })
+      .select(
+        "patientId fullName phone gender bloodGroup dateOfBirth"
+      )
+      .sort({ fullName: 1 })
+      .limit(10);
 
     return res.status(200).json({
       success: true,
+      count: patients.length,
       patients,
     });
-
   } catch (error) {
+    console.error(error);
 
     return res.status(500).json({
       success: false,
       message: error.message,
     });
-
   }
 };

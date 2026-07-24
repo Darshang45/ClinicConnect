@@ -12,7 +12,7 @@ import patientRoutes from "./src/routes/patient.routes.js";
 import prescriptionRoutes from "./src/routes/prescription.routes.js";
 import medicineRoutes from "./src/routes/medicine.routes.js";
 import availabilityRoutes from "./src/routes/availability.routes.js";
-
+import receptionistRoutes from "./src/routes/receptionist.routes.js";
 
 
 
@@ -45,6 +45,7 @@ app.use("/api/patients", patientRoutes);
 app.use("/api/prescriptions", prescriptionRoutes);
 app.use("/api/medicines", medicineRoutes);
 app.use("/api/availability", availabilityRoutes);
+app.use("/api/receptionist", receptionistRoutes);
 
 
 export default app;
