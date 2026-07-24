@@ -10,7 +10,7 @@ import departmentRoutes from "./src/routes/department.routes.js";
 import doctorRoutes from "./src/routes/doctor.routes.js";
 import patientRoutes from "./src/routes/patient.routes.js";
 import availabilityRoutes from "./src/routes/availability.routes.js";
-
+import receptionistRoutes from "./src/routes/receptionist.routes.js";
 
 
 const app = express();
@@ -40,5 +40,6 @@ app.use("/api/departments", departmentRoutes);
 app.use("/api/doctors", doctorRoutes);
 app.use("/api/patients", patientRoutes);
 app.use("/api/availability", availabilityRoutes);
+app.use("/api/receptionist", receptionistRoutes);
 
 export default app;

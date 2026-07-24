@@ -77,6 +77,21 @@ const appointmentSchema = new mongoose.Schema(
       default: null,
     },
 
+    checkInTime: {
+      type: Date,
+      default: null,
+    },
+
+    consultationStartTime: {
+      type: Date,
+      default: null,
+    },
+
+    consultationEndTime: {
+      type: Date,
+      default: null,
+    },
+
     cancelledBy: {
       type: String,
       enum: ["Patient", "Doctor", "Receptionist", "Admin"],
