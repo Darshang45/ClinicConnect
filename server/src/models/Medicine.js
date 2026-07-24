@@ -2,22 +2,82 @@ import mongoose from "mongoose";
 
 const medicineSchema = new mongoose.Schema(
   {
-    medicineName: {
+    name: {
       type: String,
       required: true,
-      unique: true,
+      trim: true,
     },
 
-    manufacturer: String,
+    genericName: {
+      type: String,
+      required: true,
+      trim: true,
+    },
 
-    category: String,
+    brand: {
+      type: String,
+      required: true,
+      trim: true,
+    },
 
-    unitPrice: {
+    category: {
+      type: String,
+      required: true,
+      enum: [
+        "Tablet",
+        "Capsule",
+        "Syrup",
+        "Injection",
+        "Cream",
+        "Ointment",
+        "Drops",
+        "Powder",
+        "Inhaler",
+        "Other",
+      ],
+    },
+
+    strength: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    manufacturer: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+
+    unit: {
+      type: String,
+      required: true,
+      enum: [
+        "Tablet",
+        "Capsule",
+        "Bottle",
+        "Tube",
+        "Vial",
+        "Strip",
+        "Piece",
+      ],
+    },
+
+    price: {
       type: Number,
       required: true,
+      min: 0,
     },
 
-    description: String,
+    requiresPrescription: {
+      type: Boolean,
+      default: true,
+    },
+
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
   },
   {
     timestamps: true,
