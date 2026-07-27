@@ -18,8 +18,9 @@ import adminDoctorRoutes from "./src/routes/adminDoctor.routes.js";
 import adminReceptionistRoutes from "./src/routes/adminReceptionist.routes.js";
 import adminPharmacistRoutes from "./src/routes/adminPharmacist.routes.js";
 import path from "path";
-
 import receptionistRoutes from "./src/routes/receptionist.routes.js";
+import pharmacyRoutes from "./src/routes/pharmacy.routes.js";
+import dashboardRoutes from "./src/routes/dashboard.routes.js";
 
 const app = express();
 
@@ -57,5 +58,7 @@ app.use("/api/admins/doctors", adminDoctorRoutes);
 app.use("/api/admins/receptionists", adminReceptionistRoutes);
 app.use("/api/admins/pharmacists", adminPharmacistRoutes);
 app.use("/api/admins", adminRoutes);
+app.use("/api/pharmacy", pharmacyRoutes);
+app.use("/api/dashboard", dashboardRoutes);
 
 export default app;
