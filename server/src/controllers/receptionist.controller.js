@@ -760,4 +760,223 @@ export const createWalkInAppointment = async (req, res) => {
       message: error.message,
     });
   }
+};  
+
+
+
+export const getReceptionistDashboard = async (req, res) => {
+  try {
+
+    const today = new Date();
+
+    const startOfDay = new Date(today);
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date(today);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const todayAppointments = await Appointment.countDocuments({
+      appointmentStart: {
+        $gte: startOfDay,
+        $lte: endOfDay,
+      },
+    });
+
+    const checkedInPatients = await Appointment.countDocuments({
+      appointmentStart: {
+        $gte: startOfDay,
+        $lte: endOfDay,
+      },
+      status: "Checked-In",
+    });
+
+    const pendingCheckIns = await Appointment.countDocuments({
+      appointmentStart: {
+        $gte: startOfDay,
+        $lte: endOfDay,
+      },
+      status: "Booked",
+    });
+
+    const completedToday = await Appointment.countDocuments({
+      appointmentStart: {
+        $gte: startOfDay,
+        $lte: endOfDay,
+      },
+      status: "Completed",
+    });
+
+    const walkInsToday = await Appointment.countDocuments({
+      appointmentStart: {
+        $gte: startOfDay,
+        $lte: endOfDay,
+      },
+      bookedBy: "Receptionist",
+    });
+
+    return res.status(200).json({
+      success: true,
+      dashboard: {
+        todayAppointments,
+        checkedInPatients,
+        pendingCheckIns,
+        completedToday,
+        walkInsToday,
+      },
+    });
+
+  } catch (error) {
+
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+
+  }
+};
+
+
+
+export const getPendingCheckIns = async (req, res) => {
+  try {
+
+    const appointments = await Appointment.find({
+      status: "Booked",
+    })
+      .populate("patient", "patientId fullName phone")
+      .populate({
+        path: "doctor",
+        populate: {
+          path: "user",
+          select: "fullName",
+        },
+      })
+      .sort({ appointmentStart: 1 });
+
+    const data = appointments.map((appointment) => ({
+      appointmentId: appointment._id,
+      tokenNumber: appointment.tokenNumber,
+      patientId: appointment.patient.patientId,
+      patientName: appointment.patient.fullName,
+      phone: appointment.patient.phone,
+      doctorName: appointment.doctor.user.fullName,
+      appointmentStart: appointment.appointmentStart,
+      consultationType: appointment.consultationType,
+    }));
+
+    return res.status(200).json({
+      success: true,
+      total: data.length,
+      appointments: data,
+    });
+
+  } catch (error) {
+
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+
+  }
+};
+
+
+
+export const getTodayWalkIns = async (req, res) => {
+  try {
+
+    const today = new Date();
+
+    const startOfDay = new Date(today);
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date(today);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const appointments = await Appointment.find({
+      bookedBy: "Receptionist",
+      appointmentStart: {
+        $gte: startOfDay,
+        $lte: endOfDay,
+      },
+    })
+      .populate("patient", "patientId fullName")
+      .populate({
+        path: "doctor",
+        populate: {
+          path: "user",
+          select: "fullName",
+        },
+      })
+      .sort({ createdAt: -1 });
+
+    const data = appointments.map((appointment) => ({
+      appointmentId: appointment._id,
+      tokenNumber: appointment.tokenNumber,
+      patientName: appointment.patient.fullName,
+      doctorName: appointment.doctor.user.fullName,
+      status: appointment.status,
+      appointmentStart: appointment.appointmentStart,
+    }));
+
+    return res.status(200).json({
+      success: true,
+      total: data.length,
+      walkIns: data,
+    });
+
+  } catch (error) {
+
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+
+  }
+};
+
+
+
+export const getQueue = async (req, res) => {
+  try {
+
+    const appointments = await Appointment.find({
+      status: {
+        $in: [
+          "Checked-In",
+          "In Consultation",
+        ],
+      },
+    })
+      .populate("patient", "fullName")
+      .populate({
+        path: "doctor",
+        populate: {
+          path: "user",
+          select: "fullName",
+        },
+      })
+      .sort({ tokenNumber: 1 });
+
+    const queue = appointments.map((appointment) => ({
+      tokenNumber: appointment.tokenNumber,
+      patientName: appointment.patient.fullName,
+      doctorName: appointment.doctor.user.fullName,
+      status: appointment.status,
+    }));
+
+    return res.status(200).json({
+      success: true,
+      total: queue.length,
+      queue,
+    });
+
+  } catch (error) {
+
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+
+  }
 };

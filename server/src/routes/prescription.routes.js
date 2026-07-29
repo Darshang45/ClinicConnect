@@ -1,5 +1,5 @@
 import express from "express";
-
+import { authenticate, authorize } from "../middleware/auth.middleware.js";
 import {
   createPrescription,
   getAllPrescriptions,
@@ -11,16 +11,21 @@ import {
 
 const router = express.Router();
 
-router.post("/", createPrescription);
+router.post("/", authenticate, authorize("doctor"), createPrescription);
 
-router.get("/", getAllPrescriptions);
+router.get("/", authenticate, authorize("doctor"), getAllPrescriptions);
 
 router.get("/appointment/:appointmentId", getPrescriptionByAppointment);
 
-router.get("/:id", getPrescriptionById);
+router.get(
+  "/:id",
+  authenticate,
+  authorize("doctor", "patient", "pharmacist", "admin"),
+  getPrescriptionById,
+);
 
-router.put("/:id", updatePrescription);
+router.put("/:id", authenticate, authorize("doctor"), updatePrescription);
 
-router.delete("/:id", deletePrescription);
+router.delete("/:id", authenticate, authorize("admin"), deletePrescription);
 
 export default router;

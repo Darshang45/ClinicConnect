@@ -1,4 +1,5 @@
 import express from "express";
+import { authenticate, authorize } from "../middleware/auth.middleware.js";
 
 import {
   createAdmin,
@@ -6,36 +7,78 @@ import {
   getAdminById,
   updateAdmin,
   deleteAdmin,
-  getDashboardOverview,
   getAppointmentStatistics,
   getRecentAppointments,
   getDepartmentStatistics,
   getDoctorStatistics,
   getTodayDashboard,
+  getAdminDashboard,
+  getRecentDoctors,
+  getRecentPatients,
 } from "../controllers/admin.controller.js";
 
 const router = express.Router();
 
-router.post("/", createAdmin);
+router.post("/", authenticate, authorize("admin"), createAdmin);
 
-router.get("/", getAdmins);
+router.get("/", authenticate, authorize("admin"), getAdmins);
 
-router.get("/dashboard", getDashboardOverview);
 
-router.get("/dashboard/appointments", getAppointmentStatistics);
+router.get(
+  "/dashboard/appointments",
+  authenticate,
+  authorize("admin"),
+  getAppointmentStatistics,
+);
 
-router.get("/dashboard/recent", getRecentAppointments);
+router.get(
+  "/dashboard/recent",
+  authenticate,
+  authorize("admin"),
+  getRecentAppointments,
+);
 
-router.get("/dashboard/departments", getDepartmentStatistics);
+router.get(
+  "/dashboard/departments",
+  authenticate,
+  authorize("admin"),
+  getDepartmentStatistics,
+);
 
-router.get("/dashboard/doctors", getDoctorStatistics);
+router.get(
+  "/dashboard/doctors",
+  authenticate,
+  authorize("admin"),
+  getDoctorStatistics,
+);
 
-router.get("/dashboard/today", getTodayDashboard);
+router.get(
+  "/dashboard/today",
+  authenticate,
+  authorize("admin"),
+  getTodayDashboard,
+);
 
-router.get("/:id", getAdminById);
+router.get("/dashboard", authenticate, authorize("admin"), getAdminDashboard);
 
-router.put("/:id", updateAdmin);
+router.get(
+  "/dashboard/recent-doctors",
+  authenticate,
+  authorize("admin"),
+  getRecentDoctors,
+);
 
-router.delete("/:id", deleteAdmin);
+router.get(
+  "/dashboard/recent-patients",
+  authenticate,
+  authorize("admin"),
+  getRecentPatients,
+);
+
+router.get("/:id", authenticate, authorize("admin"), getAdminById);
+
+router.put("/:id", authenticate, authorize("admin"), updateAdmin);
+
+router.delete("/:id", authenticate, authorize("admin"), deleteAdmin);
 
 export default router;

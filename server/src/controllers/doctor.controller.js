@@ -3,6 +3,8 @@ import Department from "../models/Department.js";
 import User from "../models/User.js";
 import { validateDoctor } from "../validators/doctor.validator.js";
 import Appointment from "../models/Appointment.js";
+import Patient from "../models/Patient.js";
+import Prescription from "../models/Prescription.js";
 
 export const createDoctor = async (req, res) => {
   try {
@@ -586,5 +588,177 @@ export const completeConsultation = async (req, res) => {
       success: false,
       message: error.message,
     });
+  }
+};
+
+
+
+export const getUpcomingAppointments = async (req, res) => {
+  try {
+
+    const doctor = await Doctor.findOne({
+      user: req.user._id,
+      isActive: true,
+    });
+
+    if (!doctor) {
+      return res.status(404).json({
+        success: false,
+        message: "Doctor not found.",
+      });
+    }
+
+    const appointments = await Appointment.find({
+      doctor: doctor._id,
+      status: {
+        $in: ["Booked", "Checked-In"],
+      },
+    })
+      .populate("patient", "patientId fullName phone")
+      .sort({
+        appointmentStart: 1,
+      });
+
+    const data = appointments.map((appointment) => ({
+      appointmentId: appointment._id,
+      patientId: appointment.patient.patientId,
+      patientName: appointment.patient.fullName,
+      phone: appointment.patient.phone,
+      appointmentStart: appointment.appointmentStart,
+      appointmentEnd: appointment.appointmentEnd,
+      consultationType: appointment.consultationType,
+      tokenNumber: appointment.tokenNumber,
+      status: appointment.status,
+    }));
+
+    return res.status(200).json({
+      success: true,
+      total: data.length,
+      appointments: data,
+    });
+
+  } catch (error) {
+
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+
+  }
+};
+
+
+
+export const getRecentPatients = async (req, res) => {
+  try {
+
+    const doctor = await Doctor.findOne({
+      user: req.user._id,
+      isActive: true,
+    });
+
+    if (!doctor) {
+      return res.status(404).json({
+        success: false,
+        message: "Doctor not found.",
+      });
+    }
+
+    const appointments = await Appointment.find({
+      doctor: doctor._id,
+      status: "Completed",
+    })
+      .populate("patient")
+      .sort({
+        consultationEndTime: -1,
+      });
+
+    const uniquePatients = [];
+
+    const seen = new Set();
+
+    appointments.forEach((appointment) => {
+
+      const patient = appointment.patient;
+
+      if (!seen.has(patient._id.toString())) {
+
+        seen.add(patient._id.toString());
+
+        uniquePatients.push({
+          patientId: patient.patientId,
+          fullName: patient.fullName,
+          phone: patient.phone,
+          gender: patient.gender,
+          bloodGroup: patient.bloodGroup,
+          lastVisit: appointment.consultationEndTime,
+        });
+
+      }
+
+    });
+
+    return res.status(200).json({
+      success: true,
+      total: uniquePatients.length,
+      patients: uniquePatients,
+    });
+
+  } catch (error) {
+
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+
+  }
+};
+
+
+export const getRecentPrescriptions = async (req, res) => {
+  try {
+
+    const doctor = await Doctor.findOne({
+      user: req.user._id,
+      isActive: true,
+    });
+
+    if (!doctor) {
+      return res.status(404).json({
+        success: false,
+        message: "Doctor not found.",
+      });
+    }
+
+    const prescriptions = await Prescription.find({
+      doctor: doctor._id,
+    })
+      .populate("patient", "patientId fullName")
+      .sort({
+        createdAt: -1,
+      })
+      .limit(10);
+
+    const data = prescriptions.map((prescription) => ({
+      prescriptionId: prescription._id,
+      patientId: prescription.patient.patientId,
+      patientName: prescription.patient.fullName,
+      diagnosis: prescription.diagnosis,
+      createdAt: prescription.createdAt,
+    }));
+
+    return res.status(200).json({
+      success: true,
+      total: data.length,
+      prescriptions: data,
+    });
+
+  } catch (error) {
+
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+
   }
 };

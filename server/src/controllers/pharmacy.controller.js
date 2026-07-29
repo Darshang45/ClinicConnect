@@ -342,3 +342,126 @@ export const deletePharmacyOrder = async (req, res) => {
     });
   }
 };
+
+
+export const getPharmacyDashboard = async (req, res) => {
+  try {
+
+    const totalOrders = await PharmacyOrder.countDocuments();
+
+    const pendingOrders = await PharmacyOrder.countDocuments({
+      dispensingStatus: "Pending",
+    });
+
+    const dispensedOrders = await PharmacyOrder.countDocuments({
+      dispensingStatus: "Dispensed",
+    });
+
+    const unpaidOrders = await PharmacyOrder.countDocuments({
+      paymentStatus: "Pending",
+    });
+
+    const paidOrders = await PharmacyOrder.countDocuments({
+      paymentStatus: "Paid",
+    });
+
+    return res.status(200).json({
+      success: true,
+      dashboard: {
+        totalOrders,
+        pendingOrders,
+        dispensedOrders,
+        paidOrders,
+        unpaidOrders,
+      },
+    });
+
+  } catch (error) {
+
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+
+  }
+};
+
+
+
+export const getPendingOrders = async (req, res) => {
+  try {
+
+    const orders = await PharmacyOrder.find({
+      dispensingStatus: "Pending",
+    })
+      .populate("patient", "patientId fullName phone")
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      total: orders.length,
+      orders,
+    });
+
+  } catch (error) {
+
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+
+  }
+};
+
+
+
+export const getDispensedOrders = async (req, res) => {
+  try {
+
+    const orders = await PharmacyOrder.find({
+      dispensingStatus: "Dispensed",
+    })
+      .populate("patient", "patientId fullName phone")
+      .sort({ dispensedAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      total: orders.length,
+      orders,
+    });
+
+  } catch (error) {
+
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+
+  }
+};
+
+
+
+export const getRecentOrders = async (req, res) => {
+  try {
+
+    const orders = await PharmacyOrder.find()
+      .populate("patient", "patientId fullName")
+      .sort({ createdAt: -1 })
+      .limit(10);
+
+    return res.status(200).json({
+      success: true,
+      total: orders.length,
+      orders,
+    });
+
+  } catch (error) {
+
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+
+  }
+};
