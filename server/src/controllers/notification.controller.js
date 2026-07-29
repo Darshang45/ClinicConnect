@@ -40,14 +40,28 @@ export const getNotifications = async (req, res) => {
         { receiverRole: userRole },
         { receiverRole: "all" },
       ],
+      deletedBy: { $ne: userId },
     })
       .populate("sender", "fullName role")
       .sort({ createdAt: -1 });
 
+    const formattedNotifications = notifications.map((doc) => {
+      const notifObj = doc.toObject();
+      const isUserRead =
+        doc.isRead ||
+        (doc.readBy &&
+          doc.readBy.some((id) => id.toString() === userId.toString()));
+
+      return {
+        ...notifObj,
+        isRead: Boolean(isUserRead),
+      };
+    });
+
     return res.status(200).json({
       success: true,
-      count: notifications.length,
-      notifications,
+      count: formattedNotifications.length,
+      notifications: formattedNotifications,
     });
 
   } catch (error) {
@@ -71,20 +85,27 @@ export const getUnreadNotifications = async (req, res) => {
     const userRole = req.user.role;
 
     const notifications = await Notification.find({
-      isRead: false,
       $or: [
         { receiver: userId },
         { receiverRole: userRole },
         { receiverRole: "all" },
       ],
+      deletedBy: { $ne: userId },
+      readBy: { $ne: userId },
+      isRead: false,
     })
       .populate("sender", "fullName role")
       .sort({ createdAt: -1 });
 
+    const formattedNotifications = notifications.map((doc) => ({
+      ...doc.toObject(),
+      isRead: false,
+    }));
+
     return res.status(200).json({
       success: true,
-      count: notifications.length,
-      notifications,
+      count: formattedNotifications.length,
+      notifications: formattedNotifications,
     });
 
   } catch (error) {
@@ -128,9 +149,10 @@ export const markAsRead = async (req, res) => {
       });
     }
 
-    notification.isRead = true;
-
-    await notification.save();
+    await Notification.findByIdAndUpdate(req.params.id, {
+      $addToSet: { readBy: req.user._id },
+      ...(isReceiver ? { isRead: true } : {}),
+    });
 
     return res.status(200).json({
       success: true,
@@ -159,12 +181,22 @@ export const markAllAsRead = async (req, res) => {
 
     await Notification.updateMany(
       {
-        isRead: false,
         $or: [
           { receiver: userId },
           { receiverRole: userRole },
           { receiverRole: "all" },
         ],
+        deletedBy: { $ne: userId },
+        readBy: { $ne: userId },
+      },
+      {
+        $addToSet: { readBy: userId },
+      }
+    );
+
+    await Notification.updateMany(
+      {
+        receiver: userId,
       },
       {
         isRead: true,
@@ -217,7 +249,13 @@ export const deleteNotification = async (req, res) => {
       });
     }
 
-    await notification.deleteOne();
+    if (isReceiver) {
+      await notification.deleteOne();
+    } else {
+      await Notification.findByIdAndUpdate(req.params.id, {
+        $addToSet: { deletedBy: req.user._id },
+      });
+    }
 
     return res.status(200).json({
       success: true,
