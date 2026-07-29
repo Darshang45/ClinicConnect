@@ -1,4 +1,5 @@
 import express from "express";
+import { authenticate } from "../middleware/auth.middleware.js";
 
 import {
   createAnnouncement,
@@ -9,6 +10,8 @@ import {
 } from "../controllers/announcement.controller.js";
 
 const router = express.Router();
+
+router.use(authenticate);
 
 router.post("/", createAnnouncement);
 

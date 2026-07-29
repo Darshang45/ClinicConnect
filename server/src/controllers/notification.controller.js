@@ -31,12 +31,13 @@ export const createNotification = async ({
 export const getNotifications = async (req, res) => {
   try {
 
-    const userId = req.params.userId;
+    const userId = req.user._id;
+    const userRole = req.user.role;
 
     const notifications = await Notification.find({
       $or: [
         { receiver: userId },
-        { receiverRole: req.query.role },
+        { receiverRole: userRole },
         { receiverRole: "all" },
       ],
     })
@@ -66,13 +67,14 @@ export const getNotifications = async (req, res) => {
 export const getUnreadNotifications = async (req, res) => {
   try {
 
-    const userId = req.params.userId;
+    const userId = req.user._id;
+    const userRole = req.user.role;
 
     const notifications = await Notification.find({
       isRead: false,
       $or: [
         { receiver: userId },
-        { receiverRole: req.query.role },
+        { receiverRole: userRole },
         { receiverRole: "all" },
       ],
     })
@@ -111,6 +113,21 @@ export const markAsRead = async (req, res) => {
       });
     }
 
+    const userId = req.user._id.toString();
+    const userRole = req.user.role;
+
+    const isReceiver =
+      notification.receiver && notification.receiver.toString() === userId;
+    const isMatchingRole = notification.receiverRole === userRole;
+    const isAllRole = notification.receiverRole === "all";
+
+    if (!isReceiver && !isMatchingRole && !isAllRole) {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied.",
+      });
+    }
+
     notification.isRead = true;
 
     await notification.save();
@@ -137,14 +154,15 @@ export const markAsRead = async (req, res) => {
 export const markAllAsRead = async (req, res) => {
   try {
 
-    const userId = req.params.userId;
+    const userId = req.user._id;
+    const userRole = req.user.role;
 
     await Notification.updateMany(
       {
         isRead: false,
         $or: [
           { receiver: userId },
-          { receiverRole: req.query.role },
+          { receiverRole: userRole },
           { receiverRole: "all" },
         ],
       },
@@ -181,6 +199,21 @@ export const deleteNotification = async (req, res) => {
       return res.status(404).json({
         success: false,
         message: "Notification not found.",
+      });
+    }
+
+    const userId = req.user._id.toString();
+    const userRole = req.user.role;
+
+    const isReceiver =
+      notification.receiver && notification.receiver.toString() === userId;
+    const isMatchingRole = notification.receiverRole === userRole;
+    const isAllRole = notification.receiverRole === "all";
+
+    if (!isReceiver && !isMatchingRole && !isAllRole) {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied.",
       });
     }
 

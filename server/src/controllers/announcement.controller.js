@@ -10,7 +10,6 @@ export const createAnnouncement = async (req, res) => {
     const {
       title,
       message,
-      createdBy,
       targetAudience,
       dashboardAlert,
       department,
@@ -22,7 +21,7 @@ export const createAnnouncement = async (req, res) => {
     const announcement = await Announcement.create({
       title,
       message,
-      createdBy,
+      createdBy: req.user._id,
       targetAudience,
       dashboardAlert,
       department,
