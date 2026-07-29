@@ -22,6 +22,10 @@ import receptionistRoutes from "./src/routes/receptionist.routes.js";
 import pharmacyRoutes from "./src/routes/pharmacy.routes.js";
 import dashboardRoutes from "./src/routes/dashboard.routes.js";
 
+import notificationRoutes from "./src/routes/notification.routes.js";
+import announcementRoutes from "./src/routes/announcement.routes.js";
+
+
 const app = express();
 
 app.use(cors());
@@ -60,5 +64,8 @@ app.use("/api/admins/pharmacists", adminPharmacistRoutes);
 app.use("/api/admins", adminRoutes);
 app.use("/api/pharmacy", pharmacyRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+
+app.use("/api/notifications", notificationRoutes);
+app.use("/api/announcements", announcementRoutes);
 
 export default app;
