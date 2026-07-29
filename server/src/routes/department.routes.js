@@ -1,4 +1,5 @@
 import express from "express";
+import { authenticate, authorize } from "../middleware/auth.middleware.js";
 
 import {
   createDepartment,
@@ -12,18 +13,28 @@ import {
 
 const router = express.Router();
 
-router.post("/", createDepartment);
+router.post("/", authenticate, authorize("admin"), createDepartment);
 
-router.get("/", getDepartments);
+router.get(
+  "/",
+  authenticate,
+  authorize("admin", "doctor", "receptionist", "patient"),
+  getDepartments,
+);
 
 router.get("/search", searchDepartments);
 
-router.get("/:id", getDepartmentById);
+router.get(
+  "/:id",
+  authenticate,
+  authorize("admin", "doctor", "receptionist", "patient"),
+  getDepartmentById,
+);
 
-router.put("/:id", updateDepartment);
+router.put("/:id", authenticate, authorize("admin"), updateDepartment);
 
 router.put("/:id/toggle-status", toggleDepartmentStatus);
 
-router.delete("/:id", deleteDepartment);
+router.delete("/:id", authenticate, authorize("admin"), deleteDepartment);
 
 export default router;

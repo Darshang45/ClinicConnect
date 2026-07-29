@@ -1,4 +1,6 @@
 import express from "express";
+import { authenticate, authorize } from "../middleware/auth.middleware.js";
+
 
 import {
   createDoctor,
@@ -13,23 +15,62 @@ import {
   getPatientHistory,
   startConsultation,
   completeConsultation,
+  getUpcomingAppointments,
+  getRecentPatients,
+  getRecentPrescriptions,
 } from "../controllers/doctor.controller.js";
 
 const router = express.Router();
 
-router.post("/", createDoctor);
+router.post("/", authenticate, authorize("admin"), createDoctor);
 
-router.get("/", getDoctors);
+router.get("/", authenticate, authorize("admin", "receptionist"), getDoctors);
 
-router.get("/search", searchDoctors);
+router.get(
+  "/search",
+  authenticate,
+  authorize("admin", "receptionist"),
+  searchDoctors,
+);
 
-router.get("/department/:departmentId", getDoctorsByDepartment);
+router.get(
+  "/dashboard/upcoming",
+  authenticate,
+  authorize("doctor"),
+  getUpcomingAppointments,
+);
 
-router.get("/:id", getDoctorById);
+router.get(
+  "/dashboard/patients",
+  authenticate,
+  authorize("doctor"),
+  getRecentPatients,
+);
 
-router.put("/:id", updateDoctor);
+router.get(
+  "/dashboard/prescriptions",
+  authenticate,
+  authorize("doctor"),
+  getRecentPrescriptions,
+);
 
-router.delete("/:id", deleteDoctor);
+router.get(
+  "/department/:departmentId",
+  authenticate,
+  authorize("admin", "receptionist", "patient"),
+  getDoctorsByDepartment,
+);
+
+router.get(
+  "/:id",
+  authenticate,
+  authorize("admin", "doctor", "receptionist"),
+  getDoctorById,
+);
+
+router.put("/:id", authenticate, authorize("admin", "doctor"), updateDoctor);
+
+router.delete("/:id", authenticate, authorize("admin"), deleteDoctor);
 
 router.get("/today-appointments/:doctorId", getTodayAppointments);
 
