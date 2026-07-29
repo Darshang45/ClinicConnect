@@ -5,6 +5,8 @@ import Patient from "../models/Patient.js";
 import Doctor from "../models/Doctor.js";
 import Department from "../models/Department.js";
 import Appointment from "../models/Appointment.js";
+// import Receptionist from "../models/  ";
+// import Pharmacist from "../models/Pharmacist.js";
 
 
 export const createAdmin = async (req, res) => {
@@ -538,6 +540,155 @@ export const getTodayDashboard = async (req, res) => {
     return res.status(200).json({
       success: true,
       today,
+    });
+
+  } catch (error) {
+
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+
+  }
+};
+
+
+
+export const getAdminDashboard = async (req, res) => {
+  try {
+
+    const totalDoctors = await Doctor.countDocuments({
+      isActive: true,
+    });
+
+    const totalPatients = await Patient.countDocuments({
+      isActive: true,
+    });
+
+    const totalReceptionists = await Receptionist.countDocuments({
+      isActive: true,
+    });
+
+    const totalPharmacists = await Pharmacist.countDocuments({
+      isActive: true,
+    });
+
+    const activeDepartments = await Department.countDocuments({
+      isActive: true,
+    });
+
+    const today = new Date();
+
+    const startOfDay = new Date(today);
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date(today);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const todayAppointments = await Appointment.countDocuments({
+      appointmentStart: {
+        $gte: startOfDay,
+        $lte: endOfDay,
+      },
+    });
+
+    const completedAppointments =
+      await Appointment.countDocuments({
+        status: "Completed",
+      });
+
+    const cancelledAppointments =
+      await Appointment.countDocuments({
+        status: "Cancelled",
+      });
+
+    return res.status(200).json({
+      success: true,
+      dashboard: {
+        totalDoctors,
+        totalPatients,
+        totalReceptionists,
+        totalPharmacists,
+        activeDepartments,
+        todayAppointments,
+        completedAppointments,
+        cancelledAppointments,
+      },
+    });
+
+  } catch (error) {
+
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+
+  }
+};
+
+
+
+export const getRecentDoctors = async (req, res) => {
+  try {
+
+    const doctors = await Doctor.find({
+      isActive: true,
+    })
+      .populate("user", "fullName email phone")
+      .populate("department", "name")
+      .sort({ createdAt: -1 })
+      .limit(5);
+
+    const data = doctors.map((doctor) => ({
+      doctorId: doctor._id,
+      name: doctor.user.fullName,
+      email: doctor.user.email,
+      phone: doctor.user.phone,
+      department: doctor.department.name,
+      specialization: doctor.specialization,
+      consultationFee: doctor.consultationFee,
+    }));
+
+    return res.status(200).json({
+      success: true,
+      total: data.length,
+      doctors: data,
+    });
+
+  } catch (error) {
+
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+
+  }
+};
+
+
+
+export const getRecentPatients = async (req, res) => {
+  try {
+
+    const patients = await Patient.find({
+      isActive: true,
+    })
+      .sort({ createdAt: -1 })
+      .limit(5);
+
+    const data = patients.map((patient) => ({
+      patientId: patient.patientId,
+      fullName: patient.fullName,
+      email: patient.email,
+      phone: patient.phone,
+      gender: patient.gender,
+      bloodGroup: patient.bloodGroup,
+    }));
+
+    return res.status(200).json({
+      success: true,
+      total: data.length,
+      patients: data,
     });
 
   } catch (error) {

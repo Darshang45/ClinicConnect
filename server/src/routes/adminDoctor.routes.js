@@ -1,4 +1,8 @@
 import express from "express";
+import {
+  authenticate,
+  authorize,
+} from "../middleware/auth.middleware.js";
 
 import {
   createDoctorByAdmin,
@@ -10,14 +14,14 @@ import {
 
 const router = express.Router();
 
-router.post("/", createDoctorByAdmin);
+router.post("/", authenticate, authorize("admin"), createDoctorByAdmin);
 
-router.get("/", getDoctorsByAdmin);
+router.get("/", authenticate, authorize("admin"), getDoctorsByAdmin);
 
-router.get("/:id", getDoctorByIdByAdmin);
+router.get("/:id", authenticate, authorize("admin"), getDoctorByIdByAdmin);
 
-router.put("/:id", updateDoctorByAdmin);
+router.put("/:id", authenticate, authorize("admin"), updateDoctorByAdmin);
 
-router.delete("/:id", deleteDoctorByAdmin);
+router.delete("/:id", authenticate, authorize("admin"), deleteDoctorByAdmin);
 
 export default router;

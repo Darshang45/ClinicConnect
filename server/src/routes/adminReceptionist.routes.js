@@ -1,4 +1,5 @@
 import express from "express";
+import { authenticate, authorize } from "../middleware/auth.middleware.js";
 
 import {
   createReceptionist,
@@ -10,14 +11,14 @@ import {
 
 const router = express.Router();
 
-router.post("/", createReceptionist);
+router.post("/", authenticate, authorize("admin"), createReceptionist);
 
-router.get("/", getReceptionists);
+router.get("/", authenticate, authorize("admin"), getReceptionists);
 
-router.get("/:id", getReceptionistById);
+router.get("/:id", authenticate, authorize("admin"), getReceptionistById);
 
-router.put("/:id", updateReceptionist);
+router.put("/:id", authenticate, authorize("admin"), updateReceptionist);
 
-router.delete("/:id", deleteReceptionist);
+router.delete("/:id", authenticate, authorize("admin"), deleteReceptionist);
 
 export default router;

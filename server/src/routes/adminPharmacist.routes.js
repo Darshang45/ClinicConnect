@@ -1,4 +1,5 @@
 import express from "express";
+import { authenticate, authorize } from "../middleware/auth.middleware.js";
 
 import {
   createPharmacist,
@@ -10,14 +11,14 @@ import {
 
 const router = express.Router();
 
-router.post("/", createPharmacist);
+router.post("/", authenticate, authorize("admin"), createPharmacist);
 
-router.get("/", getPharmacists);
+router.get("/", authenticate, authorize("admin"), getPharmacists);
 
-router.get("/:id", getPharmacistById);
+router.get("/:id", authenticate, authorize("admin"), getPharmacistById);
 
-router.put("/:id", updatePharmacist);
+router.put("/:id", authenticate, authorize("admin"), updatePharmacist);
 
-router.delete("/:id", deletePharmacist);
+router.delete("/:id", authenticate, authorize("admin"), deletePharmacist);
 
 export default router;

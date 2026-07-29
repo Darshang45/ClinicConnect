@@ -1,14 +1,18 @@
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 
-export const protect = async (req, res, next) => {
+// ======================================
+// Authentication Middleware
+// ======================================
+
+export const authenticate = async (req, res, next) => {
   try {
+
     let token;
 
-    // Authorization: Bearer <token>
     if (
       req.headers.authorization &&
-      req.headers.authorization.startsWith("Bearer")
+      req.headers.authorization.startsWith("Bearer ")
     ) {
       token = req.headers.authorization.split(" ")[1];
     }
@@ -16,44 +20,56 @@ export const protect = async (req, res, next) => {
     if (!token) {
       return res.status(401).json({
         success: false,
-        message: "Access denied. No token provided.",
+        message: "Access denied. Token not provided.",
       });
     }
 
-    // Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET
+    );
 
-    // Get user (exclude password)
-    const user = await User.findById(decoded.id).select("-password");
+    const user = await User.findById(decoded.id)
+      .select("-password");
 
-    if (!user) {
+    if (!user || !user.isActive) {
       return res.status(401).json({
         success: false,
-        message: "User not found.",
+        message: "User not found or inactive.",
       });
     }
 
-    // Attach user to request
     req.user = user;
 
     next();
+
   } catch (error) {
+
     return res.status(401).json({
       success: false,
       message: "Invalid or expired token.",
     });
+
   }
 };
 
+// ======================================
+// Authorization Middleware
+// ======================================
+
 export const authorize = (...roles) => {
+
   return (req, res, next) => {
+
     if (!roles.includes(req.user.role)) {
       return res.status(403).json({
         success: false,
-        message: "You are not authorized to access this resource.",
+        message: "Access denied.",
       });
     }
 
     next();
+
   };
+
 };

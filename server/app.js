@@ -3,7 +3,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 
 import authRoutes from "../server/src/routes/auth.routes.js";
-import testRoutes from "../server/src/routes/test.routes.js";
+// import testRoutes from "../server/src/routes/test.routes.js";
 import appointmentRoutes from "./src/routes/appointment.routes.js";
 import userRoutes from "../server/src/routes/user.routes.js";
 import departmentRoutes from "./src/routes/department.routes.js";
@@ -42,7 +42,7 @@ app.get("/", (req, res) => {
 // Routes
 
 app.use("/api/auth", authRoutes);
-app.use("/api/test", testRoutes);
+// app.use("/api/test", testRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/appointments", appointmentRoutes);
 app.use("/api/departments", departmentRoutes);
