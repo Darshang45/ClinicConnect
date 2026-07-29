@@ -7,6 +7,9 @@ import Medicine from "../models/Medicine.js";
 
 import { validatePrescription } from "../validators/prescription.validator.js";
 
+import { createNotification } from "./notification.controller.js";
+
+
 export const createPrescription = async (req, res) => {
   try {
     const validation = validatePrescription(req.body);
@@ -42,7 +45,8 @@ export const createPrescription = async (req, res) => {
     if (appointmentExists.status !== "Completed") {
       return res.status(400).json({
         success: false,
-        message: "Prescription can only be created after consultation is completed.",
+        message:
+          "Prescription can only be created after consultation is completed.",
       });
     }
 
@@ -113,6 +117,42 @@ export const createPrescription = async (req, res) => {
 
       prescriptionItems.push(prescriptionItem);
     }
+
+    // populate the prescription
+    const populatedPrescription = await Prescription.findById(prescription._id)
+      .populate({
+        path: "patient",
+        populate: {
+          path: "user",
+          select: "fullName",
+        },
+      })
+      .populate({
+        path: "doctor",
+        populate: {
+          path: "user",
+          select: "fullName",
+        },
+      });
+
+    // ==============================
+    //      Create Notifications
+    // ==============================
+    // Notify Patient
+    await createNotification({
+      title: "Prescription Issued",
+      message: `Your prescription has been issued successfully by Dr. ${populatedPrescription.doctor.user.fullName}.`,
+      sender: populatedPrescription.doctor.user._id,
+      receiver: populatedPrescription.patient.user._id,
+    });
+
+    // Notify Pharmacists
+    await createNotification({
+      title: "Prescription Issued",
+      message: `A new prescription has been issued for ${populatedPrescription.patient.fullName} by Dr. ${populatedPrescription.doctor.user.fullName}.`,
+      sender: populatedPrescription.doctor.user._id,
+      receiverRole: "pharmacist",
+    });
 
     return res.status(201).json({
       success: true,
@@ -239,12 +279,7 @@ export const updatePrescription = async (req, res) => {
       });
     }
 
-    const {
-      diagnosis,
-      notes,
-      followUpDate,
-      status,
-    } = req.body;
+    const { diagnosis, notes, followUpDate, status } = req.body;
 
     if (diagnosis) prescription.diagnosis = diagnosis;
 

@@ -9,6 +9,8 @@ import Medicine from "../models/Medicine.js";
 
 import { validatePharmacyOrder } from "../validators/pharmacy.validator.js";
 
+import { createNotification } from "./notification.controller.js";
+
 export const createPharmacyOrder = async (req, res) => {
   try {
     const validation = validatePharmacyOrder(req.body);
@@ -68,7 +70,6 @@ export const createPharmacyOrder = async (req, res) => {
     const pharmacyItems = [];
 
     for (const item of prescriptionItems) {
-
       const medicine = await Medicine.findById(item.medicine);
 
       const unitPrice = medicine.price;
@@ -84,7 +85,6 @@ export const createPharmacyOrder = async (req, res) => {
         unitPrice,
         totalPrice,
       });
-
     }
 
     await PharmacyOrderItem.insertMany(pharmacyItems);
@@ -99,14 +99,11 @@ export const createPharmacyOrder = async (req, res) => {
       pharmacyOrder,
       medicines: pharmacyItems,
     });
-
   } catch (error) {
-
     return res.status(500).json({
       success: false,
       message: error.message,
     });
-
   }
 };
 
@@ -145,7 +142,6 @@ export const getAllPharmacyOrders = async (req, res) => {
 
 export const getPharmacyOrderById = async (req, res) => {
   try {
-
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
       return res.status(400).json({
         success: false,
@@ -173,7 +169,6 @@ export const getPharmacyOrderById = async (req, res) => {
       order,
       medicines,
     });
-
   } catch (error) {
     return res.status(500).json({
       success: false,
@@ -184,7 +179,6 @@ export const getPharmacyOrderById = async (req, res) => {
 
 export const getOrdersByPatient = async (req, res) => {
   try {
-
     if (!mongoose.Types.ObjectId.isValid(req.params.patientId)) {
       return res.status(400).json({
         success: false,
@@ -202,7 +196,6 @@ export const getOrdersByPatient = async (req, res) => {
     const result = [];
 
     for (const order of orders) {
-
       const medicines = await PharmacyOrderItem.find({
         pharmacyOrder: order._id,
       }).populate("medicine");
@@ -211,7 +204,6 @@ export const getOrdersByPatient = async (req, res) => {
         ...order.toObject(),
         medicines,
       });
-
     }
 
     return res.status(200).json({
@@ -219,20 +211,16 @@ export const getOrdersByPatient = async (req, res) => {
       count: result.length,
       orders: result,
     });
-
   } catch (error) {
-
     return res.status(500).json({
       success: false,
       message: error.message,
     });
-
   }
 };
 
 export const markOrderAsPaid = async (req, res) => {
   try {
-
     const order = await PharmacyOrder.findById(req.params.id);
 
     if (!order) {
@@ -251,20 +239,16 @@ export const markOrderAsPaid = async (req, res) => {
       message: "Payment marked as paid.",
       order,
     });
-
   } catch (error) {
-
     return res.status(500).json({
       success: false,
       message: error.message,
     });
-
   }
 };
 
 export const dispenseMedicines = async (req, res) => {
   try {
-
     const order = await PharmacyOrder.findById(req.params.id);
 
     if (!order) {
@@ -279,25 +263,59 @@ export const dispenseMedicines = async (req, res) => {
 
     await order.save();
 
+    // ==============================
+    //      Create Notifications
+    // ==============================
+
+    const populatedOrder = await PharmacyOrder.findById(order._id)
+      .populate({
+        path: "patient",
+        populate: {
+          path: "user",
+          select: "fullName",
+        },
+      })
+      .populate({
+        path: "prescription",
+        populate: {
+          path: "doctor",
+          populate: {
+            path: "user",
+            select: "fullName",
+          },
+        },
+      });
+
+    await createNotification({
+      title: "Prescription Dispensed",
+      message: `Your prescribed medicines for Dr. ${populatedOrder.prescription.doctor.user.fullName}'s prescription have been dispensed successfully.`,
+      sender: req.user._id, // Pharmacist User ID
+      receiver: populatedOrder.patient.user._id,
+    });
+
+    await createNotification({
+      title: "Prescription Dispensed",
+      message: `Prescription for ${populatedOrder.patient.user.fullName} has been dispensed by ${req.user.fullName}.`,
+      sender: req.user._id,
+      receiverRole: "pharmacist",
+    });
+
+    //response
     return res.status(200).json({
       success: true,
       message: "Medicines dispensed successfully.",
       order,
     });
-
   } catch (error) {
-
     return res.status(500).json({
       success: false,
       message: error.message,
     });
-
   }
 };
 
 export const deletePharmacyOrder = async (req, res) => {
   try {
-
     const order = await PharmacyOrder.findById(req.params.id);
 
     if (!order) {
@@ -317,13 +335,10 @@ export const deletePharmacyOrder = async (req, res) => {
       success: true,
       message: "Pharmacy order deleted successfully.",
     });
-
   } catch (error) {
-
     return res.status(500).json({
       success: false,
       message: error.message,
     });
-
   }
 };

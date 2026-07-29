@@ -15,6 +15,13 @@ const notificationSchema = new mongoose.Schema(
     sender: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
+      default: null,
+    },
+
+    receiver: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
     },
 
     receiverRole: {
@@ -27,6 +34,7 @@ const notificationSchema = new mongoose.Schema(
         "admin",
         "all",
       ],
+      default: null,
     },
 
     isRead: {

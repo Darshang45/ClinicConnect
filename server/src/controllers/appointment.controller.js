@@ -9,6 +9,8 @@ import { calculateAppointmentTime } from "../services/appointment.service.js";
 import { generateSlots } from "../utils/slotGenerator.js";
 import { getDayName } from "../utils/dateHelper.js";
 
+import { createNotification } from "./notification.controller.js";
+
 export const bookAppointment = async (req, res) => {
   try {
     // ==============================
@@ -242,9 +244,38 @@ export const bookAppointment = async (req, res) => {
     // ==============================
 
     const populatedAppointment = await Appointment.findById(appointment._id)
-      .populate("patient")
-      .populate("doctor")
+      .populate({
+        path: "patient",
+        populate: {
+          path: "user",
+          select: "fullName",
+        },
+      })
+      .populate({
+        path: "doctor",
+        populate: {
+          path: "user",
+          select: "fullName",
+        },
+      })
       .populate("department");
+
+    // ==============================
+    //      Create Notifications
+    // ==============================
+
+    await createNotification({
+      title: "Appointment Booked",
+      message: `Your appointment has been booked successfully with Dr. ${populatedAppointment.doctor.user.fullName}.`,
+      sender: populatedAppointment.doctor.user._id,
+      receiver: populatedAppointment.patient.user._id,
+    });
+
+    await createNotification({
+      title: "Appointment Booked",
+      message: `A new appointment has been booked by ${populatedAppointment.patient.user.fullName}.`,
+      receiverRole: "receptionist",
+    });
 
     // ==============================
     // Step 12: Return Response

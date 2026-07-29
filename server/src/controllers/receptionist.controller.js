@@ -9,6 +9,8 @@ import { calculateAppointmentTime } from "../services/appointment.service.js";
 import { generateSlots } from "../utils/slotGenerator.js";
 import { getDayName } from "../utils/dateHelper.js";
 
+import { createNotification } from "./notification.controller.js";
+
 // ==========================================
 // Get Today's Appointments
 // ==========================================
@@ -63,8 +65,6 @@ export const getTodayAppointments = async (req, res) => {
     });
   }
 };
-
-
 
 // ==========================================
 // Check-In Patient
@@ -162,9 +162,6 @@ export const checkInPatient = async (req, res) => {
   }
 };
 
-
-
-
 // ==========================================
 // Start Consultation
 // ==========================================
@@ -241,8 +238,7 @@ export const startConsultation = async (req, res) => {
         appointmentStart: updatedAppointment.appointmentStart,
         tokenNumber: updatedAppointment.tokenNumber,
         status: updatedAppointment.status,
-        consultationStartTime:
-          updatedAppointment.consultationStartTime,
+        consultationStartTime: updatedAppointment.consultationStartTime,
       },
     });
   } catch (error) {
@@ -254,9 +250,6 @@ export const startConsultation = async (req, res) => {
     });
   }
 };
-
-
-
 
 // ==========================================
 // Complete Appointment
@@ -335,10 +328,8 @@ export const completeAppointment = async (req, res) => {
         appointmentStart: updatedAppointment.appointmentStart,
         tokenNumber: updatedAppointment.tokenNumber,
         status: updatedAppointment.status,
-        consultationStartTime:
-          updatedAppointment.consultationStartTime,
-        consultationEndTime:
-          updatedAppointment.consultationEndTime,
+        consultationStartTime: updatedAppointment.consultationStartTime,
+        consultationEndTime: updatedAppointment.consultationEndTime,
       },
     });
   } catch (error) {
@@ -350,9 +341,6 @@ export const completeAppointment = async (req, res) => {
     });
   }
 };
-
-
-
 
 // ==========================================
 // Cancel Appointment
@@ -399,6 +387,43 @@ export const cancelAppointment = async (req, res) => {
 
     await appointment.save();
 
+    // ==========================================
+    // Create Notifications
+    // ==========================================
+
+    await appointment.populate([
+      {
+        path: "patient",
+        populate: {
+          path: "user",
+          select: "fullName",
+        },
+      },
+      {
+        path: "doctor",
+        populate: {
+          path: "user",
+          select: "fullName",
+        },
+      },
+    ]);
+
+    // Notify Patient
+    await createNotification({
+      title: "Appointment Cancelled",
+      message: `Your appointment with Dr. ${appointment.doctor.user.fullName} has been cancelled.`,
+      sender: req.user._id, // Receptionist User ID
+      receiver: appointment.patient.user._id,
+    });
+
+    // Notify Receptionists
+    await createNotification({
+      title: "Appointment Cancelled",
+      message: `An appointment has been cancelled for ${appointment.patient.fullName}.`,
+      sender: req.user._id, // Receptionist User ID
+      receiverRole: "receptionist",
+    });
+
     return res.status(200).json({
       success: true,
       message: "Appointment cancelled successfully.",
@@ -418,9 +443,6 @@ export const cancelAppointment = async (req, res) => {
     });
   }
 };
-
-
-
 
 export const createWalkInAppointment = async (req, res) => {
   try {
@@ -681,6 +703,16 @@ export const createWalkInAppointment = async (req, res) => {
       });
 
     // ==============================
+    //      Create Notifications
+    // ==============================
+    await createNotification({
+      title: "Walk-In Appointment Booked",
+      message: `Your walk-in appointment has been booked successfully with Dr. ${populatedAppointment.doctor.user.fullName}.`,
+      sender: req.user._id , // Receptionist User ID (after authentication)
+      receiver: populatedAppointment.patient.user._id,
+    });
+
+    // ==============================
     // Step 12: Return Response
     // ==============================
 
@@ -728,4 +760,4 @@ export const createWalkInAppointment = async (req, res) => {
       message: error.message,
     });
   }
-};  
+};

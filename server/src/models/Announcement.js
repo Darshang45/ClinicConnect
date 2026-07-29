@@ -22,17 +22,13 @@ const announcementSchema = new mongoose.Schema(
 
     targetAudience: {
       type: String,
-      enum: [
-        "Patients",
-        "Doctors",
-        "Receptionists",
-        "Pharmacists",
-        "Admins",
-        "Everyone",
-      ],
+      enum: ["Everyone", "Doctors", "Patients"],
       default: "Everyone",
     },
-
+    dashboardAlert: {
+      type: Boolean,
+      default: true,
+    },
     department: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Department",
@@ -61,10 +57,7 @@ const announcementSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
-export default mongoose.model(
-  "Announcement",
-  announcementSchema
-);
+export default mongoose.model("Announcement", announcementSchema);
