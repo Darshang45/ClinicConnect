@@ -5,8 +5,7 @@ import Patient from "../models/Patient.js";
 import Doctor from "../models/Doctor.js";
 import Department from "../models/Department.js";
 import Appointment from "../models/Appointment.js";
-// import Receptionist from "../models/  ";
-// import Pharmacist from "../models/Pharmacist.js";
+
 
 
 export const createAdmin = async (req, res) => {

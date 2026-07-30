@@ -1,15 +1,8 @@
 import User from "../models/User.js";
 
-
 export const createPharmacist = async (req, res) => {
   try {
-
-    const {
-      fullName,
-      email,
-      phone,
-      password,
-    } = req.body;
+    const { fullName, email, phone, password } = req.body;
 
     const existingEmail = await User.findOne({ email });
 
@@ -37,26 +30,30 @@ export const createPharmacist = async (req, res) => {
       role: "pharmacist",
     });
 
+    await logActivity({
+      user: req.user._id,
+      role: req.user.role,
+      action: "ADD_PHARMACIST",
+      module: "Pharmacist",
+      description: `Added Pharmacist ${pharmacist.fullName}`,
+      ipAddress: req.ip,
+    });
+
     return res.status(201).json({
       success: true,
       message: "Pharmacist created successfully.",
       pharmacistId: pharmacist._id,
     });
-
   } catch (error) {
-
     return res.status(500).json({
       success: false,
       message: error.message,
     });
-
   }
 };
 
-
 export const getPharmacists = async (req, res) => {
   try {
-
     const pharmacists = await User.find({
       role: "pharmacist",
       isActive: true,
@@ -69,21 +66,16 @@ export const getPharmacists = async (req, res) => {
       count: pharmacists.length,
       pharmacists,
     });
-
   } catch (error) {
-
     return res.status(500).json({
       success: false,
       message: error.message,
     });
-
   }
 };
 
-
 export const getPharmacistById = async (req, res) => {
   try {
-
     const pharmacist = await User.findOne({
       _id: req.params.id,
       role: "pharmacist",
@@ -100,21 +92,16 @@ export const getPharmacistById = async (req, res) => {
       success: true,
       pharmacist,
     });
-
   } catch (error) {
-
     return res.status(500).json({
       success: false,
       message: error.message,
     });
-
   }
 };
 
-
 export const updatePharmacist = async (req, res) => {
   try {
-
     const pharmacist = await User.findOne({
       _id: req.params.id,
       role: "pharmacist",
@@ -128,15 +115,9 @@ export const updatePharmacist = async (req, res) => {
       });
     }
 
-    const {
-      fullName,
-      email,
-      phone,
-      password,
-    } = req.body;
+    const { fullName, email, phone, password } = req.body;
 
     if (email && email !== pharmacist.email) {
-
       const existingEmail = await User.findOne({ email });
 
       if (existingEmail) {
@@ -150,7 +131,6 @@ export const updatePharmacist = async (req, res) => {
     }
 
     if (phone && phone !== pharmacist.phone) {
-
       const existingPhone = await User.findOne({ phone });
 
       if (existingPhone) {
@@ -173,20 +153,24 @@ export const updatePharmacist = async (req, res) => {
       success: true,
       message: "Pharmacist updated successfully.",
     });
-
   } catch (error) {
-
     return res.status(500).json({
       success: false,
       message: error.message,
     });
-
   }
 };
 
 export const deletePharmacist = async (req, res) => {
   try {
-
+    await logActivity({
+      user: req.user._id,
+      role: req.user.role,
+      action: "DELETE_PHARMACIST",
+      module: "Pharmacist",
+      description: `Deleted Pharmacist ${pharmacist.fullName}`,
+      ipAddress: req.ip,
+    });
     const pharmacist = await User.findOne({
       _id: req.params.id,
       role: "pharmacist",
@@ -208,13 +192,10 @@ export const deletePharmacist = async (req, res) => {
       success: true,
       message: "Pharmacist deleted successfully.",
     });
-
   } catch (error) {
-
     return res.status(500).json({
       success: false,
       message: error.message,
     });
-
   }
 };

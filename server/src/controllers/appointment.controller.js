@@ -8,7 +8,7 @@ import { validateAppointment } from "../validators/appointment.validator.js";
 import { calculateAppointmentTime } from "../services/appointment.service.js";
 import { generateSlots } from "../utils/slotGenerator.js";
 import { getDayName } from "../utils/dateHelper.js";
-
+import { logActivity } from "../utils/activityLogger.js";
 import { createNotification } from "./notification.controller.js";
 
 export const bookAppointment = async (req, res) => {
@@ -280,6 +280,15 @@ export const bookAppointment = async (req, res) => {
     // ==============================
     // Step 12: Return Response
     // ==============================
+
+    await logActivity({
+      user: req.user._id,
+      role: req.user.role,
+      action: "BOOK_APPOINTMENT",
+      module: "Appointment",
+      description: `Booked appointment for ${patient.fullName} with Dr. ${doctor.fullName}.`,
+      ipAddress: req.ip,
+    });
 
     return res.status(201).json({
       success: true,

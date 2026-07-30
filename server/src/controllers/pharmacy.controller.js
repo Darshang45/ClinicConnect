@@ -8,7 +8,7 @@ import PrescriptionItem from "../models/PrescriptionItem.js";
 import Medicine from "../models/Medicine.js";
 
 import { validatePharmacyOrder } from "../validators/pharmacy.validator.js";
-
+import { logActivity } from "../utils/activityLogger.js";
 import { createNotification } from "./notification.controller.js";
 
 export const createPharmacyOrder = async (req, res) => {
@@ -300,6 +300,15 @@ export const dispenseMedicines = async (req, res) => {
       receiverRole: "pharmacist",
     });
 
+    await logActivity({
+      user: req.user._id,
+      role: req.user.role,
+      action: "DISPENSE_MEDICINE",
+      module: "Pharmacy",
+      description: `Dispensed medicines for ${patient.fullName}.`,
+      ipAddress: req.ip,
+    });
+
     //response
     return res.status(200).json({
       success: true,
@@ -343,10 +352,8 @@ export const deletePharmacyOrder = async (req, res) => {
   }
 };
 
-
 export const getPharmacyDashboard = async (req, res) => {
   try {
-
     const totalOrders = await PharmacyOrder.countDocuments();
 
     const pendingOrders = await PharmacyOrder.countDocuments({
@@ -375,22 +382,16 @@ export const getPharmacyDashboard = async (req, res) => {
         unpaidOrders,
       },
     });
-
   } catch (error) {
-
     return res.status(500).json({
       success: false,
       message: error.message,
     });
-
   }
 };
 
-
-
 export const getPendingOrders = async (req, res) => {
   try {
-
     const orders = await PharmacyOrder.find({
       dispensingStatus: "Pending",
     })
@@ -402,22 +403,16 @@ export const getPendingOrders = async (req, res) => {
       total: orders.length,
       orders,
     });
-
   } catch (error) {
-
     return res.status(500).json({
       success: false,
       message: error.message,
     });
-
   }
 };
 
-
-
 export const getDispensedOrders = async (req, res) => {
   try {
-
     const orders = await PharmacyOrder.find({
       dispensingStatus: "Dispensed",
     })
@@ -429,22 +424,16 @@ export const getDispensedOrders = async (req, res) => {
       total: orders.length,
       orders,
     });
-
   } catch (error) {
-
     return res.status(500).json({
       success: false,
       message: error.message,
     });
-
   }
 };
 
-
-
 export const getRecentOrders = async (req, res) => {
   try {
-
     const orders = await PharmacyOrder.find()
       .populate("patient", "patientId fullName")
       .sort({ createdAt: -1 })
@@ -455,13 +444,10 @@ export const getRecentOrders = async (req, res) => {
       total: orders.length,
       orders,
     });
-
   } catch (error) {
-
     return res.status(500).json({
       success: false,
       message: error.message,
     });
-
   }
 };
