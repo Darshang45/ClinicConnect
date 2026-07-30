@@ -1,11 +1,10 @@
 import User from "../models/User.js";
 import Doctor from "../models/Doctor.js";
 import Department from "../models/Department.js";
-
+import { logActivity } from "../utils/activityLogger.js";
 
 export const createDoctorByAdmin = async (req, res) => {
   try {
-
     const {
       fullName,
       email,
@@ -91,26 +90,31 @@ export const createDoctorByAdmin = async (req, res) => {
       profilePhoto,
     });
 
+    await logActivity({
+      user: req.user._id,
+      role: req.user.role,
+      action: "ADD_DOCTOR",
+      module: "Doctor",
+      description: `Added Doctor ${doctor.fullName}`,
+      ipAddress: req.ip,
+    });
+
     return res.status(201).json({
       success: true,
       message: "Doctor created successfully.",
       doctorId: doctor._id,
       userId: user._id,
     });
-
   } catch (error) {
-
     return res.status(500).json({
       success: false,
       message: error.message,
     });
-
   }
 };
 
 export const getDoctorsByAdmin = async (req, res) => {
   try {
-
     const doctors = await Doctor.find({ isActive: true })
       .populate("user", "fullName email phone isActive")
       .populate("department", "name code")
@@ -133,21 +137,16 @@ export const getDoctorsByAdmin = async (req, res) => {
       count: response.length,
       doctors: response,
     });
-
   } catch (error) {
-
     return res.status(500).json({
       success: false,
       message: error.message,
     });
-
   }
 };
 
-
 export const getDoctorByIdByAdmin = async (req, res) => {
   try {
-
     const doctor = await Doctor.findById(req.params.id)
       .populate("user", "fullName email phone")
       .populate("department", "name code");
@@ -176,21 +175,16 @@ export const getDoctorByIdByAdmin = async (req, res) => {
         isAvailable: doctor.isAvailable,
       },
     });
-
   } catch (error) {
-
     return res.status(500).json({
       success: false,
       message: error.message,
     });
-
   }
 };
 
-
 export const updateDoctorByAdmin = async (req, res) => {
   try {
-
     const doctor = await Doctor.findById(req.params.id);
 
     if (!doctor) {
@@ -226,34 +220,43 @@ export const updateDoctorByAdmin = async (req, res) => {
     if (specialization) doctor.specialization = specialization;
     if (qualification) doctor.qualification = qualification;
     if (experience !== undefined) doctor.experience = experience;
-    if (consultationFee !== undefined)
-      doctor.consultationFee = consultationFee;
+    if (consultationFee !== undefined) doctor.consultationFee = consultationFee;
     if (licenseNumber) doctor.licenseNumber = licenseNumber;
     if (bio !== undefined) doctor.bio = bio;
-    if (isAvailable !== undefined)
-      doctor.isAvailable = isAvailable;
+    if (isAvailable !== undefined) doctor.isAvailable = isAvailable;
 
     await doctor.save();
+    await logActivity({
+      user: req.user._id,
+      role: req.user.role,
+      action: "UPDATE_DOCTOR",
+      module: "Doctor",
+      description: `Updated Doctor ${doctor.fullName}`,
+      ipAddress: req.ip,
+    });
 
     return res.status(200).json({
       success: true,
       message: "Doctor updated successfully.",
     });
-
   } catch (error) {
-
     return res.status(500).json({
       success: false,
       message: error.message,
     });
-
   }
 };
 
-
 export const deleteDoctorByAdmin = async (req, res) => {
   try {
-
+    await logActivity({
+      user: req.user._id,
+      role: req.user.role,
+      action: "DELETE_DOCTOR",
+      module: "Doctor",
+      description: `Deleted Doctor ${doctor.fullName}`,
+      ipAddress: req.ip,
+    });
     const doctor = await Doctor.findById(req.params.id);
 
     if (!doctor) {
@@ -267,24 +270,18 @@ export const deleteDoctorByAdmin = async (req, res) => {
 
     await doctor.save();
 
-    await User.findByIdAndUpdate(
-      doctor.user,
-      {
-        isActive: false,
-      }
-    );
+    await User.findByIdAndUpdate(doctor.user, {
+      isActive: false,
+    });
 
     return res.status(200).json({
       success: true,
       message: "Doctor deleted successfully.",
     });
-
   } catch (error) {
-
     return res.status(500).json({
       success: false,
       message: error.message,
     });
-
   }
 };

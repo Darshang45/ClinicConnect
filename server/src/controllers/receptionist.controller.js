@@ -8,7 +8,7 @@ import { validateAppointment } from "../validators/appointment.validator.js";
 import { calculateAppointmentTime } from "../services/appointment.service.js";
 import { generateSlots } from "../utils/slotGenerator.js";
 import { getDayName } from "../utils/dateHelper.js";
-
+import { logActivity } from "../utils/activityLogger.js";
 import { createNotification } from "./notification.controller.js";
 
 // ==========================================
@@ -151,6 +151,15 @@ export const checkInPatient = async (req, res) => {
 
         checkInTime: updatedAppointment.checkInTime,
       },
+    });
+
+    await logActivity({
+      user: req.user._id,
+      role: req.user.role,
+      action: "CHECK_IN_PATIENT",
+      module: "Appointment",
+      description: `Checked in patient ${patient.fullName}.`,
+      ipAddress: req.ip,
     });
   } catch (error) {
     console.error(error);
@@ -422,6 +431,15 @@ export const cancelAppointment = async (req, res) => {
       message: `An appointment has been cancelled for ${appointment.patient.fullName}.`,
       sender: req.user._id, // Receptionist User ID
       receiverRole: "receptionist",
+    });
+
+    await logActivity({
+      user: req.user._id,
+      role: req.user.role,
+      action: "CANCEL_APPOINTMENT",
+      module: "Appointment",
+      description: `Cancelled appointment ${appointment._id}.`,
+      ipAddress: req.ip,
     });
 
     return res.status(200).json({
@@ -708,8 +726,17 @@ export const createWalkInAppointment = async (req, res) => {
     await createNotification({
       title: "Walk-In Appointment Booked",
       message: `Your walk-in appointment has been booked successfully with Dr. ${populatedAppointment.doctor.user.fullName}.`,
-      sender: req.user._id , // Receptionist User ID (after authentication)
+      sender: req.user._id, // Receptionist User ID (after authentication)
       receiver: populatedAppointment.patient.user._id,
+    });
+
+    await logActivity({
+      user: req.user._id,
+      role: req.user.role,
+      action: "BOOK_WALKIN",
+      module: "Appointment",
+      description: `Created walk-in appointment for ${patient.fullName}.`,
+      ipAddress: req.ip,
     });
 
     // ==============================
@@ -760,13 +787,10 @@ export const createWalkInAppointment = async (req, res) => {
       message: error.message,
     });
   }
-};  
-
-
+};
 
 export const getReceptionistDashboard = async (req, res) => {
   try {
-
     const today = new Date();
 
     const startOfDay = new Date(today);
@@ -824,22 +848,16 @@ export const getReceptionistDashboard = async (req, res) => {
         walkInsToday,
       },
     });
-
   } catch (error) {
-
     return res.status(500).json({
       success: false,
       message: error.message,
     });
-
   }
 };
 
-
-
 export const getPendingCheckIns = async (req, res) => {
   try {
-
     const appointments = await Appointment.find({
       status: "Booked",
     })
@@ -869,22 +887,16 @@ export const getPendingCheckIns = async (req, res) => {
       total: data.length,
       appointments: data,
     });
-
   } catch (error) {
-
     return res.status(500).json({
       success: false,
       message: error.message,
     });
-
   }
 };
 
-
-
 export const getTodayWalkIns = async (req, res) => {
   try {
-
     const today = new Date();
 
     const startOfDay = new Date(today);
@@ -924,28 +936,19 @@ export const getTodayWalkIns = async (req, res) => {
       total: data.length,
       walkIns: data,
     });
-
   } catch (error) {
-
     return res.status(500).json({
       success: false,
       message: error.message,
     });
-
   }
 };
 
-
-
 export const getQueue = async (req, res) => {
   try {
-
     const appointments = await Appointment.find({
       status: {
-        $in: [
-          "Checked-In",
-          "In Consultation",
-        ],
+        $in: ["Checked-In", "In Consultation"],
       },
     })
       .populate("patient", "fullName")
@@ -970,13 +973,10 @@ export const getQueue = async (req, res) => {
       total: queue.length,
       queue,
     });
-
   } catch (error) {
-
     return res.status(500).json({
       success: false,
       message: error.message,
     });
-
   }
 };

@@ -5,8 +5,6 @@ import Prescription from "../models/Prescription.js";
 import Doctor from "../models/Doctor.js";
 import Department from "../models/Department.js";
 
-
-
 //Patient ID generator
 
 const generatePatientId = async () => {
@@ -23,9 +21,7 @@ const generatePatientId = async () => {
   return `PAT${String(newId).padStart(6, "0")}`;
 };
 
-
-//Create Patient 
-
+//Create Patient
 
 export const createPatient = async (req, res) => {
   try {
@@ -99,20 +95,17 @@ export const createPatient = async (req, res) => {
       message: "Patient created successfully.",
       patient,
     });
-
   } catch (error) {
-
     console.error(error);
 
     return res.status(500).json({
       success: false,
       message: error.message,
     });
-
   }
 };
 
-//Get all Patients 
+//Get all Patients
 
 export const getPatients = async (req, res) => {
   try {
@@ -142,14 +135,11 @@ export const getPatients = async (req, res) => {
       totalPages: Math.ceil(totalPatients / limit),
       patients,
     });
-
   } catch (error) {
-
     return res.status(500).json({
       success: false,
       message: error.message,
     });
-
   }
 };
 
@@ -157,7 +147,6 @@ export const getPatients = async (req, res) => {
 
 export const getPatientById = async (req, res) => {
   try {
-
     const patient = await Patient.findById(req.params.id);
 
     if (!patient) {
@@ -171,22 +160,18 @@ export const getPatientById = async (req, res) => {
       success: true,
       patient,
     });
-
   } catch (error) {
-
     return res.status(500).json({
       success: false,
       message: error.message,
     });
-
   }
 };
 
-//Update Patient 
+//Update Patient
 
 export const updatePatient = async (req, res) => {
   try {
-
     const patient = await Patient.findById(req.params.id);
 
     if (!patient) {
@@ -205,23 +190,18 @@ export const updatePatient = async (req, res) => {
       message: "Patient updated successfully",
       patient,
     });
-
   } catch (error) {
-
     return res.status(500).json({
       success: false,
       message: error.message,
     });
-
   }
 };
-
 
 //Soft delete patient
 
 export const deletePatient = async (req, res) => {
   try {
-
     const patient = await Patient.findById(req.params.id);
 
     if (!patient) {
@@ -239,23 +219,18 @@ export const deletePatient = async (req, res) => {
       success: true,
       message: "Patient deactivated successfully",
     });
-
   } catch (error) {
-
     return res.status(500).json({
       success: false,
       message: error.message,
     });
-
   }
 };
-
 
 // Search Patient by Phone NO.
 
 export const getPatientByPhone = async (req, res) => {
   try {
-
     const patient = await Patient.findOne({
       phone: req.params.phone,
       isActive: true,
@@ -272,17 +247,13 @@ export const getPatientByPhone = async (req, res) => {
       success: true,
       patient,
     });
-
   } catch (error) {
-
     return res.status(500).json({
       success: false,
       message: error.message,
     });
-
   }
 };
-
 
 //Search Patient
 
@@ -320,9 +291,7 @@ export const searchPatients = async (req, res) => {
         },
       ],
     })
-      .select(
-        "patientId fullName phone gender bloodGroup dateOfBirth"
-      )
+      .select("patientId fullName phone gender bloodGroup dateOfBirth")
       .sort({ fullName: 1 })
       .limit(10);
 
@@ -341,10 +310,8 @@ export const searchPatients = async (req, res) => {
   }
 };
 
-
 export const getPatientDashboard = async (req, res) => {
   try {
-
     const patient = await Patient.findOne({
       user: req.user._id,
       isActive: true,
@@ -357,30 +324,26 @@ export const getPatientDashboard = async (req, res) => {
       });
     }
 
-    const upcomingAppointments =
-      await Appointment.countDocuments({
-        patient: patient._id,
-        status: {
-          $in: ["Booked", "Checked-In"],
-        },
-      });
+    const upcomingAppointments = await Appointment.countDocuments({
+      patient: patient._id,
+      status: {
+        $in: ["Booked", "Checked-In"],
+      },
+    });
 
-    const completedAppointments =
-      await Appointment.countDocuments({
-        patient: patient._id,
-        status: "Completed",
-      });
+    const completedAppointments = await Appointment.countDocuments({
+      patient: patient._id,
+      status: "Completed",
+    });
 
-    const cancelledAppointments =
-      await Appointment.countDocuments({
-        patient: patient._id,
-        status: "Cancelled",
-      });
+    const cancelledAppointments = await Appointment.countDocuments({
+      patient: patient._id,
+      status: "Cancelled",
+    });
 
-    const activePrescriptions =
-      await Prescription.countDocuments({
-        patient: patient._id,
-      });
+    const activePrescriptions = await Prescription.countDocuments({
+      patient: patient._id,
+    });
 
     return res.status(200).json({
       success: true,
@@ -391,21 +354,16 @@ export const getPatientDashboard = async (req, res) => {
         activePrescriptions,
       },
     });
-
   } catch (error) {
-
     return res.status(500).json({
       success: false,
       message: error.message,
     });
-
   }
 };
 
-
 export const getMyProfile = async (req, res) => {
   try {
-
     const patient = await Patient.findOne({
       user: req.user._id,
       isActive: true,
@@ -435,22 +393,16 @@ export const getMyProfile = async (req, res) => {
         insurance: patient.insurance,
       },
     });
-
   } catch (error) {
-
     return res.status(500).json({
       success: false,
       message: error.message,
     });
-
   }
 };
 
-
-
 export const updateMyProfile = async (req, res) => {
   try {
-
     const patient = await Patient.findOne({
       user: req.user._id,
       isActive: true,
@@ -472,14 +424,11 @@ export const updateMyProfile = async (req, res) => {
       insurance,
     } = req.body;
 
-    if (phone !== undefined)
-      patient.phone = phone;
+    if (phone !== undefined) patient.phone = phone;
 
-    if (address !== undefined)
-      patient.address = address;
+    if (address !== undefined) patient.address = address;
 
-    if (allergies !== undefined)
-      patient.allergies = allergies;
+    if (allergies !== undefined) patient.allergies = allergies;
 
     if (chronicDiseases !== undefined)
       patient.chronicDiseases = chronicDiseases;
@@ -487,10 +436,18 @@ export const updateMyProfile = async (req, res) => {
     if (emergencyContact !== undefined)
       patient.emergencyContact = emergencyContact;
 
-    if (insurance !== undefined)
-      patient.insurance = insurance;
+    if (insurance !== undefined) patient.insurance = insurance;
 
     await patient.save();
+
+    await logActivity({
+      user: req.user._id,
+      role: req.user.role,
+      action: "UPDATE_PROFILE",
+      module: "Patient",
+      description: "Updated patient profile.",
+      ipAddress: req.ip,
+    });
 
     return res.status(200).json({
       success: true,
@@ -506,21 +463,16 @@ export const updateMyProfile = async (req, res) => {
         insurance: patient.insurance,
       },
     });
-
   } catch (error) {
-
     return res.status(500).json({
       success: false,
       message: error.message,
     });
-
   }
 };
 
-
 export const getUpcomingAppointments = async (req, res) => {
   try {
-
     const patient = await Patient.findOne({
       user: req.user._id,
       isActive: true,
@@ -567,22 +519,16 @@ export const getUpcomingAppointments = async (req, res) => {
       total: data.length,
       appointments: data,
     });
-
   } catch (error) {
-
     return res.status(500).json({
       success: false,
       message: error.message,
     });
-
   }
 };
 
-
-
 export const getMyPrescriptions = async (req, res) => {
   try {
-
     const patient = await Patient.findOne({
       user: req.user._id,
       isActive: true,
@@ -623,21 +569,16 @@ export const getMyPrescriptions = async (req, res) => {
       total: data.length,
       prescriptions: data,
     });
-
   } catch (error) {
-
     return res.status(500).json({
       success: false,
       message: error.message,
     });
-
   }
 };
 
-
 export const getAvailableDoctors = async (req, res) => {
   try {
-
     const doctors = await Doctor.find({
       isActive: true,
       isAvailable: true,
@@ -662,21 +603,16 @@ export const getAvailableDoctors = async (req, res) => {
       total: data.length,
       doctors: data,
     });
-
   } catch (error) {
-
     return res.status(500).json({
       success: false,
       message: error.message,
     });
-
   }
 };
 
-
 export const getAvailableDepartments = async (req, res) => {
   try {
-
     const departments = await Department.find({
       isActive: true,
     }).sort({
@@ -696,13 +632,10 @@ export const getAvailableDepartments = async (req, res) => {
       total: data.length,
       departments: data,
     });
-
   } catch (error) {
-
     return res.status(500).json({
       success: false,
       message: error.message,
     });
-
   }
 };

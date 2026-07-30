@@ -21,7 +21,7 @@ import path from "path";
 import receptionistRoutes from "./src/routes/receptionist.routes.js";
 import pharmacyRoutes from "./src/routes/pharmacy.routes.js";
 import dashboardRoutes from "./src/routes/dashboard.routes.js";
-
+import activityLogRoutes from "./src/routes/activityLog.routes.js";
 import notificationRoutes from "./src/routes/notification.routes.js";
 import announcementRoutes from "./src/routes/announcement.routes.js";
 
@@ -58,13 +58,13 @@ app.use("/api/availability", availabilityRoutes);
 app.use("/api/medical-reports", medicalReportRoutes);
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 app.use("/api/receptionist", receptionistRoutes);
+app.use("/api/admins/activity-logs", activityLogRoutes);
 app.use("/api/admins/doctors", adminDoctorRoutes);
 app.use("/api/admins/receptionists", adminReceptionistRoutes);
 app.use("/api/admins/pharmacists", adminPharmacistRoutes);
 app.use("/api/admins", adminRoutes);
 app.use("/api/pharmacy", pharmacyRoutes);
 app.use("/api/dashboard", dashboardRoutes);
-
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/announcements", announcementRoutes);
 

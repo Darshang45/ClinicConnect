@@ -8,7 +8,7 @@ import Medicine from "../models/Medicine.js";
 import { validatePrescription } from "../validators/prescription.validator.js";
 
 import { createNotification } from "./notification.controller.js";
-
+import { logActivity } from "../utils/activityLogger.js";
 
 export const createPrescription = async (req, res) => {
   try {
@@ -90,6 +90,15 @@ export const createPrescription = async (req, res) => {
       diagnosis,
       notes,
       followUpDate,
+    });
+
+    await logActivity({
+      user: req.user._id,
+      role: req.user.role,
+      action: "CREATE_PRESCRIPTION",
+      module: "Prescription",
+      description: `Prescription created for patient ${patient.fullName}.`,
+      ipAddress: req.ip,
     });
 
     // Save Medicines
