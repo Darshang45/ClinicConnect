@@ -42,4 +42,10 @@ const pharmacyOrderSchema = new mongoose.Schema(
   }
 );
 
+pharmacyOrderSchema.index({ patient: 1, createdAt: -1 });
+pharmacyOrderSchema.index({ dispensingStatus: 1, createdAt: -1 });
+pharmacyOrderSchema.index({ dispensingStatus: 1, dispensedAt: -1 });
+pharmacyOrderSchema.index({ paymentStatus: 1, createdAt: -1 });
+pharmacyOrderSchema.index({ createdAt: -1 });
+
 export default mongoose.model("PharmacyOrder", pharmacyOrderSchema);

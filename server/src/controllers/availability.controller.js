@@ -199,8 +199,6 @@ export const getAvailableSlots = async (req, res) => {
 
     const day = getDayName(date);
 
-    const allAvailabilities = await DoctorAvailability.find();
-
     const availability = await DoctorAvailability.findOne({
       doctor: doctorId,
     });
@@ -236,7 +234,18 @@ export const getAvailableSlots = async (req, res) => {
     const endOfDay = new Date(date);
     endOfDay.setHours(23, 59, 59, 999);
 
-    const bookedAppointments = await Appointment.find();
+    const bookedAppointments = await Appointment.find({
+      doctor: doctorId,
+      appointmentStart: {
+        $gte: startOfDay,
+        $lte: endOfDay,
+      },
+      status: {
+        $in: ["Scheduled", "Checked-In", "In Consultation"],
+      },
+    })
+      .select("appointmentStart")
+      .lean();
 
     const bookedSlots = bookedAppointments.map((appointment) => {
       const date = new Date(appointment.appointmentStart);

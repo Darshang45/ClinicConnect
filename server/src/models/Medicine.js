@@ -84,4 +84,7 @@ const medicineSchema = new mongoose.Schema(
   }
 );
 
+medicineSchema.index({ category: 1, isActive: 1 });
+medicineSchema.index({ isActive: 1, name: 1 });
+
 export default mongoose.model("Medicine", medicineSchema);

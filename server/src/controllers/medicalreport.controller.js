@@ -6,6 +6,7 @@ import Appointment from "../models/Appointment.js";
 import { validateMedicalReport } from "../validators/medicalReport.validator.js";
 
 import Patient from "../models/Patient.js";
+import { paginateQuery } from "../utils/paginate.js";
 
 export const createMedicalReport = async (req, res) => {
   try {
@@ -80,18 +81,19 @@ export const createMedicalReport = async (req, res) => {
 
 export const getAllMedicalReports = async (req, res) => {
   try {
-
-    const reports = await MedicalReport.find()
-      .populate("appointment")
-      .populate("patient")
-      .populate("doctor")
-      .sort({ createdAt: -1 });
-
-    return res.status(200).json({
-      success: true,
-      count: reports.length,
-      reports,
+    const response = await paginateQuery({
+      model: MedicalReport,
+      query: MedicalReport.find()
+        .populate("appointment")
+        .populate("patient")
+        .populate("doctor")
+        .sort({ createdAt: -1 }),
+      pagination: req.query,
+      message: "Medical reports retrieved successfully.",
+      legacy: { dataKey: "reports", totalKey: "count" },
     });
+
+    return res.status(200).json(response);
 
   } catch (error) {
 
@@ -161,19 +163,21 @@ export const getReportsByPatient = async (req, res) => {
       });
     }
 
-    const reports = await MedicalReport.find({
-      patient: req.params.patientId,
-    })
-      .populate("appointment")
-      .populate("patient")
-      .populate("doctor")
-      .sort({ createdAt: -1 });
-
-    return res.status(200).json({
-      success: true,
-      count: reports.length,
-      reports,
+    const filter = { patient: req.params.patientId };
+    const response = await paginateQuery({
+      model: MedicalReport,
+      filter,
+      query: MedicalReport.find(filter)
+        .populate("appointment")
+        .populate("patient")
+        .populate("doctor")
+        .sort({ createdAt: -1 }),
+      pagination: req.query,
+      message: "Patient medical reports retrieved successfully.",
+      legacy: { dataKey: "reports", totalKey: "count" },
     });
+
+    return res.status(200).json(response);
 
   } catch (error) {
     return res.status(500).json({

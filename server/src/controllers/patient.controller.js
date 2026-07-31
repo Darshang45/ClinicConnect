@@ -4,6 +4,7 @@ import Appointment from "../models/Appointment.js";
 import Prescription from "../models/Prescription.js";
 import Doctor from "../models/Doctor.js";
 import Department from "../models/Department.js";
+import { paginateQuery } from "../utils/paginate.js";
 
 //Patient ID generator
 
@@ -109,11 +110,9 @@ export const createPatient = async (req, res) => {
 
 export const getPatients = async (req, res) => {
   try {
-    const page = Number(req.query.page) || 1;
-    const limit = Number(req.query.limit) || 10;
     const search = req.query.search || "";
 
-    const query = {
+    const filter = {
       isActive: true,
       fullName: {
         $regex: search,
@@ -121,20 +120,21 @@ export const getPatients = async (req, res) => {
       },
     };
 
-    const totalPatients = await Patient.countDocuments(query);
-
-    const patients = await Patient.find(query)
-      .sort({ createdAt: -1 })
-      .skip((page - 1) * limit)
-      .limit(limit);
-
-    return res.status(200).json({
-      success: true,
-      totalPatients,
-      currentPage: page,
-      totalPages: Math.ceil(totalPatients / limit),
-      patients,
+    const response = await paginateQuery({
+      model: Patient,
+      filter,
+      query: Patient.find(filter).sort({ createdAt: -1 }),
+      pagination: req.query,
+      message: "Patients retrieved successfully.",
+      legacy: {
+        dataKey: "patients",
+        totalKey: "totalPatients",
+        pageKey: "currentPage",
+        totalPagesKey: "totalPages",
+      },
     });
+
+    return res.status(200).json(response);
   } catch (error) {
     return res.status(500).json({
       success: false,
@@ -268,7 +268,7 @@ export const searchPatients = async (req, res) => {
       });
     }
 
-    const patients = await Patient.find({
+    const filter = {
       isActive: true,
       $or: [
         {
@@ -290,16 +290,19 @@ export const searchPatients = async (req, res) => {
           },
         },
       ],
-    })
-      .select("patientId fullName phone gender bloodGroup dateOfBirth")
-      .sort({ fullName: 1 })
-      .limit(10);
-
-    return res.status(200).json({
-      success: true,
-      count: patients.length,
-      patients,
+    };
+    const response = await paginateQuery({
+      model: Patient,
+      filter,
+      query: Patient.find(filter)
+        .select("patientId fullName phone gender bloodGroup dateOfBirth")
+        .sort({ fullName: 1 }),
+      pagination: req.query,
+      message: "Patients retrieved successfully.",
+      legacy: { dataKey: "patients", totalKey: "count" },
     });
+
+    return res.status(200).json(response);
   } catch (error) {
     console.error(error);
 
@@ -315,7 +318,9 @@ export const getPatientDashboard = async (req, res) => {
     const patient = await Patient.findOne({
       user: req.user._id,
       isActive: true,
-    });
+    })
+      .select("_id")
+      .lean();
 
     if (!patient) {
       return res.status(404).json({
@@ -485,25 +490,31 @@ export const getUpcomingAppointments = async (req, res) => {
       });
     }
 
-    const appointments = await Appointment.find({
+    const filter = {
       patient: patient._id,
       status: {
         $in: ["Booked", "Checked-In"],
       },
-    })
-      .populate({
-        path: "doctor",
-        populate: {
-          path: "user",
-          select: "fullName",
-        },
-      })
-      .populate("department", "name")
-      .sort({
-        appointmentStart: 1,
-      });
+    };
+    const response = await paginateQuery({
+      model: Appointment,
+      filter,
+      query: Appointment.find(filter)
+        .populate({
+          path: "doctor",
+          populate: {
+            path: "user",
+            select: "fullName",
+          },
+        })
+        .populate("department", "name")
+        .sort({ appointmentStart: 1 }),
+      pagination: req.query,
+      message: "Upcoming appointments retrieved successfully.",
+      legacy: { dataKey: "appointments", totalKey: "total" },
+    });
 
-    const data = appointments.map((appointment) => ({
+    response.data = response.data.map((appointment) => ({
       appointmentId: appointment._id,
       doctor: appointment.doctor.user.fullName,
       department: appointment.department.name,
@@ -514,11 +525,7 @@ export const getUpcomingAppointments = async (req, res) => {
       status: appointment.status,
     }));
 
-    return res.status(200).json({
-      success: true,
-      total: data.length,
-      appointments: data,
-    });
+    return res.status(200).json(response);
   } catch (error) {
     return res.status(500).json({
       success: false,
@@ -532,7 +539,9 @@ export const getMyPrescriptions = async (req, res) => {
     const patient = await Patient.findOne({
       user: req.user._id,
       isActive: true,
-    });
+    })
+      .select("_id")
+      .lean();
 
     if (!patient) {
       return res.status(404).json({
@@ -541,21 +550,27 @@ export const getMyPrescriptions = async (req, res) => {
       });
     }
 
-    const prescriptions = await Prescription.find({
+    const filter = {
       patient: patient._id,
-    })
-      .populate({
-        path: "doctor",
-        populate: {
-          path: "user",
-          select: "fullName",
-        },
-      })
-      .sort({
-        createdAt: -1,
-      });
+    };
+    const response = await paginateQuery({
+      model: Prescription,
+      filter,
+      query: Prescription.find(filter)
+        .populate({
+          path: "doctor",
+          populate: {
+            path: "user",
+            select: "fullName",
+          },
+        })
+        .sort({ createdAt: -1 }),
+      pagination: req.query,
+      message: "Prescriptions retrieved successfully.",
+      legacy: { dataKey: "prescriptions", totalKey: "total" },
+    });
 
-    const data = prescriptions.map((prescription) => ({
+    response.data = response.data.map((prescription) => ({
       prescriptionId: prescription._id,
       doctor: prescription.doctor.user.fullName,
       diagnosis: prescription.diagnosis,
@@ -564,11 +579,7 @@ export const getMyPrescriptions = async (req, res) => {
       createdAt: prescription.createdAt,
     }));
 
-    return res.status(200).json({
-      success: true,
-      total: data.length,
-      prescriptions: data,
-    });
+    return res.status(200).json(response);
   } catch (error) {
     return res.status(500).json({
       success: false,
@@ -579,15 +590,23 @@ export const getMyPrescriptions = async (req, res) => {
 
 export const getAvailableDoctors = async (req, res) => {
   try {
-    const doctors = await Doctor.find({
+    const filter = {
       isActive: true,
       isAvailable: true,
-    })
-      .populate("user", "fullName")
-      .populate("department", "name")
-      .sort({ createdAt: -1 });
+    };
+    const response = await paginateQuery({
+      model: Doctor,
+      filter,
+      query: Doctor.find(filter)
+        .populate("user", "fullName")
+        .populate("department", "name")
+        .sort({ createdAt: -1 }),
+      pagination: req.query,
+      message: "Available doctors retrieved successfully.",
+      legacy: { dataKey: "doctors", totalKey: "total" },
+    });
 
-    const data = doctors.map((doctor) => ({
+    response.data = response.data.map((doctor) => ({
       doctorId: doctor._id,
       name: doctor.user.fullName,
       specialization: doctor.specialization,
@@ -598,11 +617,7 @@ export const getAvailableDoctors = async (req, res) => {
       isAvailable: doctor.isAvailable,
     }));
 
-    return res.status(200).json({
-      success: true,
-      total: data.length,
-      doctors: data,
-    });
+    return res.status(200).json(response);
   } catch (error) {
     return res.status(500).json({
       success: false,
@@ -615,9 +630,9 @@ export const getAvailableDepartments = async (req, res) => {
   try {
     const departments = await Department.find({
       isActive: true,
-    }).sort({
-      name: 1,
-    });
+    })
+      .sort({ name: 1 })
+      .lean();
 
     const data = departments.map((department) => ({
       departmentId: department._id,

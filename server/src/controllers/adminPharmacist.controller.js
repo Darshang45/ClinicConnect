@@ -1,4 +1,5 @@
 import User from "../models/User.js";
+import { paginateQuery } from "../utils/paginate.js";
 
 export const createPharmacist = async (req, res) => {
   try {
@@ -54,18 +55,20 @@ export const createPharmacist = async (req, res) => {
 
 export const getPharmacists = async (req, res) => {
   try {
-    const pharmacists = await User.find({
+    const filter = {
       role: "pharmacist",
       isActive: true,
-    })
-      .select("-password")
-      .sort({ createdAt: -1 });
-
-    return res.status(200).json({
-      success: true,
-      count: pharmacists.length,
-      pharmacists,
+    };
+    const response = await paginateQuery({
+      model: User,
+      filter,
+      query: User.find(filter).select("-password").sort({ createdAt: -1 }),
+      pagination: req.query,
+      message: "Pharmacists retrieved successfully.",
+      legacy: { dataKey: "pharmacists", totalKey: "count" },
     });
+
+    return res.status(200).json(response);
   } catch (error) {
     return res.status(500).json({
       success: false,

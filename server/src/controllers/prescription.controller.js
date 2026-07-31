@@ -9,6 +9,7 @@ import { validatePrescription } from "../validators/prescription.validator.js";
 
 import { createNotification } from "./notification.controller.js";
 import { logActivity } from "../utils/activityLogger.js";
+import { paginateQuery } from "../utils/paginate.js";
 
 export const createPrescription = async (req, res) => {
   try {
@@ -181,30 +182,41 @@ export const createPrescription = async (req, res) => {
 
 export const getAllPrescriptions = async (req, res) => {
   try {
-    const prescriptions = await Prescription.find()
-      .populate("appointment")
-      .populate("patient")
-      .populate("doctor")
-      .sort({ createdAt: -1 });
+    const response = await paginateQuery({
+      model: Prescription,
+      query: Prescription.find()
+        .populate("appointment")
+        .populate("patient")
+        .populate("doctor")
+        .sort({ createdAt: -1 }),
+      pagination: req.query,
+      message: "Prescriptions retrieved successfully.",
+      legacy: { dataKey: "prescriptions", totalKey: "count" },
+    });
 
-    const response = [];
+    const prescriptionIds = response.data.map((prescription) => prescription._id);
+    const prescriptionItems = prescriptionIds.length
+      ? await PrescriptionItem.find({
+          prescription: { $in: prescriptionIds },
+        })
+          .populate("medicine")
+          .lean()
+      : [];
+    const medicinesByPrescription = new Map();
 
-    for (const prescription of prescriptions) {
-      const medicines = await PrescriptionItem.find({
-        prescription: prescription._id,
-      }).populate("medicine");
-
-      response.push({
-        ...prescription.toObject(),
-        medicines,
-      });
+    for (const item of prescriptionItems) {
+      const key = item.prescription.toString();
+      const medicines = medicinesByPrescription.get(key) || [];
+      medicines.push(item);
+      medicinesByPrescription.set(key, medicines);
     }
 
-    return res.status(200).json({
-      success: true,
-      count: response.length,
-      prescriptions: response,
-    });
+    response.data = response.data.map((prescription) => ({
+      ...prescription,
+      medicines: medicinesByPrescription.get(prescription._id.toString()) || [],
+    }));
+
+    return res.status(200).json(response);
   } catch (error) {
     return res.status(500).json({
       success: false,

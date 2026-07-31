@@ -90,4 +90,7 @@ const patientSchema = new mongoose.Schema(
   }
 );
 
+patientSchema.index({ isActive: 1, createdAt: -1 });
+patientSchema.index({ user: 1 });
+
 export default mongoose.model("Patient", patientSchema);
