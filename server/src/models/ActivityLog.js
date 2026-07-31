@@ -48,4 +48,8 @@ const activityLogSchema = new mongoose.Schema(
   }
 );
 
+activityLogSchema.index({ user: 1, createdAt: -1 });
+activityLogSchema.index({ role: 1, module: 1, createdAt: -1 });
+activityLogSchema.index({ createdAt: -1 });
+
 export default mongoose.model("ActivityLog", activityLogSchema);

@@ -60,4 +60,8 @@ const announcementSchema = new mongoose.Schema(
   },
 );
 
+announcementSchema.index({ targetAudience: 1, isActive: 1, startDate: -1 });
+announcementSchema.index({ department: 1, isActive: 1 });
+announcementSchema.index({ createdAt: -1 });
+
 export default mongoose.model("Announcement", announcementSchema);

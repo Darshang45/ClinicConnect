@@ -37,4 +37,6 @@ const adminSchema = new mongoose.Schema(
   }
 );
 
+adminSchema.index({ isActive: 1, createdAt: -1 });
+
 export default mongoose.model("Admin", adminSchema);

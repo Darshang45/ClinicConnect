@@ -10,6 +10,7 @@ import { generateSlots } from "../utils/slotGenerator.js";
 import { getDayName } from "../utils/dateHelper.js";
 import { logActivity } from "../utils/activityLogger.js";
 import { createNotification } from "./notification.controller.js";
+import { paginateQuery } from "../utils/paginate.js";
 
 // ==========================================
 // Get Today's Appointments
@@ -25,37 +26,39 @@ export const getTodayAppointments = async (req, res) => {
     const endOfDay = new Date(date);
     endOfDay.setHours(23, 59, 59, 999);
 
-    const appointments = await Appointment.find({
+    const filter = {
       appointmentStart: {
         $gte: startOfDay,
         $lte: endOfDay,
       },
-    })
-      .populate({
-        path: "patient",
-        select: "patientId fullName phone",
-      })
-      .populate({
-        path: "doctor",
-        select: "specialization consultationFee",
-        populate: {
-          path: "user",
-          select: "fullName email",
-        },
-      })
-      .populate({
-        path: "department",
-        select: "name",
-      })
-      .sort({
-        tokenNumber: 1,
-      });
-
-    return res.status(200).json({
-      success: true,
-      count: appointments.length,
-      appointments,
+    };
+    const response = await paginateQuery({
+      model: Appointment,
+      filter,
+      query: Appointment.find(filter)
+        .populate({
+          path: "patient",
+          select: "patientId fullName phone",
+        })
+        .populate({
+          path: "doctor",
+          select: "specialization consultationFee",
+          populate: {
+            path: "user",
+            select: "fullName email",
+          },
+        })
+        .populate({
+          path: "department",
+          select: "name",
+        })
+        .sort({ tokenNumber: 1 }),
+      pagination: req.query,
+      message: "Today's appointments retrieved successfully.",
+      legacy: { dataKey: "appointments", totalKey: "count" },
     });
+
+    return res.status(200).json(response);
   } catch (error) {
     console.error(error);
 
@@ -629,7 +632,9 @@ export const createWalkInAppointment = async (req, res) => {
       status: {
         $in: ["Scheduled", "Checked-In", "In Consultation"],
       },
-    });
+    })
+      .select("appointmentStart")
+      .lean();
 
     const bookedSlots = bookedAppointments.map((appointment) => {
       const date = new Date(appointment.appointmentStart);
@@ -858,20 +863,28 @@ export const getReceptionistDashboard = async (req, res) => {
 
 export const getPendingCheckIns = async (req, res) => {
   try {
-    const appointments = await Appointment.find({
+    const filter = {
       status: "Booked",
-    })
-      .populate("patient", "patientId fullName phone")
-      .populate({
-        path: "doctor",
-        populate: {
-          path: "user",
-          select: "fullName",
-        },
-      })
-      .sort({ appointmentStart: 1 });
+    };
+    const response = await paginateQuery({
+      model: Appointment,
+      filter,
+      query: Appointment.find(filter)
+        .populate("patient", "patientId fullName phone")
+        .populate({
+          path: "doctor",
+          populate: {
+            path: "user",
+            select: "fullName",
+          },
+        })
+        .sort({ appointmentStart: 1 }),
+      pagination: req.query,
+      message: "Pending check-ins retrieved successfully.",
+      legacy: { dataKey: "appointments", totalKey: "total" },
+    });
 
-    const data = appointments.map((appointment) => ({
+    response.data = response.data.map((appointment) => ({
       appointmentId: appointment._id,
       tokenNumber: appointment.tokenNumber,
       patientId: appointment.patient.patientId,
@@ -882,11 +895,7 @@ export const getPendingCheckIns = async (req, res) => {
       consultationType: appointment.consultationType,
     }));
 
-    return res.status(200).json({
-      success: true,
-      total: data.length,
-      appointments: data,
-    });
+    return res.status(200).json(response);
   } catch (error) {
     return res.status(500).json({
       success: false,
@@ -905,24 +914,32 @@ export const getTodayWalkIns = async (req, res) => {
     const endOfDay = new Date(today);
     endOfDay.setHours(23, 59, 59, 999);
 
-    const appointments = await Appointment.find({
+    const filter = {
       bookedBy: "Receptionist",
       appointmentStart: {
         $gte: startOfDay,
         $lte: endOfDay,
       },
-    })
-      .populate("patient", "patientId fullName")
-      .populate({
-        path: "doctor",
-        populate: {
-          path: "user",
-          select: "fullName",
-        },
-      })
-      .sort({ createdAt: -1 });
+    };
+    const response = await paginateQuery({
+      model: Appointment,
+      filter,
+      query: Appointment.find(filter)
+        .populate("patient", "patientId fullName")
+        .populate({
+          path: "doctor",
+          populate: {
+            path: "user",
+            select: "fullName",
+          },
+        })
+        .sort({ createdAt: -1 }),
+      pagination: req.query,
+      message: "Today's walk-in appointments retrieved successfully.",
+      legacy: { dataKey: "walkIns", totalKey: "total" },
+    });
 
-    const data = appointments.map((appointment) => ({
+    response.data = response.data.map((appointment) => ({
       appointmentId: appointment._id,
       tokenNumber: appointment.tokenNumber,
       patientName: appointment.patient.fullName,
@@ -931,11 +948,7 @@ export const getTodayWalkIns = async (req, res) => {
       appointmentStart: appointment.appointmentStart,
     }));
 
-    return res.status(200).json({
-      success: true,
-      total: data.length,
-      walkIns: data,
-    });
+    return res.status(200).json(response);
   } catch (error) {
     return res.status(500).json({
       success: false,
@@ -946,33 +959,37 @@ export const getTodayWalkIns = async (req, res) => {
 
 export const getQueue = async (req, res) => {
   try {
-    const appointments = await Appointment.find({
+    const filter = {
       status: {
         $in: ["Checked-In", "In Consultation"],
       },
-    })
-      .populate("patient", "fullName")
-      .populate({
-        path: "doctor",
-        populate: {
-          path: "user",
-          select: "fullName",
-        },
-      })
-      .sort({ tokenNumber: 1 });
+    };
+    const response = await paginateQuery({
+      model: Appointment,
+      filter,
+      query: Appointment.find(filter)
+        .populate("patient", "fullName")
+        .populate({
+          path: "doctor",
+          populate: {
+            path: "user",
+            select: "fullName",
+          },
+        })
+        .sort({ tokenNumber: 1 }),
+      pagination: req.query,
+      message: "Queue retrieved successfully.",
+      legacy: { dataKey: "queue", totalKey: "total" },
+    });
 
-    const queue = appointments.map((appointment) => ({
+    response.data = response.data.map((appointment) => ({
       tokenNumber: appointment.tokenNumber,
       patientName: appointment.patient.fullName,
       doctorName: appointment.doctor.user.fullName,
       status: appointment.status,
     }));
 
-    return res.status(200).json({
-      success: true,
-      total: queue.length,
-      queue,
-    });
+    return res.status(200).json(response);
   } catch (error) {
     return res.status(500).json({
       success: false,

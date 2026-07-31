@@ -1,4 +1,5 @@
 import Medicine from "../models/Medicine.js";
+import { paginateQuery } from "../utils/paginate.js";
 import { validateMedicine } from "../validators/medicine.validator.js";
 
 export const createMedicine = async (req, res) => {
@@ -65,17 +66,19 @@ export const createMedicine = async (req, res) => {
 
 export const getMedicines = async (req, res) => {
   try {
-    const medicines = await Medicine.find({
+    const filter = {
       isActive: true,
-    }).sort({
-      name: 1,
+    };
+    const response = await paginateQuery({
+      model: Medicine,
+      filter,
+      query: Medicine.find(filter).sort({ name: 1 }),
+      pagination: req.query,
+      message: "Medicines retrieved successfully.",
+      legacy: { dataKey: "medicines", totalKey: "total" },
     });
 
-    return res.status(200).json({
-      success: true,
-      total: medicines.length,
-      medicines,
-    });
+    return res.status(200).json(response);
   } catch (error) {
     return res.status(500).json({
       success: false,
@@ -166,7 +169,7 @@ export const searchMedicines = async (req, res) => {
   try {
     const keyword = req.query.keyword || "";
 
-    const medicines = await Medicine.find({
+    const filter = {
       isActive: true,
       $or: [
         {
@@ -182,12 +185,17 @@ export const searchMedicines = async (req, res) => {
           },
         },
       ],
+    };
+    const response = await paginateQuery({
+      model: Medicine,
+      filter,
+      query: Medicine.find(filter).sort({ name: 1 }),
+      pagination: req.query,
+      message: "Medicines retrieved successfully.",
+      legacy: { dataKey: "medicines" },
     });
 
-    return res.status(200).json({
-      success: true,
-      medicines,
-    });
+    return res.status(200).json(response);
   } catch (error) {
     return res.status(500).json({
       success: false,
@@ -198,16 +206,20 @@ export const searchMedicines = async (req, res) => {
 
 export const getMedicinesByCategory = async (req, res) => {
   try {
-    const medicines = await Medicine.find({
+    const filter = {
       category: req.params.category,
       isActive: true,
+    };
+    const response = await paginateQuery({
+      model: Medicine,
+      filter,
+      query: Medicine.find(filter).sort({ name: 1 }),
+      pagination: req.query,
+      message: "Medicines retrieved successfully.",
+      legacy: { dataKey: "medicines", totalKey: "total" },
     });
 
-    return res.status(200).json({
-      success: true,
-      total: medicines.length,
-      medicines,
-    });
+    return res.status(200).json(response);
   } catch (error) {
     return res.status(500).json({
       success: false,

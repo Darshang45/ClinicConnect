@@ -71,4 +71,7 @@ const doctorSchema = new mongoose.Schema(
   }
 );
 
+doctorSchema.index({ department: 1, isActive: 1, isAvailable: 1 });
+doctorSchema.index({ isActive: 1, createdAt: -1 });
+
 export default mongoose.model("Doctor", doctorSchema);

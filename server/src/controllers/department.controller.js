@@ -1,5 +1,6 @@
 import Department from "../models/Department.js";
 import { validateDepartment } from "../validators/department.validator.js";
+import { paginateQuery } from "../utils/paginate.js";
 //Create department
 
 export const createDepartment = async (req, res) => {
@@ -62,17 +63,19 @@ export const createDepartment = async (req, res) => {
 
 export const getDepartments = async (req, res) => {
   try {
-    const departments = await Department.find({
+    const filter = {
       isActive: true,
-    }).sort({
-      name: 1,
+    };
+    const response = await paginateQuery({
+      model: Department,
+      filter,
+      query: Department.find(filter).sort({ name: 1 }),
+      pagination: req.query,
+      message: "Departments retrieved successfully.",
+      legacy: { dataKey: "departments", totalKey: "total" },
     });
 
-    return res.status(200).json({
-      success: true,
-      total: departments.length,
-      departments,
-    });
+    return res.status(200).json(response);
   } catch (error) {
     return res.status(500).json({
       success: false,
@@ -220,18 +223,23 @@ export const searchDepartments = async (req, res) => {
   try {
     const keyword = req.query.keyword || "";
 
-    const departments = await Department.find({
+    const filter = {
       isActive: true,
       name: {
         $regex: keyword,
         $options: "i",
       },
+    };
+    const response = await paginateQuery({
+      model: Department,
+      filter,
+      query: Department.find(filter).sort({ name: 1 }),
+      pagination: req.query,
+      message: "Departments retrieved successfully.",
+      legacy: { dataKey: "departments" },
     });
 
-    return res.status(200).json({
-      success: true,
-      departments,
-    });
+    return res.status(200).json(response);
   } catch (error) {
     return res.status(500).json({
       success: false,

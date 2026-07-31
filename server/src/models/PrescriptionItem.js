@@ -48,6 +48,8 @@ const prescriptionItemSchema = new mongoose.Schema(
   }
 );
 
+prescriptionItemSchema.index({ prescription: 1 });
+
 export default mongoose.model(
   "PrescriptionItem",
   prescriptionItemSchema
