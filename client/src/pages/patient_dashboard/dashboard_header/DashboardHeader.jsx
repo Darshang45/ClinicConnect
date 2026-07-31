@@ -14,13 +14,9 @@ import {
   FiUsers,
 } from "react-icons/fi";
 import patientPhoto from "../../../assets/images/hero/patient1.jpg";
-<<<<<<< HEAD
-import NotificationList from "../../../components/common/NotificationList";
-=======
 import Notification from "../../../components/common/Notification/Notification";
 import SignOut from "../../../components/common/SignOut";
 import useAuth from "../../../hooks/useAuth";
->>>>>>> ea5d54ac4efa2196a5a78fec8d1d52983f2401b5
 import { notifications } from "../data/notifications";
 import "../../../styles/patient_dashboard.css";
 
@@ -152,10 +148,6 @@ function DashboardHeader() {
             <FiMessageSquare />
           </Link>
           <div className="pd-navbar-menu">
-<<<<<<< HEAD
-            <button className={`pd-icon-button pd-notification-button ${openPanel === "notifications" ? "is-open" : ""}`} type="button" aria-label="Open notifications" aria-expanded={openPanel === "notifications"} onClick={() => togglePanel("notifications")}><FiBell /></button>
-            {openPanel === "notifications" && <div className="pd-navbar-popover" role="dialog" aria-label="Notifications"><div className="pd-popover-heading"><h2>Notifications</h2><span>Mark all read</span></div><NotificationList items={notifications} /></div>}
-=======
             <button
               className={`pd-icon-button pd-notification-button ${openPanel === "notifications" ? "is-open" : ""}`}
               type="button"
@@ -178,7 +170,6 @@ function DashboardHeader() {
                 <Notification items={notifications} />
               </div>
             )}
->>>>>>> ea5d54ac4efa2196a5a78fec8d1d52983f2401b5
           </div>
           <SignOut
             redirectTo="/login"
