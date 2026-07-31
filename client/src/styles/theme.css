@@ -1,0 +1,110 @@
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --primary: #5be68a;
+  --primary-container: #087a3b;
+  --secondary: #a8c9b3;
+  --secondary-container: #1e4130;
+  --on-secondary-container: #c6e8d1;
+  --surface: #121917;
+  --surface-container-low: #18221d;
+  --surface-container: #202c25;
+  --surface-container-high: #29372f;
+  --surface-container-lowest: #0d1310;
+  --on-surface: #e1e9e2;
+  --on-surface-variant: #c1cec1;
+  --on-background: #e1e9e2;
+  --on-primary: #00210d;
+  --on-primary-container: #d7fddf;
+  --outline: #8fa091;
+  --outline-variant: #465748;
+  --error: #ffb4ab;
+  --error-container: #5f1715;
+  --on-error-container: #ffdad6;
+  --inverse-surface: #e1e9e2;
+}
+
+:root[data-theme="dark"] body,
+:root[data-theme="dark"] #root {
+  background: var(--surface);
+  color: var(--on-surface);
+}
+
+:root[data-theme="dark"] .glass-card,
+:root[data-theme="dark"] .about-box,
+:root[data-theme="dark"] .other-doctor-card,
+:root[data-theme="dark"] .cc-signout-dropdown {
+  background: var(--surface-container-lowest);
+}
+
+:root[data-theme="dark"] .common-container.patient-dashboard,
+:root[data-theme="dark"] .doc-inline-chat,
+:root[data-theme="dark"] .rc-inline-chat,
+:root[data-theme="dark"] .rc-notification-dropdown {
+  --pd-primary: var(--primary);
+  --pd-surface: var(--surface);
+  --pd-low: var(--surface-container-low);
+  --pd-high: var(--surface-container-high);
+  --pd-text: var(--on-surface);
+  --pd-muted: var(--on-surface-variant);
+}
+
+:root[data-theme="dark"] .pd-sidebar,
+:root[data-theme="dark"] .pd-navbar-popover,
+:root[data-theme="dark"] .pd-summary-card,
+:root[data-theme="dark"] .patient-dashboard .common-card,
+:root[data-theme="dark"] .pd-profile-close,
+:root[data-theme="dark"] .pd-profile-field input,
+:root[data-theme="dark"] .pd-emergency-item {
+  background: var(--surface-container-lowest) !important;
+  color: var(--on-surface);
+}
+
+:root[data-theme="dark"] .pd-topbar {
+  background: rgb(18 25 23 / 0.9);
+}
+
+:root[data-theme="dark"] .pd-conversation-body {
+  background: var(--surface-container-low);
+}
+
+:root[data-theme="dark"] .cc-signout-heading,
+:root[data-theme="dark"] .cc-signout-user dd {
+  color: var(--on-surface);
+}
+
+:root[data-theme="dark"] .doc-dashboard-header {
+  background: rgb(18 25 23 / 0.9);
+}
+
+:root[data-theme="dark"] .doctor-dashboard .common-card,
+:root[data-theme="dark"] .doc-notification-dropdown,
+:root[data-theme="dark"] .doc-patient-search,
+:root[data-theme="dark"] .doc-follow-up-field input,
+:root[data-theme="dark"] .doc-medicine-card,
+:root[data-theme="dark"] .doc-small-action,
+:root[data-theme="dark"] .doc-prescription-preview,
+:root[data-theme="dark"] .doc-utility-button {
+  background: var(--surface-container-lowest);
+  color: var(--on-surface);
+}
+
+:root[data-theme="dark"] .reception-dashboard,
+:root[data-theme="dark"] .reception-dashboard .common-card,
+:root[data-theme="dark"] .rc-dashboard-header,
+:root[data-theme="dark"] .rc-notification-dropdown,
+:root[data-theme="dark"] .rc-form-field input,
+:root[data-theme="dark"] .rc-form-field select,
+:root[data-theme="dark"] .rc-form-field textarea,
+:root[data-theme="dark"] .rc-selected-patient-search > label,
+:root[data-theme="dark"] .rc-patient-search-results,
+:root[data-theme="dark"] .rc-patient-search-results button,
+:root[data-theme="dark"] .rc-filter-tabs .common-button.is-selected {
+  background: var(--surface-container-lowest) !important;
+  color: var(--on-surface);
+}
+
+:root[data-theme="dark"] .rc-filter-tabs,
+:root[data-theme="dark"] .rc-patient-search-results button:hover,
+:root[data-theme="dark"] .rc-patient-search-results button:focus-visible {
+  background: var(--surface-container-high) !important;
+}

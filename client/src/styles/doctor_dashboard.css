@@ -90,7 +90,7 @@
 .doc-navbar-menu { position: relative; }
 
 .doc-icon-button,
-.doc-button {
+.doctor-dashboard .common-button {
   border: 0;
   cursor: pointer;
   font: inherit;
@@ -228,7 +228,7 @@
 .doc-welcome-banner p { margin-top: 5px; color: rgb(255 255 255 / 0.8); font-size: 14px; font-weight: 600; }
 
 .doc-headline-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
-.doc-card { background: #fff; }
+.doctor-dashboard .common-card { background: #fff; }
 .doc-headline-card,
 .doc-metric-card {
   border: 1px solid rgb(189 202 186 / 0.32);

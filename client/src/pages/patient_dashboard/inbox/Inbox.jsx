@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import ConversationWorkspace from "../../../components/common/ConversationWorkspace";
+=======
+import ConversationWorkspace from "../../../components/common/Inbox/Inbox";
+>>>>>>> ea5d54ac4efa2196a5a78fec8d1d52983f2401b5
 import DashboardHeader from "../dashboard_header/DashboardHeader";
 import { messages } from "../data/messages";
 import "../../../styles/patient_dashboard.css";
