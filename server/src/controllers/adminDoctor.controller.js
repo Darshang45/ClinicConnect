@@ -2,6 +2,7 @@ import User from "../models/User.js";
 import Doctor from "../models/Doctor.js";
 import Department from "../models/Department.js";
 import { logActivity } from "../utils/activityLogger.js";
+import { paginateQuery } from "../utils/paginate.js";
 
 export const createDoctorByAdmin = async (req, res) => {
   try {
@@ -115,12 +116,20 @@ export const createDoctorByAdmin = async (req, res) => {
 
 export const getDoctorsByAdmin = async (req, res) => {
   try {
-    const doctors = await Doctor.find({ isActive: true })
-      .populate("user", "fullName email phone isActive")
-      .populate("department", "name code")
-      .sort({ createdAt: -1 });
+    const filter = { isActive: true };
+    const response = await paginateQuery({
+      model: Doctor,
+      filter,
+      query: Doctor.find(filter)
+        .populate("user", "fullName email phone isActive")
+        .populate("department", "name code")
+        .sort({ createdAt: -1 }),
+      pagination: req.query,
+      message: "Doctors retrieved successfully.",
+      legacy: { dataKey: "doctors", totalKey: "count" },
+    });
 
-    const response = doctors.map((doctor) => ({
+    response.data = response.data.map((doctor) => ({
       doctorId: doctor._id,
       fullName: doctor.user.fullName,
       email: doctor.user.email,
@@ -132,11 +141,7 @@ export const getDoctorsByAdmin = async (req, res) => {
       isAvailable: doctor.isAvailable,
     }));
 
-    return res.status(200).json({
-      success: true,
-      count: response.length,
-      doctors: response,
-    });
+    return res.status(200).json(response);
   } catch (error) {
     return res.status(500).json({
       success: false,

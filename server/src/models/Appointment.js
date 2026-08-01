@@ -132,4 +132,10 @@ const appointmentSchema = new mongoose.Schema(
   },
 );
 
+appointmentSchema.index({ doctor: 1, appointmentStart: 1, status: 1 });
+appointmentSchema.index({ patient: 1, appointmentStart: -1 });
+appointmentSchema.index({ status: 1, appointmentStart: 1 });
+appointmentSchema.index({ department: 1, appointmentStart: 1 });
+appointmentSchema.index({ appointmentStart: 1 });
+
 export default mongoose.model("Appointment", appointmentSchema);

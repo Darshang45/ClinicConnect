@@ -67,4 +67,9 @@ const medicalReportSchema = new mongoose.Schema(
   }
 );
 
+medicalReportSchema.index({ patient: 1, createdAt: -1 });
+medicalReportSchema.index({ doctor: 1, createdAt: -1 });
+medicalReportSchema.index({ appointment: 1 });
+medicalReportSchema.index({ createdAt: -1 });
+
 export default mongoose.model("MedicalReport", medicalReportSchema);

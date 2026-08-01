@@ -1,5 +1,6 @@
 import Announcement from "../models/Announcement.js";
 import { createNotification } from "./notification.controller.js";
+import { paginateQuery } from "../utils/paginate.js";
 
 // ==========================================
 // Create Announcement
@@ -77,16 +78,18 @@ export const createAnnouncement = async (req, res) => {
 
 export const getAllAnnouncements = async (req, res) => {
   try {
-    const announcements = await Announcement.find()
-      .populate("createdBy", "fullName email role")
-      .populate("department", "name")
-      .sort({ createdAt: -1 });
-
-    return res.status(200).json({
-      success: true,
-      count: announcements.length,
-      announcements,
+    const response = await paginateQuery({
+      model: Announcement,
+      query: Announcement.find()
+        .populate("createdBy", "fullName email role")
+        .populate("department", "name")
+        .sort({ createdAt: -1 }),
+      pagination: req.query,
+      message: "Announcements retrieved successfully.",
+      legacy: { dataKey: "announcements", totalKey: "count" },
     });
+
+    return res.status(200).json(response);
   } catch (error) {
     return res.status(500).json({
       success: false,

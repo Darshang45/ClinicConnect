@@ -42,4 +42,6 @@ const departmentSchema = new mongoose.Schema(
   }
 );
 
+departmentSchema.index({ isActive: 1, name: 1 });
+
 export default mongoose.model("Department", departmentSchema);

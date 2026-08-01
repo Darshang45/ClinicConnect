@@ -42,7 +42,8 @@ export const getReceptionistDashboard = async (req, res) => {
         },
       })
       .populate("department", "name")
-      .sort({ tokenNumber: 1 });
+      .sort({ tokenNumber: 1 })
+      .lean();
 
     // Summary counts
     const summary = {
@@ -120,7 +121,8 @@ export const getDoctorDashboard = async (req, res) => {
       },
     })
       .populate("patient", "patientId fullName phone")
-      .sort({ tokenNumber: 1 });
+      .sort({ tokenNumber: 1 })
+      .lean();
 
     const summary = {
       todayPatients: appointments.length,
@@ -234,7 +236,8 @@ export const getAdminDashboard = async (req, res) => {
         },
       })
       .sort({ appointmentStart: -1 })
-      .limit(5);
+      .limit(5)
+      .lean();
 
     const formattedAppointments = recentAppointments.map((appointment) => ({
       appointmentId: appointment._id,
@@ -323,7 +326,8 @@ export const getPatientDashboard = async (req, res) => {
         },
       })
       .populate("department", "name")
-      .sort({ appointmentStart: 1 });
+      .sort({ appointmentStart: 1 })
+      .lean();
 
     // Appointment History
     const appointmentHistory = await Appointment.find({
@@ -339,7 +343,8 @@ export const getPatientDashboard = async (req, res) => {
       })
       .populate("department", "name")
       .sort({ appointmentStart: -1 })
-      .limit(5);
+      .limit(5)
+      .lean();
 
     // Recent Prescriptions
     const prescriptions = await Prescription.find({
@@ -354,14 +359,16 @@ export const getPatientDashboard = async (req, res) => {
         },
       })
       .sort({ createdAt: -1 })
-      .limit(5);
+      .limit(5)
+      .lean();
 
     // Recent Medical Reports
     const reports = await MedicalReport.find({
       patient: patientId,
     })
       .sort({ createdAt: -1 })
-      .limit(5);
+      .limit(5)
+      .lean();
 
     return res.status(200).json({
       success: true,
@@ -481,7 +488,8 @@ export const getPharmacyDashboard = async (req, res) => {
         },
       })
       .sort({ createdAt: -1 })
-      .limit(5);
+      .limit(5)
+      .lean();
 
     const formattedPrescriptions = recentPrescriptions.map((prescription) => ({
       prescriptionId: prescription._id,

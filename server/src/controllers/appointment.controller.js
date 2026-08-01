@@ -178,7 +178,9 @@ export const bookAppointment = async (req, res) => {
       status: {
         $in: ["Scheduled", "Checked-In", "In Consultation"],
       },
-    });
+    })
+      .select("appointmentStart")
+      .lean();
 
     const bookedSlots = bookedAppointments.map((appointment) => {
       const date = new Date(appointment.appointmentStart);

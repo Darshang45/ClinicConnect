@@ -1,14 +1,11 @@
 import ActivityLog from "../models/ActivityLog.js";
+import { paginateQuery } from "../utils/paginate.js";
 
 /*
     GET /api/admins/activity-logs
 */
 export const getActivityLogs = async (req, res) => {
   try {
-    const page = Number(req.query.page) || 1;
-    const limit = Number(req.query.limit) || 10;
-    const skip = (page - 1) * limit;
-
     const filter = {};
 
     if (req.query.role) {
@@ -33,22 +30,24 @@ export const getActivityLogs = async (req, res) => {
       };
     }
 
-    const total = await ActivityLog.countDocuments(filter);
-
-    const logs = await ActivityLog.find(filter)
-      .populate("user", "fullName email role")
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit);
-
-    return res.status(200).json({
-      success: true,
-      page,
-      limit,
-      total,
-      totalPages: Math.ceil(total / limit),
-      logs,
+    const response = await paginateQuery({
+      model: ActivityLog,
+      filter,
+      query: ActivityLog.find(filter)
+        .populate("user", "fullName email role")
+        .sort({ createdAt: -1 }),
+      pagination: req.query,
+      message: "Activity logs retrieved successfully.",
+      legacy: {
+        dataKey: "logs",
+        totalKey: "total",
+        pageKey: "page",
+        limitKey: "limit",
+        totalPagesKey: "totalPages",
+      },
     });
+
+    return res.status(200).json(response);
   } catch (error) {
     return res.status(500).json({
       success: false,
