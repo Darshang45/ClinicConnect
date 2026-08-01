@@ -5,7 +5,7 @@ import "../../styles/login.css";
 
 const roles = [
   {
-    key: "Admin",
+    key: "admin",
     label: "Administrator",
     modalLabel: "Admin",
     subtitle: "(Main Doctor)",
@@ -13,7 +13,7 @@ const roles = [
     route: "/admin/dashboard",
   },
   {
-    key: "Doctor",
+    key: "doctor",
     label: "Medical Doctor",
     modalLabel: "Doctors",
     subtitle: "Clinical Staff",
@@ -21,7 +21,7 @@ const roles = [
     route: "/doctor/dashboard",
   },
   {
-    key: "Receptionist",
+    key: "receptionist",
     label: "Receptionist",
     modalLabel: "Receptionist",
     subtitle: "Front Desk",
@@ -29,7 +29,7 @@ const roles = [
     route: "/reception/dashboard",
   },
   {
-    key: "Pharmacist",
+    key: "pharmacist",
     label: "Pharmacist",
     modalLabel: "Pharmacist",
     subtitle: "Pharmacy",
@@ -40,7 +40,7 @@ const roles = [
 
 function StaffLogin() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+const { staffLogin } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [selectedRole, setSelectedRole] = useState(roles[0]);
@@ -55,15 +55,43 @@ function StaffLogin() {
     };
   }, [isRoleModalOpen]);
 
-  const handleSubmit = (event) => {
-    event.preventDefault();
+
+  const handleSubmit = async (event) => {
+  event.preventDefault();
+
+  try {
     setIsSubmitting(true);
 
-    window.setTimeout(() => {
-      login({ email, role: selectedRole.key });
-      navigate(selectedRole.route);
-    }, 500);
-  };
+    const user = await staffLogin(email, password);
+
+    // Role validation
+    if (user.role !== selectedRole.key.toLowerCase()) {
+      throw new Error(
+        `You are not authorized to login as ${selectedRole.label}.`
+      );
+    }
+
+    navigate(selectedRole.route);
+  } catch (error) {
+    alert(
+      error.response?.data?.message ||
+        error.message ||
+        "Login failed."
+    );
+  } finally {
+    setIsSubmitting(false);
+  }
+};
+
+  // const handleSubmit = (event) => {
+  //   event.preventDefault();
+  //   setIsSubmitting(true);
+
+  //   window.setTimeout(() => {
+  //     login({ email, role: selectedRole.key });
+  //     navigate(selectedRole.route);
+  //   }, 500);
+  // };
 
   return (
     <div className="login-page">

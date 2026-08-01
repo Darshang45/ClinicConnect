@@ -1,27 +1,116 @@
-const roleProfiles = {
-  Admin: { name: "Dr. Alexander Pierce", shortName: "Dr. Alexander", roleTitle: "Chief Medical Officer" },
-  Doctor: { name: "Dr. Sarah Mitchell", shortName: "Dr. Sarah", roleTitle: "Medical Doctor" },
-  Receptionist: { name: "Elena Rodriguez", shortName: "Elena", roleTitle: "Receptionist" },
-  Pharmacist: { name: "Alex Morgan", shortName: "Alex", roleTitle: "Pharmacist" },
-  Patient: { name: "Atharva Srivastava", shortName: "Atharva", roleTitle: "Patient" },
+import api from "./api";
+
+// ============================================
+// 1. Staff Login
+// POST /api/auth/login
+// ============================================
+export const loginStaff = async (credentials) => {
+  const response = await api.post("/auth/login", credentials);
+  return response.data;
 };
 
-const avatar = "https://lh3.googleusercontent.com/aida-public/AB6AXuC9gcHKCW866UuJ6uC8JGW5BZtkikPDDWd4g5fboiuNVec_HSjzwtN4nM06eJAQoFAM_AnV2irwULU9gsp7FNbcjqY_HOJC7kAbh1VpbsoEnUhStV6vz2b3XS-cSItnd_7suXEExDOxhO1j5G9oo-Yw_Ce3A_6NjmrZYoJ0IrkXRHKtCwnN1YHQMLeIC_emsL6nhLKMe7hu2UT8cQz_Qswq3gsKp-wSyLU9O6rr4VMa8cVxVnJeKvmo";
+// ============================================
+// 2. Get Current Logged In User
+// GET /api/auth/me
+// ============================================
+export const getCurrentUser = async () => {
+  const response = await api.get("/auth/me");
+  return response.data;
+};
 
-export function createStaffSession({ email, role }) {
-  const profile = roleProfiles[role] || roleProfiles.Admin;
+// ============================================
+// 3. Change Password
+// PUT /api/auth/change-password
+// ============================================
+export const changePassword = async (passwordData) => {
+  const response = await api.put(
+    "/auth/change-password",
+    passwordData
+  );
 
-  return {
-    token: `local-${Date.now()}`,
-    user: { ...profile, avatar, email, role },
-  };
-}
+  return response.data;
+};
 
-export function createPatientSession({ mobile }) {
-  const profile = roleProfiles.Patient;
+// ============================================
+// 4. Send Patient OTP
+// POST /api/auth/patient/send-otp
+// ============================================
+export const sendPatientOtp = async (email) => {
+  const response = await api.post(
+    "/auth/patient/send-otp",
+    { email }
+  );
 
-  return {
-    token: `local-${Date.now()}`,
-    user: { ...profile, avatar, mobile, role: "Patient" },
-  };
-}
+  return response.data;
+};
+
+// ============================================
+// 5. Verify Patient OTP
+// POST /api/auth/patient/verify-otp
+// ============================================
+export const verifyPatientOtp = async (
+  email,
+  otp
+) => {
+  const response = await api.post(
+    "/auth/patient/verify-otp",
+    {
+      email,
+      otp,
+    }
+  );
+
+  return response.data;
+};
+
+// ============================================
+// 6. Resend Patient OTP
+// POST /api/auth/patient/resend-otp
+// ============================================
+export const resendPatientOtp = async (
+  email
+) => {
+  const response = await api.post(
+    "/auth/patient/resend-otp",
+    { email }
+  );
+
+  return response.data;
+};
+
+// ============================================
+// Logout (Frontend Utility)
+// ============================================
+export const logoutUser = () => {
+  localStorage.removeItem("token");
+  localStorage.removeItem("user");
+};
+
+
+// const roleProfiles = {
+//   Admin: { name: "Dr. Alexander Pierce", shortName: "Dr. Alexander", roleTitle: "Chief Medical Officer" },
+//   Doctor: { name: "Dr. Sarah Mitchell", shortName: "Dr. Sarah", roleTitle: "Medical Doctor" },
+//   Receptionist: { name: "Elena Rodriguez", shortName: "Elena", roleTitle: "Receptionist" },
+//   Pharmacist: { name: "Alex Morgan", shortName: "Alex", roleTitle: "Pharmacist" },
+//   Patient: { name: "Atharva Srivastava", shortName: "Atharva", roleTitle: "Patient" },
+// };
+
+// const avatar = "https://lh3.googleusercontent.com/aida-public/AB6AXuC9gcHKCW866UuJ6uC8JGW5BZtkikPDDWd4g5fboiuNVec_HSjzwtN4nM06eJAQoFAM_AnV2irwULU9gsp7FNbcjqY_HOJC7kAbh1VpbsoEnUhStV6vz2b3XS-cSItnd_7suXEExDOxhO1j5G9oo-Yw_Ce3A_6NjmrZYoJ0IrkXRHKtCwnN1YHQMLeIC_emsL6nhLKMe7hu2UT8cQz_Qswq3gsKp-wSyLU9O6rr4VMa8cVxVnJeKvmo";
+
+// export function createStaffSession({ email, role }) {
+//   const profile = roleProfiles[role] || roleProfiles.Admin;
+
+//   return {
+//     token: `local-${Date.now()}`,
+//     user: { ...profile, avatar, email, role },
+//   };
+// }
+
+// export function createPatientSession({ mobile }) {
+//   const profile = roleProfiles.Patient;
+
+//   return {
+//     token: `local-${Date.now()}`,
+//     user: { ...profile, avatar, mobile, role: "Patient" },
+//   };
+// }

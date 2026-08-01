@@ -39,7 +39,7 @@ function AppRoutes() {
         <Route path="/login/staff" element={<StaffLogin />} />
 
         {/* Dashboards */}
-        <Route element={<ProtectedRoute allowedRoles={["Patient"]} loginPath="/login" />}>
+        <Route element={<ProtectedRoute allowedRoles={["patient"]} loginPath="/login" />}>
           <Route path="/patient/dashboard" element={<PatientDashboard />} />
           <Route path="/patient/book" element={<PatientBooking />} />
           <Route path="/patient/billing" element={<PatientDashboardPage><BillingInsurance /></PatientDashboardPage>} />
@@ -48,22 +48,22 @@ function AppRoutes() {
           <Route path="/patient/inbox" element={<PatientInbox />} />
         </Route>
 
-        <Route element={<ProtectedRoute allowedRoles={["Doctor"]} />}>
+        <Route element={<ProtectedRoute allowedRoles={["doctor"]} />}>
           <Route path="/doctor/dashboard" element={<DoctorDashboard />} />
           <Route path="/doctor/inbox" element={<DoctorChatPanel/>} />
         </Route>
 
-        <Route element={<ProtectedRoute allowedRoles={["Receptionist"]} />}>
+        <Route element={<ProtectedRoute allowedRoles={["receptionist"]} />}>
           <Route path="/reception/dashboard" element={<ReceptionDashboard />} />
           <Route path="/reception/inbox" element={<ReceptionDashboard />} />
           <Route path="/reception/billing" element={<ReceptionDashboard />} />
         </Route>
 
-        <Route element={<ProtectedRoute allowedRoles={["Pharmacist"]} />}>
+        <Route element={<ProtectedRoute allowedRoles={["pharmacist"]} />}>
           <Route path="/pharmacy/dashboard" element={<PharmacyDashboard />} />
         </Route>
 
-        <Route element={<ProtectedRoute allowedRoles={["Admin"]} />}>
+        <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/chat" element={<AdminDashboard />} />
           <Route path="/admin/profile" element={<AdminProfile />} />
