@@ -1,20 +1,21 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import AuthContext from "./authStore";
 
 import {
   loginStaff,
   verifyPatientOtp,
+  completePatientProfile,
   getCurrentUser,
   logoutUser,
 } from "../services/authService";
 
 const TOKEN_KEY = "token";
 const USER_KEY = "user";
+const REGISTRATION_EMAIL = "registrationEmail";
+const REGISTRATION_TOKEN = "registrationToken";
 
 export function AuthProvider({ children }) {
-  const [token, setToken] = useState(
-    localStorage.getItem(TOKEN_KEY) || ""
-  );
+  const [token, setToken] = useState(localStorage.getItem(TOKEN_KEY) || "");
 
   const [user, setUser] = useState(() => {
     const storedUser = localStorage.getItem(USER_KEY);
@@ -23,6 +24,20 @@ export function AuthProvider({ children }) {
   });
 
   const [loading, setLoading] = useState(true);
+
+  const clearRegistrationSession = () => {
+    sessionStorage.removeItem(REGISTRATION_EMAIL);
+    sessionStorage.removeItem(REGISTRATION_TOKEN);
+  };
+
+  const logout = () => {
+    logoutUser();
+    clearRegistrationSession();
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
+    setToken("");
+    setUser(null);
+  };
 
   // ==========================================
   // Restore Session
@@ -38,17 +53,13 @@ export function AuthProvider({ children }) {
       try {
         const response = await getCurrentUser();
 
-        localStorage.setItem(
-          USER_KEY,
-          JSON.stringify(response.user)
-        );
+        localStorage.setItem(USER_KEY, JSON.stringify(response.user));
 
         setUser(response.user);
       } catch (error) {
         console.error(error);
 
         logout();
-
       } finally {
         setLoading(false);
       }
@@ -73,10 +84,7 @@ export function AuthProvider({ children }) {
 
     setToken(response.token);
 
-    localStorage.setItem(
-      USER_KEY,
-      JSON.stringify(response.user)
-    );
+    localStorage.setItem(USER_KEY, JSON.stringify(response.user));
 
     setUser(response.user);
 
@@ -99,10 +107,7 @@ export function AuthProvider({ children }) {
 
     const currentUser = await getCurrentUser();
 
-    localStorage.setItem(
-      USER_KEY,
-      JSON.stringify(currentUser.user)
-    );
+    localStorage.setItem(USER_KEY, JSON.stringify(currentUser.user));
 
     setUser(currentUser.user);
 
@@ -110,54 +115,77 @@ export function AuthProvider({ children }) {
   };
 
   // ==========================================
-  // Logout
+  // Save Registration Session
+  // ==========================================
+  const saveRegistrationSession = (email, registrationToken) => {
+    sessionStorage.setItem(REGISTRATION_EMAIL, email);
+    sessionStorage.setItem(REGISTRATION_TOKEN, registrationToken);
+  };
+
+  // ==========================================
+  // get Registration Session
   // ==========================================
 
-  const logout = () => {
-    logoutUser();
+  const getRegistrationSession = () => {
+    return {
+      email: sessionStorage.getItem(REGISTRATION_EMAIL),
+      registrationToken: sessionStorage.getItem(REGISTRATION_TOKEN),
+    };
+  };
 
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(USER_KEY);
+  // ==========================================
+  // complete Patient Registration
+  // ==========================================
 
-    setToken("");
+  const completePatientRegistration = async (profileData) => {
+    const { registrationToken } = getRegistrationSession();
 
-    setUser(null);
+    if (!registrationToken) {
+      throw new Error("Registration session expired.");
+    }
+
+    const response = await completePatientProfile(
+      profileData,
+      registrationToken,
+    );
+
+    localStorage.setItem(TOKEN_KEY, response.token);
+
+    setToken(response.token);
+
+    const currentUser = await getCurrentUser();
+
+    localStorage.setItem(USER_KEY, JSON.stringify(currentUser.user));
+
+    setUser(currentUser.user);
+
+    clearRegistrationSession();
+
+    return currentUser.user;
   };
 
   // ==========================================
   // Context Value
   // ==========================================
 
-  const value = useMemo(
-    () => ({
-      loading,
+  const value = {
+    loading,
+    token,
+    user,
+    isAuthenticated: !!token && !!user,
+    role: user?.role || "",
+    email: user?.email || "",
+    staffLogin,
+    patientLogin,
+    saveRegistrationSession,
+    getRegistrationSession,
+    clearRegistrationSession,
+    completePatientRegistration,
+    logout,
+  };
 
-      token,
-
-      user,
-
-      isAuthenticated: !!token,
-
-      role: user?.role || "",
-
-      email: user?.email || "",
-
-      staffLogin,
-
-      patientLogin,
-
-      logout,
-    }),
-    [loading, token, user]
-  );
-
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
-
 
 // import { useMemo, useState } from "react";
 // import AuthContext from "./authStore";

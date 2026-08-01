@@ -1,5 +1,8 @@
 import api from "./api";
 
+// Matches the current backend resend-OTP guard.
+export const PATIENT_OTP_RESEND_COOLDOWN_SECONDS = 60;
+
 // ============================================
 // 1. Staff Login
 // POST /api/auth/login
@@ -23,10 +26,7 @@ export const getCurrentUser = async () => {
 // PUT /api/auth/change-password
 // ============================================
 export const changePassword = async (passwordData) => {
-  const response = await api.put(
-    "/auth/change-password",
-    passwordData
-  );
+  const response = await api.put("/auth/change-password", passwordData);
 
   return response.data;
 };
@@ -36,10 +36,7 @@ export const changePassword = async (passwordData) => {
 // POST /api/auth/patient/send-otp
 // ============================================
 export const sendPatientOtp = async (email) => {
-  const response = await api.post(
-    "/auth/patient/send-otp",
-    { email }
-  );
+  const response = await api.post("/auth/patient/send-otp", { email });
 
   return response.data;
 };
@@ -48,17 +45,11 @@ export const sendPatientOtp = async (email) => {
 // 5. Verify Patient OTP
 // POST /api/auth/patient/verify-otp
 // ============================================
-export const verifyPatientOtp = async (
-  email,
-  otp
-) => {
-  const response = await api.post(
-    "/auth/patient/verify-otp",
-    {
-      email,
-      otp,
-    }
-  );
+export const verifyPatientOtp = async (email, otp) => {
+  const response = await api.post("/auth/patient/verify-otp", {
+    email,
+    otp,
+  });
 
   return response.data;
 };
@@ -67,12 +58,28 @@ export const verifyPatientOtp = async (
 // 6. Resend Patient OTP
 // POST /api/auth/patient/resend-otp
 // ============================================
-export const resendPatientOtp = async (
-  email
+export const resendPatientOtp = async (email) => {
+  const response = await api.post("/auth/patient/resend-otp", { email });
+
+  return response.data;
+};
+
+// ============================================
+// 7. Complete Patient Profile
+// POST /api/auth/patient/complete-profile
+// ============================================
+export const completePatientProfile = async (
+  profileData,
+  registrationToken,
 ) => {
   const response = await api.post(
-    "/auth/patient/resend-otp",
-    { email }
+    "/auth/patient/complete-profile",
+    profileData,
+    {
+      headers: {
+        Authorization: `Bearer ${registrationToken}`,
+      },
+    },
   );
 
   return response.data;
@@ -85,7 +92,6 @@ export const logoutUser = () => {
   localStorage.removeItem("token");
   localStorage.removeItem("user");
 };
-
 
 // const roleProfiles = {
 //   Admin: { name: "Dr. Alexander Pierce", shortName: "Dr. Alexander", roleTitle: "Chief Medical Officer" },
