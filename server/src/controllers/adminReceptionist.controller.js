@@ -1,5 +1,6 @@
 import User from "../models/User.js";
 import { logActivity } from "../utils/activityLogger.js";
+import { paginateQuery } from "../utils/paginate.js";
 
 export const createReceptionist = async (req, res) => {
   try {
@@ -55,18 +56,20 @@ export const createReceptionist = async (req, res) => {
 
 export const getReceptionists = async (req, res) => {
   try {
-    const receptionists = await User.find({
+    const filter = {
       role: "receptionist",
       isActive: true,
-    })
-      .select("-password")
-      .sort({ createdAt: -1 });
-
-    return res.status(200).json({
-      success: true,
-      count: receptionists.length,
-      receptionists,
+    };
+    const response = await paginateQuery({
+      model: User,
+      filter,
+      query: User.find(filter).select("-password").sort({ createdAt: -1 }),
+      pagination: req.query,
+      message: "Receptionists retrieved successfully.",
+      legacy: { dataKey: "receptionists", totalKey: "count" },
     });
+
+    return res.status(200).json(response);
   } catch (error) {
     return res.status(500).json({
       success: false,

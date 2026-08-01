@@ -10,6 +10,7 @@ import Medicine from "../models/Medicine.js";
 import { validatePharmacyOrder } from "../validators/pharmacy.validator.js";
 import { logActivity } from "../utils/activityLogger.js";
 import { createNotification } from "./notification.controller.js";
+import { paginateQuery } from "../utils/paginate.js";
 
 export const createPharmacyOrder = async (req, res) => {
   try {
@@ -109,29 +110,40 @@ export const createPharmacyOrder = async (req, res) => {
 
 export const getAllPharmacyOrders = async (req, res) => {
   try {
-    const orders = await PharmacyOrder.find()
-      .populate("prescription")
-      .populate("patient")
-      .sort({ createdAt: -1 });
+    const response = await paginateQuery({
+      model: PharmacyOrder,
+      query: PharmacyOrder.find()
+        .populate("prescription")
+        .populate("patient")
+        .sort({ createdAt: -1 }),
+      pagination: req.query,
+      message: "Pharmacy orders retrieved successfully.",
+      legacy: { dataKey: "orders", totalKey: "count" },
+    });
 
-    const result = [];
+    const orderIds = response.data.map((order) => order._id);
+    const orderItems = orderIds.length
+      ? await PharmacyOrderItem.find({
+          pharmacyOrder: { $in: orderIds },
+        })
+          .populate("medicine")
+          .lean()
+      : [];
+    const medicinesByOrder = new Map();
 
-    for (const order of orders) {
-      const medicines = await PharmacyOrderItem.find({
-        pharmacyOrder: order._id,
-      }).populate("medicine");
-
-      result.push({
-        ...order.toObject(),
-        medicines,
-      });
+    for (const item of orderItems) {
+      const key = item.pharmacyOrder.toString();
+      const medicines = medicinesByOrder.get(key) || [];
+      medicines.push(item);
+      medicinesByOrder.set(key, medicines);
     }
 
-    return res.status(200).json({
-      success: true,
-      count: result.length,
-      orders: result,
-    });
+    response.data = response.data.map((order) => ({
+      ...order,
+      medicines: medicinesByOrder.get(order._id.toString()) || [],
+    }));
+
+    return res.status(200).json(response);
   } catch (error) {
     return res.status(500).json({
       success: false,
@@ -186,31 +198,42 @@ export const getOrdersByPatient = async (req, res) => {
       });
     }
 
-    const orders = await PharmacyOrder.find({
-      patient: req.params.patientId,
-    })
-      .populate("prescription")
-      .populate("patient")
-      .sort({ createdAt: -1 });
+    const filter = { patient: req.params.patientId };
+    const response = await paginateQuery({
+      model: PharmacyOrder,
+      filter,
+      query: PharmacyOrder.find(filter)
+        .populate("prescription")
+        .populate("patient")
+        .sort({ createdAt: -1 }),
+      pagination: req.query,
+      message: "Patient pharmacy orders retrieved successfully.",
+      legacy: { dataKey: "orders", totalKey: "count" },
+    });
 
-    const result = [];
+    const orderIds = response.data.map((order) => order._id);
+    const orderItems = orderIds.length
+      ? await PharmacyOrderItem.find({
+          pharmacyOrder: { $in: orderIds },
+        })
+          .populate("medicine")
+          .lean()
+      : [];
+    const medicinesByOrder = new Map();
 
-    for (const order of orders) {
-      const medicines = await PharmacyOrderItem.find({
-        pharmacyOrder: order._id,
-      }).populate("medicine");
-
-      result.push({
-        ...order.toObject(),
-        medicines,
-      });
+    for (const item of orderItems) {
+      const key = item.pharmacyOrder.toString();
+      const medicines = medicinesByOrder.get(key) || [];
+      medicines.push(item);
+      medicinesByOrder.set(key, medicines);
     }
 
-    return res.status(200).json({
-      success: true,
-      count: result.length,
-      orders: result,
-    });
+    response.data = response.data.map((order) => ({
+      ...order,
+      medicines: medicinesByOrder.get(order._id.toString()) || [],
+    }));
+
+    return res.status(200).json(response);
   } catch (error) {
     return res.status(500).json({
       success: false,
@@ -392,17 +415,21 @@ export const getPharmacyDashboard = async (req, res) => {
 
 export const getPendingOrders = async (req, res) => {
   try {
-    const orders = await PharmacyOrder.find({
+    const filter = {
       dispensingStatus: "Pending",
-    })
-      .populate("patient", "patientId fullName phone")
-      .sort({ createdAt: -1 });
-
-    return res.status(200).json({
-      success: true,
-      total: orders.length,
-      orders,
+    };
+    const response = await paginateQuery({
+      model: PharmacyOrder,
+      filter,
+      query: PharmacyOrder.find(filter)
+        .populate("patient", "patientId fullName phone")
+        .sort({ createdAt: -1 }),
+      pagination: req.query,
+      message: "Pending pharmacy orders retrieved successfully.",
+      legacy: { dataKey: "orders", totalKey: "total" },
     });
+
+    return res.status(200).json(response);
   } catch (error) {
     return res.status(500).json({
       success: false,
@@ -413,17 +440,21 @@ export const getPendingOrders = async (req, res) => {
 
 export const getDispensedOrders = async (req, res) => {
   try {
-    const orders = await PharmacyOrder.find({
+    const filter = {
       dispensingStatus: "Dispensed",
-    })
-      .populate("patient", "patientId fullName phone")
-      .sort({ dispensedAt: -1 });
-
-    return res.status(200).json({
-      success: true,
-      total: orders.length,
-      orders,
+    };
+    const response = await paginateQuery({
+      model: PharmacyOrder,
+      filter,
+      query: PharmacyOrder.find(filter)
+        .populate("patient", "patientId fullName phone")
+        .sort({ dispensedAt: -1 }),
+      pagination: req.query,
+      message: "Dispensed pharmacy orders retrieved successfully.",
+      legacy: { dataKey: "orders", totalKey: "total" },
     });
+
+    return res.status(200).json(response);
   } catch (error) {
     return res.status(500).json({
       success: false,
@@ -437,7 +468,8 @@ export const getRecentOrders = async (req, res) => {
     const orders = await PharmacyOrder.find()
       .populate("patient", "patientId fullName")
       .sort({ createdAt: -1 })
-      .limit(10);
+      .limit(10)
+      .lean();
 
     return res.status(200).json({
       success: true,

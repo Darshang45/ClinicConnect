@@ -5,6 +5,7 @@ import Patient from "../models/Patient.js";
 import Doctor from "../models/Doctor.js";
 import Department from "../models/Department.js";
 import Appointment from "../models/Appointment.js";
+import { paginateQuery } from "../utils/paginate.js";
 
 
 
@@ -70,17 +71,21 @@ export const createAdmin = async (req, res) => {
 
 export const getAdmins = async (req, res) => {
   try {
-    const admins = await Admin.find({
+    const filter = {
       isActive: true,
-    })
-      .populate("user", "fullName email phone")
-      .sort({ createdAt: -1 });
-
-    return res.status(200).json({
-      success: true,
-      total: admins.length,
-      admins,
+    };
+    const response = await paginateQuery({
+      model: Admin,
+      filter,
+      query: Admin.find(filter)
+        .populate("user", "fullName email phone")
+        .sort({ createdAt: -1 }),
+      pagination: req.query,
+      message: "Administrators retrieved successfully.",
+      legacy: { dataKey: "admins", totalKey: "total" },
     });
+
+    return res.status(200).json(response);
   } catch (error) {
     return res.status(500).json({
       success: false,
@@ -304,7 +309,8 @@ export const getRecentAppointments = async (req, res) => {
           select: "fullName",
         },
       })
-      .populate("department", "name");
+      .populate("department", "name")
+      .lean();
 
     const recentAppointments = appointments.map((appointment) => ({
       appointmentId: appointment._id,
@@ -499,7 +505,9 @@ export const getTodayDashboard = async (req, res) => {
         $gte: startOfDay,
         $lte: endOfDay,
       },
-    });
+    })
+      .select("status")
+      .lean();
 
     const today = {
       appointments: appointments.length,
@@ -636,7 +644,8 @@ export const getRecentDoctors = async (req, res) => {
       .populate("user", "fullName email phone")
       .populate("department", "name")
       .sort({ createdAt: -1 })
-      .limit(5);
+      .limit(5)
+      .lean();
 
     const data = doctors.map((doctor) => ({
       doctorId: doctor._id,
@@ -673,7 +682,8 @@ export const getRecentPatients = async (req, res) => {
       isActive: true,
     })
       .sort({ createdAt: -1 })
-      .limit(5);
+      .limit(5)
+      .lean();
 
     const data = patients.map((patient) => ({
       patientId: patient.patientId,

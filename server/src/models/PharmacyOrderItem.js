@@ -34,6 +34,8 @@ const pharmacyOrderItemSchema = new mongoose.Schema(
   }
 );
 
+pharmacyOrderItemSchema.index({ pharmacyOrder: 1 });
+
 export default mongoose.model(
   "PharmacyOrderItem",
   pharmacyOrderItemSchema

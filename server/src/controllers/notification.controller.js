@@ -1,4 +1,5 @@
 import Notification from "../models/Notification.js";
+import { paginateQuery } from "../utils/paginate.js";
 
 // ======================================================
 // Internal Helper Function
@@ -34,35 +35,38 @@ export const getNotifications = async (req, res) => {
     const userId = req.user._id;
     const userRole = req.user.role;
 
-    const notifications = await Notification.find({
+    const filter = {
       $or: [
         { receiver: userId },
         { receiverRole: userRole },
         { receiverRole: "all" },
       ],
       deletedBy: { $ne: userId },
-    })
-      .populate("sender", "fullName role")
-      .sort({ createdAt: -1 });
+    };
+    const response = await paginateQuery({
+      model: Notification,
+      filter,
+      query: Notification.find(filter)
+        .populate("sender", "fullName role")
+        .sort({ createdAt: -1 }),
+      pagination: req.query,
+      message: "Notifications retrieved successfully.",
+      legacy: { dataKey: "notifications", totalKey: "count" },
+    });
 
-    const formattedNotifications = notifications.map((doc) => {
-      const notifObj = doc.toObject();
+    response.data = response.data.map((doc) => {
       const isUserRead =
         doc.isRead ||
         (doc.readBy &&
           doc.readBy.some((id) => id.toString() === userId.toString()));
 
       return {
-        ...notifObj,
+        ...doc,
         isRead: Boolean(isUserRead),
       };
     });
 
-    return res.status(200).json({
-      success: true,
-      count: formattedNotifications.length,
-      notifications: formattedNotifications,
-    });
+    return res.status(200).json(response);
 
   } catch (error) {
 
@@ -84,7 +88,7 @@ export const getUnreadNotifications = async (req, res) => {
     const userId = req.user._id;
     const userRole = req.user.role;
 
-    const notifications = await Notification.find({
+    const filter = {
       $or: [
         { receiver: userId },
         { receiverRole: userRole },
@@ -93,20 +97,24 @@ export const getUnreadNotifications = async (req, res) => {
       deletedBy: { $ne: userId },
       readBy: { $ne: userId },
       isRead: false,
-    })
-      .populate("sender", "fullName role")
-      .sort({ createdAt: -1 });
+    };
+    const response = await paginateQuery({
+      model: Notification,
+      filter,
+      query: Notification.find(filter)
+        .populate("sender", "fullName role")
+        .sort({ createdAt: -1 }),
+      pagination: req.query,
+      message: "Unread notifications retrieved successfully.",
+      legacy: { dataKey: "notifications", totalKey: "count" },
+    });
 
-    const formattedNotifications = notifications.map((doc) => ({
-      ...doc.toObject(),
+    response.data = response.data.map((doc) => ({
+      ...doc,
       isRead: false,
     }));
 
-    return res.status(200).json({
-      success: true,
-      count: formattedNotifications.length,
-      notifications: formattedNotifications,
-    });
+    return res.status(200).json(response);
 
   } catch (error) {
 
