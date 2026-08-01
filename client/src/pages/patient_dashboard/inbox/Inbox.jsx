@@ -1,4 +1,4 @@
-import ConversationWorkspace from "../../../components/common/ConversationWorkspace";
+import ConversationWorkspace from "../../../components/common/Inbox/Inbox";
 import DashboardHeader from "../dashboard_header/DashboardHeader";
 import { messages } from "../data/messages";
 import "../../../styles/patient_dashboard.css";

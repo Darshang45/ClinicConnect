@@ -1,8 +1,8 @@
-function Container({ children, className = "", ...props }) {
+function Container({ as: Component = "div", children, className = "", ...props }) {
   return (
-    <div className={`pd-container ${className}`.trim()} {...props}>
+    <Component className={`common-container ${className}`.trim()} {...props}>
       {children}
-    </div>
+    </Component>
   );
 }
 

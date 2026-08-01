@@ -1,17 +1,6 @@
-import "../../styles/doctor_dashboard.css";
-import "../../styles/patient_dashboard.css";
-
-function Card({
-  children,
-  className = "",
-  as: Component = "div",
-  ...props
-}) {
+function Card({ as: Component = "div", children, className = "", ...props }) {
   return (
-    <Component
-      className={`doc-card ${className}`.trim()}
-      {...props}
-    >
+    <Component className={`common-card ${className}`.trim()} {...props}>
       {children}
     </Component>
   );

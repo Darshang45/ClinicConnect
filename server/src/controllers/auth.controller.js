@@ -40,7 +40,7 @@ export const login = async (req, res) => {
       isActive: true,
     }).select("+password");
 
-    if (!user) {
+    if (!user || user.role === "patient") {
       return res.status(401).json({
         success: false,
         message: "Invalid email or password.",
@@ -409,6 +409,9 @@ export const completePatientProfile = async (req, res) => {
       address,
       bloodGroup,
       emergencyContact,
+      allergies,
+      chronicDiseases,
+      insurance,
     } = req.body;
 
     if (!fullName || !phone || !gender || !dob || !address) {
@@ -461,8 +464,9 @@ export const completePatientProfile = async (req, res) => {
             bloodGroup,
             address,
             emergencyContact: emergencyContact || {},
-            allergies: [],
-            chronicDiseases: [],
+            allergies: allergies || [],
+            chronicDiseases: chronicDiseases || [],
+            insurance: insurance || {},
           },
         ],
         { session },

@@ -1,4 +1,4 @@
-import ConversationWorkspace from "../../../components/common/ConversationWorkspace";
+import Inbox from "../../../components/common/Inbox/Inbox";
 import { doctorConversations } from "../data/communications";
 import "../../../styles/doctor_dashboard.css";
 import DashboardHeader from "../dashboard_header/DashboardHeader";
@@ -8,7 +8,7 @@ function DoctorChatPanel({ panelRef }) {
     
     <aside className="doc-inline-chat" ref={panelRef} aria-label="Doctor inbox">
       <DashboardHeader/>
-      <ConversationWorkspace
+      <Inbox
         className="doc-chat-workspace"
         threads={doctorConversations}
         conversationLabel="Inbox"

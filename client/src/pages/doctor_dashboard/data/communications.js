@@ -4,7 +4,7 @@ import patientTwo from "../../../assets/images/hero/patient2.jpg";
 export const doctorConversations = [
   { id: "sarah", name: "Sarah Parker", preview: "I have arrived for my follow-up appointment.", time: "10:12 AM", unread: 2, image: patientOne },
   { id: "reception", name: "Reception Desk", preview: "Emily Blunt has completed her intake form.", time: "9:54 AM", unread: 1, image: patientTwo },
-  { id: "pharmacy", name: "LuxeHealth Pharmacy", preview: "Prescription #LH-8821 is ready for review.", time: "Yesterday", unread: 0, image: patientOne },
+  { id: "pharmacy", name: "Clinic Connect Pharmacy", preview: "Prescription #LH-8821 is ready for review.", time: "Yesterday", unread: 0, image: patientOne },
 ];
 
 export const doctorNotifications = [
