@@ -24,20 +24,16 @@ const userSchema = new mongoose.Schema(
 
     password: {
       type: String,
-      required: true,
+      required: function () {
+        return this.role !== "patient";
+      },
       minlength: 6,
       select: false,
     },
 
     role: {
       type: String,
-      enum: [
-        "patient",
-        "doctor",
-        "receptionist",
-        "pharmacist",
-        "admin",
-      ],
+      enum: ["patient", "doctor", "receptionist", "pharmacist", "admin"],
       required: true,
     },
 
@@ -48,11 +44,14 @@ const userSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 // Hash password before saving
 userSchema.pre("save", async function () {
+
+  // Patients authenticate with OTP only
+  if (!this.password) return;
 
   if (!this.isModified("password")) return;
 
@@ -60,17 +59,11 @@ userSchema.pre("save", async function () {
 
   this.password = await bcrypt.hash(this.password, salt);
 
-
 });
 
 // Compare password
 userSchema.methods.matchPassword = async function (enteredPassword) {
-
-  return await bcrypt.compare(
-    enteredPassword,
-    this.password
-  );
-
+  return await bcrypt.compare(enteredPassword, this.password);
 };
 
 export default mongoose.model("User", userSchema);
