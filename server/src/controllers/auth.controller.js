@@ -368,7 +368,7 @@ export const verifyPatientOtp = async (req, res) => {
 
     const token = jwt.sign(
       {
-        id: patient._id,
+        id: patient.user._id,
         role: "patient",
       },
       process.env.JWT_SECRET,
