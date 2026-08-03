@@ -135,9 +135,14 @@ export const getDoctorsByAdmin = async (req, res) => {
       email: doctor.user.email,
       phone: doctor.user.phone,
       department: doctor.department.name,
+      departmentId: doctor.department._id,
       specialization: doctor.specialization,
       experience: doctor.experience,
       consultationFee: doctor.consultationFee,
+      qualification: doctor.qualification,
+      licenseNumber: doctor.licenseNumber,
+      bio: doctor.bio,
+      profilePhoto: doctor.profilePhoto,
       isAvailable: doctor.isAvailable,
     }));
 

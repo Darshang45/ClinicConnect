@@ -241,7 +241,7 @@ export const getDashboardOverview = async (req, res) => {
         pharmacists: totalPharmacists,
         appointmentsToday,
       },
-    });
+    }); 
   } catch (error) {
     return res.status(500).json({
       success: false,
@@ -572,11 +572,13 @@ export const getAdminDashboard = async (req, res) => {
       isActive: true,
     });
 
-    const totalReceptionists = await Receptionist.countDocuments({
+    const totalReceptionists = await User.countDocuments({
+      role: "receptionist",
       isActive: true,
     });
 
-    const totalPharmacists = await Pharmacist.countDocuments({
+    const totalPharmacists = await User.countDocuments({
+      role: "pharmacist",
       isActive: true,
     });
 

@@ -1,0 +1,35 @@
+import React, { useState } from "react";
+import { deletePharmacist } from "../../../../services/AdminPharmacistService";
+import { DeleteModal } from "../../components/ui";
+
+function DeletePharmacistModal({ pharmacist, onClose, onSuccess }) {
+  const [loading, setLoading] = useState(false);
+
+  const handleDelete = async () => {
+    if (!pharmacist) return;
+    try {
+      setLoading(true);
+      const pharmId = pharmacist._id || pharmacist.id;
+      await deletePharmacist(pharmId);
+      if (onSuccess) onSuccess();
+    } catch (error) {
+      console.error(error);
+      alert(error.response?.data?.message || "Unable to delete pharmacist.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <DeleteModal
+      isOpen={true}
+      title="Delete Pharmacist Account"
+      itemName={pharmacist?.fullName || "Pharmacist"}
+      onClose={onClose}
+      onConfirm={handleDelete}
+      loading={loading}
+    />
+  );
+}
+
+export default DeletePharmacistModal;

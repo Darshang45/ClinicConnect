@@ -2,8 +2,8 @@ function Footer() {
   return (
     <footer className="footer">
       <div className="footer-left">
-        <span className="footer-brand">LuxeHealth</span>
-        <p>(c) 2026 LuxeHealth Medical Systems. All rights reserved.</p>
+        <span className="footer-brand">Clinic Connect</span>
+        <p>(c) 2026 Clinic Connect Medical Systems. All rights reserved.</p>
       </div>
       <div className="footer-links">
         <a href="#privacy">Privacy Policy</a>
