@@ -16,6 +16,7 @@ import {
   Button,
   Alert,
 } from "../../components/ui";
+import { getApiErrorMessage } from "../../../../services/api";
 
 function DoctorForm({ mode = "add", onCancel, onSuccess, doctor }) {
   const [departments, setDepartments] = useState([]);
@@ -83,19 +84,21 @@ function DoctorForm({ mode = "add", onCancel, onSuccess, doctor }) {
 
     try {
       setLoading(true);
+      let response;
+
       if (mode === "add") {
-        await createDoctor(formData);
+        response = await createDoctor(formData);
       } else {
         const docId = doctor.doctorId || doctor._id;
-        await updateDoctor(docId, formData);
+        response = await updateDoctor(docId, formData);
       }
-      if (onSuccess) onSuccess();
+      if (onSuccess) onSuccess(response?.message);
     } catch (error) {
       console.error(error);
-      setErrorMsg(
-        error.response?.data?.message ||
-          `Failed to ${mode === "add" ? "create" : "update"} doctor.`
-      );
+      setErrorMsg(getApiErrorMessage(
+        error,
+        `Failed to ${mode === "add" ? "create" : "update"} doctor.`
+      ));
     } finally {
       setLoading(false);
     }

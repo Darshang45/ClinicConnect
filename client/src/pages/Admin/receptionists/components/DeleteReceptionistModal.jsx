@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { deleteReceptionist } from "../../../../services/AdminReceptionistService";
+import { getApiErrorMessage } from "../../../../services/api";
 import { DeleteModal } from "../../components/ui";
 
-function DeleteReceptionistModal({ receptionist, onClose, onSuccess }) {
+function DeleteReceptionistModal({ receptionist, onClose, onSuccess, onError }) {
   const [loading, setLoading] = useState(false);
 
   const handleDelete = async () => {
@@ -10,11 +11,11 @@ function DeleteReceptionistModal({ receptionist, onClose, onSuccess }) {
     try {
       setLoading(true);
       const recId = receptionist._id || receptionist.id;
-      await deleteReceptionist(recId);
-      if (onSuccess) onSuccess();
+      const response = await deleteReceptionist(recId);
+      if (onSuccess) onSuccess(response?.message);
     } catch (error) {
       console.error(error);
-      alert(error.response?.data?.message || "Unable to delete receptionist.");
+      if (onError) onError(getApiErrorMessage(error, "Unable to delete receptionist."));
     } finally {
       setLoading(false);
     }

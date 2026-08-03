@@ -1,5 +1,7 @@
 import User from "../models/User.js";
+import { logActivity } from "../utils/activityLogger.js";
 import { paginateQuery } from "../utils/paginate.js";
+import { createCaseInsensitiveSearchRegex } from "../utils/search.js";
 
 export const createPharmacist = async (req, res) => {
   try {
@@ -59,6 +61,16 @@ export const getPharmacists = async (req, res) => {
       role: "pharmacist",
       isActive: true,
     };
+    const searchRegex = createCaseInsensitiveSearchRegex(req.query.search);
+
+    if (searchRegex) {
+      filter.$or = [
+        { fullName: searchRegex },
+        { email: searchRegex },
+        { phone: searchRegex },
+      ];
+    }
+
     const response = await paginateQuery({
       model: User,
       filter,
@@ -152,6 +164,15 @@ export const updatePharmacist = async (req, res) => {
 
     await pharmacist.save();
 
+    await logActivity({
+      user: req.user._id,
+      role: req.user.role,
+      action: "UPDATE_PHARMACIST",
+      module: "Pharmacist",
+      description: `Updated Pharmacist ${pharmacist.fullName}`,
+      ipAddress: req.ip,
+    });
+
     return res.status(200).json({
       success: true,
       message: "Pharmacist updated successfully.",
@@ -166,14 +187,6 @@ export const updatePharmacist = async (req, res) => {
 
 export const deletePharmacist = async (req, res) => {
   try {
-    await logActivity({
-      user: req.user._id,
-      role: req.user.role,
-      action: "DELETE_PHARMACIST",
-      module: "Pharmacist",
-      description: `Deleted Pharmacist ${pharmacist.fullName}`,
-      ipAddress: req.ip,
-    });
     const pharmacist = await User.findOne({
       _id: req.params.id,
       role: "pharmacist",
@@ -190,6 +203,15 @@ export const deletePharmacist = async (req, res) => {
     pharmacist.isActive = false;
 
     await pharmacist.save();
+
+    await logActivity({
+      user: req.user._id,
+      role: req.user.role,
+      action: "DELETE_PHARMACIST",
+      module: "Pharmacist",
+      description: `Deleted Pharmacist ${pharmacist.fullName}`,
+      ipAddress: req.ip,
+    });
 
     return res.status(200).json({
       success: true,

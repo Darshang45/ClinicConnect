@@ -13,6 +13,7 @@ import {
   Button,
   Alert,
 } from "../../components/ui";
+import { getApiErrorMessage } from "../../../../services/api";
 
 function ReceptionistForm({ mode = "add", onCancel, onSuccess, receptionist }) {
   const [loading, setLoading] = useState(false);
@@ -50,19 +51,21 @@ function ReceptionistForm({ mode = "add", onCancel, onSuccess, receptionist }) {
 
     try {
       setLoading(true);
+      let response;
+
       if (mode === "add") {
-        await createReceptionist(formData);
+        response = await createReceptionist(formData);
       } else {
         const recId = receptionist._id || receptionist.id;
-        await updateReceptionist(recId, formData);
+        response = await updateReceptionist(recId, formData);
       }
-      if (onSuccess) onSuccess();
+      if (onSuccess) onSuccess(response?.message);
     } catch (error) {
       console.error(error);
-      setErrorMsg(
-        error.response?.data?.message ||
-          `Failed to ${mode === "add" ? "create" : "update"} receptionist.`
-      );
+      setErrorMsg(getApiErrorMessage(
+        error,
+        `Failed to ${mode === "add" ? "create" : "update"} receptionist.`
+      ));
     } finally {
       setLoading(false);
     }

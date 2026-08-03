@@ -4,7 +4,8 @@ import PharmacistTable from "./components/PharmacistTable";
 import PharmacistForm from "./components/PharmacistForm";
 import PharmacistDetails from "./components/PharmacistDetails";
 import DeletePharmacistModal from "./components/DeletePharmacistModal";
-import { getPharmacists } from "../../../services/AdminPharmacistService";
+import { getPharmacists, getPharmacistById } from "../../../services/AdminPharmacistService";
+import { getApiErrorMessage } from "../../../services/api";
 import { PageContainer } from "../components/ui";
 
 function PharmacistsPage() {
@@ -13,6 +14,7 @@ function PharmacistsPage() {
   const [pharmacists, setPharmacists] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState(null);
   const [search, setSearch] = useState("");
@@ -40,7 +42,7 @@ function PharmacistsPage() {
       );
     } catch (err) {
       console.error(err);
-      setError(err.response?.data?.message || "Failed to load pharmacists list.");
+      setError(getApiErrorMessage(err, "Failed to load pharmacists list."));
     } finally {
       setLoading(false);
     }
@@ -49,6 +51,40 @@ function PharmacistsPage() {
   useEffect(() => {
     fetchPharmacistsList();
   }, [fetchPharmacistsList]);
+
+  const handleSearchChange = (value) => {
+    setPage(1);
+    setSearch(value);
+  };
+
+  const handleView = async (pharmacist) => {
+    try {
+      setLoading(true);
+      setError("");
+      const pharmacistId = pharmacist._id || pharmacist.id;
+      const response = await getPharmacistById(pharmacistId);
+      setSelectedPharmacist({ ...pharmacist, ...(response.pharmacist || {}) });
+      setMode("view");
+    } catch (err) {
+      console.error(err);
+      setError(getApiErrorMessage(err, "Failed to load pharmacist details."));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleMutationSuccess = (message) => {
+    setError("");
+    setSuccess(message || "Pharmacist record saved successfully.");
+    setMode("table");
+    fetchPharmacistsList();
+  };
+
+  const handleMutationError = (message) => {
+    setSuccess("");
+    setError(message || "Unable to complete the pharmacist request.");
+    setMode("table");
+  };
 
   return (
     <AdminLayout>
@@ -60,14 +96,16 @@ function PharmacistsPage() {
             error={error}
             pagination={pagination}
             search={search}
-            onSearchChange={setSearch}
+            onSearchChange={handleSearchChange}
             onPageChange={setPage}
             onRefresh={fetchPharmacistsList}
-            onAdd={() => setMode("add")}
-            onView={(pharm) => {
-              setSelectedPharmacist(pharm);
-              setMode("view");
+            success={success}
+            onSuccessClose={() => setSuccess("")}
+            onAdd={() => {
+              setSuccess("");
+              setMode("add");
             }}
+            onView={handleView}
             onEdit={(pharm) => {
               setSelectedPharmacist(pharm);
               setMode("edit");
@@ -83,10 +121,7 @@ function PharmacistsPage() {
           <PharmacistForm
             mode="add"
             onCancel={() => setMode("table")}
-            onSuccess={() => {
-              fetchPharmacistsList();
-              setMode("table");
-            }}
+            onSuccess={handleMutationSuccess}
           />
         )}
 
@@ -95,10 +130,7 @@ function PharmacistsPage() {
             mode="edit"
             pharmacist={selectedPharmacist}
             onCancel={() => setMode("table")}
-            onSuccess={() => {
-              fetchPharmacistsList();
-              setMode("table");
-            }}
+            onSuccess={handleMutationSuccess}
           />
         )}
 
@@ -115,10 +147,8 @@ function PharmacistsPage() {
           <DeletePharmacistModal
             pharmacist={selectedPharmacist}
             onClose={() => setMode("table")}
-            onSuccess={() => {
-              fetchPharmacistsList();
-              setMode("table");
-            }}
+            onSuccess={handleMutationSuccess}
+            onError={handleMutationError}
           />
         )}
       </PageContainer>

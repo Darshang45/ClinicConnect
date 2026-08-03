@@ -49,6 +49,7 @@ export const formatPaginatedResponse = ({
       limit,
       totalPages,
       totalRecords,
+      totalItems: totalRecords,
       hasNextPage: page < totalPages,
       hasPreviousPage: page > 1,
     },

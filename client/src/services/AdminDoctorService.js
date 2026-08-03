@@ -4,12 +4,14 @@ export const getDoctors = async ({
   page = 1,
   limit = 10,
   search = "",
+  department = "",
 } = {}) => {
   const response = await api.get("/admins/doctors", {
     params: {
       page,
       limit,
       search,
+      department,
     },
   });
 

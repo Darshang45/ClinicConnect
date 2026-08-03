@@ -16,11 +16,13 @@ function ReceptionistTable({
   receptionists = [],
   loading,
   error,
+  success,
   pagination,
   search,
   onSearchChange,
   onPageChange,
   onRefresh,
+  onSuccessClose,
   onAdd,
   onView,
   onEdit,
@@ -46,6 +48,7 @@ function ReceptionistTable({
       />
 
       {error && <Alert variant="danger" onClose={onRefresh}>{error}</Alert>}
+      {success && <Alert variant="success" onClose={onSuccessClose}>{success}</Alert>}
 
       <Card className="staff-search-card">
         <div className="card-body">

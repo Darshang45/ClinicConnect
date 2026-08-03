@@ -17,6 +17,7 @@ function DoctorTable({
   doctors,
   loading,
   error,
+  success,
   pagination,
   search,
   onSearchChange,
@@ -25,6 +26,7 @@ function DoctorTable({
   departmentsList = [],
   onPageChange,
   onRefresh,
+  onSuccessClose,
   onAdd,
   onView,
   onEdit,
@@ -59,6 +61,7 @@ function DoctorTable({
       />
 
       {error && <Alert variant="danger" onClose={onRefresh}>{error}</Alert>}
+      {success && <Alert variant="success" onClose={onSuccessClose}>{success}</Alert>}
 
       <Card className="staff-search-card">
         <div className="card-body">
@@ -67,7 +70,7 @@ function DoctorTable({
               <SearchBar
                 value={search}
                 onChange={onSearchChange}
-                placeholder="Search by doctor name, email, or specialization..."
+                placeholder="Search by doctor name, email, phone, or specialization..."
               />
             </div>
             <div className="col-md-7 col-12">
@@ -79,7 +82,7 @@ function DoctorTable({
                 >
                   <option value="">All Departments</option>
                   {departmentsList.map((dept) => (
-                    <option key={dept._id} value={dept.name}>
+                    <option key={dept._id} value={dept._id}>
                       {dept.name}
                     </option>
                   ))}

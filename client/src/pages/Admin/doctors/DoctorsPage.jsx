@@ -5,7 +5,8 @@ import DoctorForm from "./components/DoctorForm";
 import DoctorDetails from "./components/DoctorDetails";
 import DeleteDoctorModal from "./components/DeleteDoctorModal";
 import { DoctorProvider } from "../../../context/DoctorContext";
-import { getDoctors, getDepartments } from "../../../services/AdminDoctorService";
+import { getDoctors, getDepartments, getDoctorById } from "../../../services/AdminDoctorService";
+import { getApiErrorMessage } from "../../../services/api";
 import { PageContainer } from "../components/ui";
 
 function DoctorsContent() {
@@ -14,6 +15,7 @@ function DoctorsContent() {
   const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState(null);
 
@@ -43,28 +45,22 @@ function DoctorsContent() {
         page,
         limit: 10,
         search,
+        department,
       });
 
-      let filteredDoctors = response.data || [];
+      const list = response.data || response.doctors || [];
 
-      // Frontend filter by department if set
-      if (department) {
-        filteredDoctors = filteredDoctors.filter(
-          (doc) => doc.departmentId === department || doc.department === department
-        );
-      }
-
-      setDoctors(filteredDoctors);
+      setDoctors(list);
       setPagination(response.pagination || {
         currentPage: page,
-        totalPages: Math.ceil(filteredDoctors.length / 10) || 1,
-        totalItems: filteredDoctors.length,
+        totalPages: Math.ceil(list.length / 10) || 1,
+        totalItems: list.length,
         hasNextPage: false,
         hasPreviousPage: page > 1,
       });
     } catch (err) {
       console.error(err);
-      setError(err.response?.data?.message || "Failed to load doctors list.");
+      setError(getApiErrorMessage(err, "Failed to load doctors list."));
     } finally {
       setLoading(false);
     }
@@ -73,6 +69,45 @@ function DoctorsContent() {
   useEffect(() => {
     fetchDoctorsList();
   }, [fetchDoctorsList]);
+
+  const handleSearchChange = (value) => {
+    setPage(1);
+    setSearch(value);
+  };
+
+  const handleDepartmentChange = (value) => {
+    setPage(1);
+    setDepartment(value);
+  };
+
+  const handleView = async (doctor) => {
+    try {
+      setLoading(true);
+      setError("");
+      const doctorId = doctor.doctorId || doctor._id;
+      const response = await getDoctorById(doctorId);
+      setSelectedDoctor({ ...doctor, ...(response.doctor || {}) });
+      setMode("view");
+    } catch (err) {
+      console.error(err);
+      setError(getApiErrorMessage(err, "Failed to load doctor details."));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleMutationSuccess = (message) => {
+    setError("");
+    setSuccess(message || "Doctor record saved successfully.");
+    setMode("table");
+    fetchDoctorsList();
+  };
+
+  const handleMutationError = (message) => {
+    setSuccess("");
+    setError(message || "Unable to complete the doctor request.");
+    setMode("table");
+  };
 
   return (
     <PageContainer>
@@ -83,17 +118,19 @@ function DoctorsContent() {
           error={error}
           pagination={pagination}
           search={search}
-          onSearchChange={setSearch}
+          onSearchChange={handleSearchChange}
           department={department}
-          onDepartmentChange={setDepartment}
+          onDepartmentChange={handleDepartmentChange}
           departmentsList={departmentsList}
           onPageChange={setPage}
           onRefresh={fetchDoctorsList}
-          onAdd={() => setMode("add")}
-          onView={(doctor) => {
-            setSelectedDoctor(doctor);
-            setMode("view");
+          success={success}
+          onSuccessClose={() => setSuccess("")}
+          onAdd={() => {
+            setSuccess("");
+            setMode("add");
           }}
+          onView={handleView}
           onEdit={(doctor) => {
             setSelectedDoctor(doctor);
             setMode("edit");
@@ -109,10 +146,7 @@ function DoctorsContent() {
         <DoctorForm
           mode="add"
           onCancel={() => setMode("table")}
-          onSuccess={() => {
-            fetchDoctorsList();
-            setMode("table");
-          }}
+          onSuccess={handleMutationSuccess}
         />
       )}
 
@@ -121,10 +155,7 @@ function DoctorsContent() {
           mode="edit"
           doctor={selectedDoctor}
           onCancel={() => setMode("table")}
-          onSuccess={() => {
-            fetchDoctorsList();
-            setMode("table");
-          }}
+          onSuccess={handleMutationSuccess}
         />
       )}
 
@@ -141,10 +172,8 @@ function DoctorsContent() {
         <DeleteDoctorModal
           doctor={selectedDoctor}
           onClose={() => setMode("table")}
-          onSuccess={() => {
-            fetchDoctorsList();
-            setMode("table");
-          }}
+          onSuccess={handleMutationSuccess}
+          onError={handleMutationError}
         />
       )}
     </PageContainer>

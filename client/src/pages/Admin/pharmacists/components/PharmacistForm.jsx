@@ -13,6 +13,7 @@ import {
   Button,
   Alert,
 } from "../../components/ui";
+import { getApiErrorMessage } from "../../../../services/api";
 
 function PharmacistForm({ mode = "add", onCancel, onSuccess, pharmacist }) {
   const [loading, setLoading] = useState(false);
@@ -50,19 +51,21 @@ function PharmacistForm({ mode = "add", onCancel, onSuccess, pharmacist }) {
 
     try {
       setLoading(true);
+      let response;
+
       if (mode === "add") {
-        await createPharmacist(formData);
+        response = await createPharmacist(formData);
       } else {
         const pharmId = pharmacist._id || pharmacist.id;
-        await updatePharmacist(pharmId, formData);
+        response = await updatePharmacist(pharmId, formData);
       }
-      if (onSuccess) onSuccess();
+      if (onSuccess) onSuccess(response?.message);
     } catch (error) {
       console.error(error);
-      setErrorMsg(
-        error.response?.data?.message ||
-          `Failed to ${mode === "add" ? "create" : "update"} pharmacist.`
-      );
+      setErrorMsg(getApiErrorMessage(
+        error,
+        `Failed to ${mode === "add" ? "create" : "update"} pharmacist.`
+      ));
     } finally {
       setLoading(false);
     }

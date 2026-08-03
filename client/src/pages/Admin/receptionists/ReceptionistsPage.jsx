@@ -4,7 +4,8 @@ import ReceptionistTable from "./components/ReceptionistTable";
 import ReceptionistForm from "./components/ReceptionistForm";
 import ReceptionistDetails from "./components/ReceptionistDetails";
 import DeleteReceptionistModal from "./components/DeleteReceptionistModal";
-import { getReceptionists } from "../../../services/AdminReceptionistService";
+import { getReceptionists, getReceptionistById } from "../../../services/AdminReceptionistService";
+import { getApiErrorMessage } from "../../../services/api";
 import { PageContainer } from "../components/ui";
 
 function ReceptionistsPage() {
@@ -13,6 +14,7 @@ function ReceptionistsPage() {
   const [receptionists, setReceptionists] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState(null);
   const [search, setSearch] = useState("");
@@ -40,7 +42,7 @@ function ReceptionistsPage() {
       );
     } catch (err) {
       console.error(err);
-      setError(err.response?.data?.message || "Failed to load receptionists list.");
+      setError(getApiErrorMessage(err, "Failed to load receptionists list."));
     } finally {
       setLoading(false);
     }
@@ -49,6 +51,40 @@ function ReceptionistsPage() {
   useEffect(() => {
     fetchReceptionistsList();
   }, [fetchReceptionistsList]);
+
+  const handleSearchChange = (value) => {
+    setPage(1);
+    setSearch(value);
+  };
+
+  const handleView = async (receptionist) => {
+    try {
+      setLoading(true);
+      setError("");
+      const receptionistId = receptionist._id || receptionist.id;
+      const response = await getReceptionistById(receptionistId);
+      setSelectedReceptionist({ ...receptionist, ...(response.receptionist || {}) });
+      setMode("view");
+    } catch (err) {
+      console.error(err);
+      setError(getApiErrorMessage(err, "Failed to load receptionist details."));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleMutationSuccess = (message) => {
+    setError("");
+    setSuccess(message || "Receptionist record saved successfully.");
+    setMode("table");
+    fetchReceptionistsList();
+  };
+
+  const handleMutationError = (message) => {
+    setSuccess("");
+    setError(message || "Unable to complete the receptionist request.");
+    setMode("table");
+  };
 
   return (
     <AdminLayout>
@@ -60,14 +96,16 @@ function ReceptionistsPage() {
             error={error}
             pagination={pagination}
             search={search}
-            onSearchChange={setSearch}
+            onSearchChange={handleSearchChange}
             onPageChange={setPage}
             onRefresh={fetchReceptionistsList}
-            onAdd={() => setMode("add")}
-            onView={(rec) => {
-              setSelectedReceptionist(rec);
-              setMode("view");
+            success={success}
+            onSuccessClose={() => setSuccess("")}
+            onAdd={() => {
+              setSuccess("");
+              setMode("add");
             }}
+            onView={handleView}
             onEdit={(rec) => {
               setSelectedReceptionist(rec);
               setMode("edit");
@@ -83,10 +121,7 @@ function ReceptionistsPage() {
           <ReceptionistForm
             mode="add"
             onCancel={() => setMode("table")}
-            onSuccess={() => {
-              fetchReceptionistsList();
-              setMode("table");
-            }}
+            onSuccess={handleMutationSuccess}
           />
         )}
 
@@ -95,10 +130,7 @@ function ReceptionistsPage() {
             mode="edit"
             receptionist={selectedReceptionist}
             onCancel={() => setMode("table")}
-            onSuccess={() => {
-              fetchReceptionistsList();
-              setMode("table");
-            }}
+            onSuccess={handleMutationSuccess}
           />
         )}
 
@@ -115,10 +147,8 @@ function ReceptionistsPage() {
           <DeleteReceptionistModal
             receptionist={selectedReceptionist}
             onClose={() => setMode("table")}
-            onSuccess={() => {
-              fetchReceptionistsList();
-              setMode("table");
-            }}
+            onSuccess={handleMutationSuccess}
+            onError={handleMutationError}
           />
         )}
       </PageContainer>

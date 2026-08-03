@@ -1,8 +1,9 @@
 import React, { useState } from "react";
 import { deleteDoctor } from "../../../../services/AdminDoctorService";
+import { getApiErrorMessage } from "../../../../services/api";
 import { DeleteModal } from "../../components/ui";
 
-function DeleteDoctorModal({ doctor, onClose, onSuccess }) {
+function DeleteDoctorModal({ doctor, onClose, onSuccess, onError }) {
   const [loading, setLoading] = useState(false);
 
   const handleDelete = async () => {
@@ -10,11 +11,11 @@ function DeleteDoctorModal({ doctor, onClose, onSuccess }) {
     try {
       setLoading(true);
       const docId = doctor.doctorId || doctor._id;
-      await deleteDoctor(docId);
-      if (onSuccess) onSuccess();
+      const response = await deleteDoctor(docId);
+      if (onSuccess) onSuccess(response?.message);
     } catch (error) {
       console.error(error);
-      alert(error.response?.data?.message || "Unable to delete doctor.");
+      if (onError) onError(getApiErrorMessage(error, "Unable to delete doctor."));
     } finally {
       setLoading(false);
     }
