@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import useAuth from "../../hooks/useAuth";
+import { useAppointmentBooking } from "../../context/AppointmentBookingContext";
 
 const bloodGroups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 
 const initialProfile = {
   fullName: "",
+  email: "",
   phone: "",
   gender: "",
   dateOfBirth: "",
@@ -30,10 +32,23 @@ const toList = (value) =>
     .filter(Boolean);
 
 function CompleteProfile({ onBack, onComplete }) {
-  const { completePatientRegistration } = useAuth();
+  const { completePatientRegistration, getRegistrationSession } = useAuth();
+  const { pendingAppointment } = useAppointmentBooking();
   const [profile, setProfile] = useState(initialProfile);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    const regSession = getRegistrationSession() || {};
+    const prefillName = pendingAppointment?.fullName || "";
+    const prefillEmail = pendingAppointment?.email || regSession?.email || "";
+
+    setProfile((prev) => ({
+      ...prev,
+      fullName: prev.fullName || prefillName,
+      email: prev.email || prefillEmail,
+    }));
+  }, [pendingAppointment, getRegistrationSession]);
 
   const updateField = (field, value) => {
     setProfile((current) => ({ ...current, [field]: value }));
@@ -112,6 +127,23 @@ function CompleteProfile({ onBack, onComplete }) {
           value={profile.fullName}
         />
       </div>
+
+      {profile.email && (
+        <div className="login-field">
+          <label className="login-label" htmlFor="profile-email">
+            Email Address
+          </label>
+          <input
+            className="login-input"
+            id="profile-email"
+            readOnly
+            type="email"
+            value={profile.email}
+            style={{ opacity: 0.75, cursor: "default" }}
+            tabIndex={-1}
+          />
+        </div>
+      )}
 
       <div className="login-field">
         <label className="login-label" htmlFor="phone">
@@ -312,8 +344,6 @@ function CompleteProfile({ onBack, onComplete }) {
           value={profile.insurance.policyNumber}
         />
       </div>
-
-      
 
       {error && (
         <p className="login-card-subtitle" role="alert">

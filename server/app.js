@@ -24,6 +24,7 @@ import dashboardRoutes from "./src/routes/dashboard.routes.js";
 import activityLogRoutes from "./src/routes/activityLog.routes.js";
 import notificationRoutes from "./src/routes/notification.routes.js";
 import announcementRoutes from "./src/routes/announcement.routes.js";
+import publicRoutes from "./src/routes/public.routes.js";
 
 
 const app = express();
@@ -66,5 +67,6 @@ app.use("/api/pharmacy", pharmacyRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/announcements", announcementRoutes);
+app.use("/api/public", publicRoutes);
 
 export default app;

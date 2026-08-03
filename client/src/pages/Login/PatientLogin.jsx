@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   PATIENT_OTP_RESEND_COOLDOWN_SECONDS,
   resendPatientOtp,
@@ -8,6 +8,8 @@ import {
 import useAuth from "../../hooks/useAuth";
 import "../../styles/login.css";
 import CompleteProfile from "./CompleteProfile";
+import useAppointmentFlow from "../../hooks/useAppointmentFlow";
+import { useAppointmentBooking } from "../../context/AppointmentBookingContext";
 
 const STEPS = {
   LOGIN: "LOGIN",
@@ -25,11 +27,17 @@ const formatTime = (seconds) => {
 
 function PatientLogin() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const { pendingAppointment, isPending, clearAppointment } = useAppointmentBooking();
   const {
     clearRegistrationSession,
     patientLogin,
     saveRegistrationSession,
+    getRegistrationSession,
   } = useAuth();
+  const { completePendingAppointment, bookingLoading, bookingError } =
+    useAppointmentFlow();
+
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [step, setStep] = useState(STEPS.LOGIN);
@@ -39,6 +47,53 @@ function PatientLogin() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState("");
   const otpInputRef = useRef(null);
+
+  const startOtpTimers = () => {
+    setOtp("");
+    setOtpExpiresIn(OTP_DURATION);
+    setResendIn(PATIENT_OTP_RESEND_COOLDOWN_SECONDS);
+  };
+
+  useEffect(() => {
+    const regSession = getRegistrationSession();
+
+    if (location.pathname === "/login/verify") {
+      const knownEmail =
+        pendingAppointment?.email ||
+        regSession?.email ||
+        location.state?.email ||
+        "";
+
+      if (knownEmail) {
+        setEmail(knownEmail);
+      }
+      setStep(STEPS.OTP);
+      if (otpExpiresIn === 0) {
+        startOtpTimers();
+      }
+    } else if (location.pathname === "/login") {
+      // If user intentionally clicked the normal Login button, clear stale booking/registration state
+      if (location.state?.fromNormalLogin) {
+        clearRegistrationSession();
+        clearAppointment();
+        setEmail("");
+        setOtp("");
+        setOtpExpiresIn(0);
+        setResendIn(0);
+        setMessage("");
+        setStep(STEPS.LOGIN);
+        return;
+      }
+
+      if (regSession?.registrationToken) {
+        if (regSession.email) setEmail(regSession.email);
+        setStep(STEPS.REGISTER);
+      } else {
+        setStep(STEPS.LOGIN);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname]);
 
   useEffect(() => {
     if (step !== STEPS.OTP || otpExpiresIn <= 0) return undefined;
@@ -67,12 +122,6 @@ function PatientLogin() {
     }
   }, [step]);
 
-  const startOtpTimers = () => {
-    setOtp("");
-    setOtpExpiresIn(OTP_DURATION);
-    setResendIn(PATIENT_OTP_RESEND_COOLDOWN_SECONDS);
-  };
-
   const handleSendOtp = async () => {
     const normalizedEmail = email.trim().toLowerCase();
 
@@ -85,13 +134,15 @@ function PatientLogin() {
       setIsSendingOtp(true);
       setMessage("");
 
-      const response = step === STEPS.OTP
-        ? await resendPatientOtp(normalizedEmail)
-        : await sendPatientOtp(normalizedEmail);
+      const response =
+        step === STEPS.OTP
+          ? await resendPatientOtp(normalizedEmail)
+          : await sendPatientOtp(normalizedEmail);
 
       if (response.isNewPatient) {
         saveRegistrationSession(normalizedEmail, response.registrationToken);
         setStep(STEPS.REGISTER);
+        navigate("/login");
         return;
       }
 
@@ -102,13 +153,19 @@ function PatientLogin() {
           ? "We've sent a new 6-digit verification code to your email."
           : "We've sent a 6-digit verification code to your email.",
       );
+      if (location.pathname !== "/login/verify") {
+        navigate("/login/verify");
+      }
     } catch (error) {
       const serverMessage = error.response?.data?.message;
       const cooldownMatch = serverMessage?.match(/wait\s+(\d+)\s+seconds/i);
 
       if (cooldownMatch) setResendIn(Number(cooldownMatch[1]));
 
-      setMessage(serverMessage || "We couldn't send a verification code. Please try again.");
+      setMessage(
+        serverMessage ||
+          "We couldn't send a verification code. Please try again.",
+      );
     } finally {
       setIsSendingOtp(false);
     }
@@ -137,12 +194,35 @@ function PatientLogin() {
       setMessage("");
 
       await patientLogin(email.trim().toLowerCase(), otp);
-      navigate("/patient/dashboard");
+
+      // isNewPatient: if there was a registration session, they just registered
+      const wasNewPatient = !!getRegistrationSession()?.registrationToken;
+      await completePendingAppointment({ isNewPatient: wasNewPatient });
     } catch (error) {
-      setMessage(error.response?.data?.message || "We couldn't verify that code. Please try again.");
+      setMessage(
+        error.response?.data?.message ||
+          "We couldn't verify that code. Please try again.",
+      );
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleRegistrationSuccess = () => {
+    const { email: registrationEmail } = getRegistrationSession();
+
+    if (registrationEmail) {
+      setEmail(registrationEmail);
+    }
+
+    setOtp("");
+    setStep(STEPS.OTP);
+    startOtpTimers();
+
+    setMessage(
+      "Registration completed successfully. Please verify the OTP sent to your email."
+    );
+    navigate("/login/verify");
   };
 
   const handleBackToLogin = () => {
@@ -153,6 +233,15 @@ function PatientLogin() {
     setResendIn(0);
     setMessage("");
     setStep(STEPS.LOGIN);
+    navigate("/login");
+  };
+
+  const handleBackNavigation = () => {
+    if (isPending) {
+      navigate("/#book");
+    } else {
+      navigate("/");
+    }
   };
 
   const isRegistering = step === STEPS.REGISTER;
@@ -175,16 +264,44 @@ function PatientLogin() {
       <main className="login-main">
         <div className="login-shell">
           <section className="login-card">
+            <button
+              type="button"
+              className="login-back-btn"
+              onClick={handleBackNavigation}
+              style={{
+                background: "transparent",
+                border: "none",
+                color: "var(--color-primary, #0284c7)",
+                cursor: "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "0.25rem",
+                marginBottom: "1rem",
+                fontWeight: 500,
+                fontSize: "0.875rem",
+              }}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: "1.2rem" }}>
+                arrow_back
+              </span>
+              {isPending ? "Back to Appointment Form" : "Back to Home"}
+            </button>
+
             <div className="login-card-brand">
               <div className="login-logo-stack">
                 <div className="login-logo-mark">
-                  <span className="material-symbols-outlined" aria-hidden="true">
+                  <span
+                    className="material-symbols-outlined"
+                    aria-hidden="true"
+                  >
                     health_and_safety
                   </span>
                 </div>
                 <span className="login-brand-name">Clinic Connect</span>
               </div>
-              <h3>{isRegistering ? "Complete Registration" : "Welcome Back"}</h3>
+              <h3>
+                {isRegistering ? "Complete Registration" : "Welcome Back"}
+              </h3>
               <p className="login-card-subtitle">
                 {isRegistering
                   ? "Complete your profile to continue."
@@ -192,10 +309,16 @@ function PatientLogin() {
               </p>
             </div>
 
+            {displayedMessage && (
+              <p className="login-card-subtitle" style={{ color: "var(--color-primary, #0284c7)", marginTop: "0.5rem" }} role="status">
+                {displayedMessage}
+              </p>
+            )}
+
             {isRegistering ? (
               <CompleteProfile
                 onBack={handleBackToLogin}
-                onComplete={() => navigate("/patient/dashboard")}
+                onComplete={handleRegistrationSuccess}
               />
             ) : (
               <form className="login-form" onSubmit={handleSubmit}>
@@ -204,7 +327,10 @@ function PatientLogin() {
                     Email Address
                   </label>
                   <div className="login-input-wrap">
-                    <span className="material-symbols-outlined login-field-icon" aria-hidden="true">
+                    <span
+                      className="material-symbols-outlined login-field-icon"
+                      aria-hidden="true"
+                    >
                       email
                     </span>
                     <input
@@ -228,7 +354,10 @@ function PatientLogin() {
                         OTP
                       </label>
                       <div className="login-input-wrap">
-                        <span className="material-symbols-outlined login-field-icon" aria-hidden="true">
+                        <span
+                          className="material-symbols-outlined login-field-icon"
+                          aria-hidden="true"
+                        >
                           lock
                         </span>
                         <input
@@ -236,7 +365,9 @@ function PatientLogin() {
                           id="patient-otp"
                           inputMode="numeric"
                           maxLength="6"
-                          onChange={(event) => setOtp(event.target.value.replace(/\D/g, ""))}
+                          onChange={(event) =>
+                            setOtp(event.target.value.replace(/\D/g, ""))
+                          }
                           placeholder="Enter 6-digit OTP"
                           ref={otpInputRef}
                           required
@@ -246,21 +377,33 @@ function PatientLogin() {
                       </div>
                     </div>
                     <p className="login-card-subtitle" role="status">
-                      {isOtpExpired ? "OTP Expired" : `OTP expires in ${formatTime(otpExpiresIn)}`}
+                      {isOtpExpired
+                        ? "OTP Expired"
+                        : `OTP expires in ${formatTime(otpExpiresIn)}`}
                     </p>
                   </>
                 )}
 
-                {displayedMessage && <p className="login-card-subtitle" role="status">{displayedMessage}</p>}
-
+                {bookingError && (
+                  <p className="login-card-subtitle" role="alert" style={{ color: "#ef4444" }}>
+                    {bookingError}
+                  </p>
+                )}
                 <button
                   className="login-submit"
-                  disabled={isSendingOtp || (step === STEPS.OTP && resendIn > 0)}
+                  disabled={
+                    isSendingOtp || (step === STEPS.OTP && resendIn > 0)
+                  }
                   type="button"
                   onClick={handleSendOtp}
                 >
                   {isSendingOtp ? (
-                    <span className="login-spinner" aria-label={step === STEPS.OTP ? "Resending OTP" : "Sending OTP"} />
+                    <span
+                      className="login-spinner"
+                      aria-label={
+                        step === STEPS.OTP ? "Resending OTP" : "Sending OTP"
+                      }
+                    />
                   ) : step === STEPS.OTP && resendIn > 0 ? (
                     `Resend OTP in ${resendIn}s`
                   ) : step === STEPS.OTP ? (
@@ -273,10 +416,17 @@ function PatientLogin() {
                 {step === STEPS.OTP && (
                   <button
                     className="login-submit"
-                    disabled={isSubmitting || isOtpExpired}
+                    disabled={isSubmitting || bookingLoading || isOtpExpired}
                     type="submit"
                   >
-                    {isSubmitting ? <span className="login-spinner" aria-label="Verifying OTP" /> : "Verify OTP"}
+                    {isSubmitting || bookingLoading ? (
+                      <span
+                        className="login-spinner"
+                        aria-label="Completing Login"
+                      />
+                    ) : (
+                      "Verify OTP"
+                    )}{" "}
                   </button>
                 )}
               </form>
@@ -292,7 +442,10 @@ function PatientLogin() {
 
           <nav className="login-footer" aria-label="Login support links">
             {["Support", "Privacy Policy", "System Status"].map((link) => (
-              <a href={`#${link.toLowerCase().replaceAll(" ", "-")}`} key={link}>
+              <a
+                href={`#${link.toLowerCase().replaceAll(" ", "-")}`}
+                key={link}
+              >
                 {link}
               </a>
             ))}

@@ -36,6 +36,7 @@ function AppRoutes() {
 
         {/* Login */}
         <Route path="/login" element={<PatientLogin />} />
+        <Route path="/login/verify" element={<PatientLogin />} />
         <Route path="/login/staff" element={<StaffLogin />} />
 
         {/* Dashboards */}

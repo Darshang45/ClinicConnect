@@ -278,16 +278,7 @@ export const verifyPatientOtp = async (req, res) => {
       });
     }
 
-    const token = jwt.sign(
-      {
-        id: patient.user,
-        role: "patient",
-      },
-      process.env.JWT_SECRET,
-      {
-        expiresIn: "7d",
-      },
-    );
+   const token = generateToken(patient.user, "patient");
 
     await Otp.deleteOne({
       _id: otpRecord._id,
@@ -472,33 +463,59 @@ export const completePatientProfile = async (req, res) => {
         { session },
       );
 
-      const token = jwt.sign(
-        {
-          id: user[0]._id,
-          role: "patient",
-        },
-        process.env.JWT_SECRET,
-        {
-          expiresIn: "7d",
-        },
-      );
-
+    
       await session.commitTransaction();
 
       session.endSession();
 
-      return res.status(201).json({
-        success: true,
-        message: "Patient registered successfully.",
-        token,
-        patient: {
-          id: patient[0]._id,
-          patientId: patient[0].patientId,
-          fullName: patient[0].fullName,
-          email: patient[0].email,
-          phone: patient[0].phone,
-        },
-      });
+      // Remove any previous OTPs
+await Otp.deleteMany({
+  email: email.toLowerCase(),
+});
+
+// Generate new OTP
+const otp = Math.floor(
+  100000 + Math.random() * 900000
+).toString();
+
+// Save OTP
+await Otp.create({
+  email: email.toLowerCase(),
+  otp,
+  expiresAt: new Date(Date.now() + 5 * 60 * 1000),
+});
+
+// Email Template
+const html = `
+<div style="font-family: Arial, sans-serif;">
+    <h2>Clinic Connect - Verify Your Account</h2>
+
+    <p>Hello <strong>${fullName}</strong>,</p>
+
+    <p>Your verification OTP is:</p>
+
+    <h1 style="letter-spacing:6px;">
+        ${otp}
+    </h1>
+
+    <p>This OTP is valid for <strong>5 minutes</strong>.</p>
+
+    <p>You must verify this OTP to activate your account.</p>
+</div>
+`;
+
+await sendEmail(
+  email,
+  "Clinic Connect - Verify Your Account",
+  html
+);
+
+     return res.status(201).json({
+  success: true,
+  requiresOtp: true,
+  message:
+    "Registration completed successfully. Please verify the OTP sent to your email.",
+});
     } catch (error) {
       await session.abortTransaction();
 
