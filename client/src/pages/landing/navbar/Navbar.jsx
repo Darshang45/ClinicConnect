@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import MobileMenu from "./MobileMenu";
 
 function Navbar() {
+  const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [activeLink, setActiveLink] = useState("#");
@@ -70,9 +71,13 @@ function Navbar() {
           </div>
 
           <div className="navbar-actions">
-            <Link to="/login" className="navbar-login">
+            <button
+              type="button"
+              className="navbar-login"
+              onClick={() => navigate("/login", { state: { fromNormalLogin: true } })}
+            >
               Login
-            </Link>
+            </button>
             <a href="#book" className="btn btn-primary navbar-book" onClick={(e) => handleLinkClick(e, "#book")}>
               Book Appointment
             </a>
