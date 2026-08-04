@@ -3,7 +3,7 @@ import React from "react";
 function Pagination({ pagination, onPageChange }) {
   if (!pagination || pagination.totalPages <= 1) return null;
 
-  const { currentPage, totalPages, totalItems, hasNextPage, hasPreviousPage } = pagination;
+  const { currentPage, totalPages, totalRecords, hasNextPage, hasPreviousPage } = pagination;
 
   const getPageNumbers = () => {
     const pages = [];
@@ -26,8 +26,8 @@ function Pagination({ pagination, onPageChange }) {
       <div className="pagination-text">
         Showing page <strong className="text-dark">{currentPage}</strong> of{" "}
         <strong className="text-dark">{totalPages}</strong>
-        {totalItems !== undefined && (
-          <span className="ms-1">({totalItems} total records)</span>
+        {totalRecords !== undefined && (
+          <span className="ms-1">({totalRecords} total records)</span>
         )}
       </div>
       <div className="pagination-controls">

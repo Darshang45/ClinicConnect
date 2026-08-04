@@ -28,6 +28,8 @@ import ProtectedRoute from "./ProtectedRoute";
 import DoctorsPage from "../pages/Admin/doctors/DoctorsPage";
 import ReceptionistsPage from "../pages/Admin/receptionists/ReceptionistsPage";
 import PharmacistsPage from "../pages/Admin/pharmacists/PharmacistsPage";
+import DepartmentsPage from "../pages/Admin/Departments/DepartmentsPage";
+
 
 function AppRoutes() {
   return (
@@ -74,6 +76,7 @@ function AppRoutes() {
           <Route path="/admin/receptionists" element={<ReceptionistsPage />}/>
           <Route path="/admin/pharmacists" element={<PharmacistsPage />}/>
           <Route path="/admin/pharmacy" element={<PharmacistsPage />}/>
+          <Route path="/admin/departments" element={<DepartmentsPage />}/>
           <Route path="/admin/patients" element={<AdminRegistrationPage RegistrationForm={PatientRegistration} role="Patient" />} />
         </Route>
 
