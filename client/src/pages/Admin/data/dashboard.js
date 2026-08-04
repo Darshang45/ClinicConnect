@@ -8,7 +8,7 @@ export const adminUser = {
 
 export const navigation = [
   { label: "Dashboard", icon: "dashboard", to: "/admin/dashboard" },
-  // { label: "Patients", icon: "person", to: "/admin/patients" },
+  { label: "Patients", icon: "person", to: "/admin/patients" },
   { label: "Doctors", icon: "medical_services", to: "/admin/doctors" },
   { label: "Receptionists", icon: "support_agent", to: "/admin/receptionists" },
   { label: "Pharmacy", icon: "medication", to: "/admin/pharmacy" },
