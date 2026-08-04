@@ -19,12 +19,17 @@ import PharmacyDashboard from "../pages/Pharmacy/PharmacyDashboard";
 import AdminDashboard from "../pages/Admin/Dashboard";
 import AdminProfile from "../pages/Admin/Profile";
 import AdminRegistrationPage from "../pages/Admin/AdminRegistrationPage";
-import DoctorRegistration from "../pages/Admin/components/DoctorRegistration";
-import PharmacyRegistration from "../pages/Admin/components/PharmacyRegistration";
-import ReceptionRegistration from "../pages/Admin/components/ReceptionRegistration";
+import DoctorRegistration from "../pages/Admin/doctors/pages/AddDoctor";
+// import PharmacyRegistration from "../pages/Admin/pharmacists/components/PharmacistForm";
+// import ReceptionRegistration from "../pages/Admin/receptionists/components/ReceptionistForm";
 import DoctorChatPanel from "../pages/doctor_dashboard/chat/DoctorChatPanel";
 import PatientRegistration from "../pages/reception_dashboard/patient_registration/PatientRegistration";
 import ProtectedRoute from "./ProtectedRoute";
+import DoctorsPage from "../pages/Admin/doctors/DoctorsPage";
+import ReceptionistsPage from "../pages/Admin/receptionists/ReceptionistsPage";
+import PharmacistsPage from "../pages/Admin/pharmacists/PharmacistsPage";
+import DepartmentsPage from "../pages/Admin/Departments/DepartmentsPage";
+
 
 function AppRoutes() {
   return (
@@ -68,10 +73,12 @@ function AppRoutes() {
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
           <Route path="/admin/chat" element={<AdminDashboard />} />
           <Route path="/admin/profile" element={<AdminProfile />} />
+          <Route path="/admin/doctors" element={<DoctorsPage />}/>
+          <Route path="/admin/receptionists" element={<ReceptionistsPage />}/>
+          <Route path="/admin/pharmacists" element={<PharmacistsPage />}/>
+          <Route path="/admin/pharmacy" element={<PharmacistsPage />}/>
+          <Route path="/admin/departments" element={<DepartmentsPage />}/>
           <Route path="/admin/patients" element={<AdminRegistrationPage RegistrationForm={PatientRegistration} role="Patient" />} />
-          <Route path="/admin/doctors" element={<AdminRegistrationPage RegistrationForm={DoctorRegistration} role="Doctor" />} />
-          <Route path="/admin/receptionists" element={<AdminRegistrationPage RegistrationForm={ReceptionRegistration} role="Receptionist" />} />
-          <Route path="/admin/pharmacy" element={<AdminRegistrationPage RegistrationForm={PharmacyRegistration} role="Pharmacist" />} />
         </Route>
 
       </Routes>

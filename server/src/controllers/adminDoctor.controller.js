@@ -3,6 +3,7 @@ import Doctor from "../models/Doctor.js";
 import Department from "../models/Department.js";
 import { logActivity } from "../utils/activityLogger.js";
 import { paginateQuery } from "../utils/paginate.js";
+import { createCaseInsensitiveSearchRegex } from "../utils/search.js";
 
 export const createDoctorByAdmin = async (req, res) => {
   try {
@@ -96,7 +97,7 @@ export const createDoctorByAdmin = async (req, res) => {
       role: req.user.role,
       action: "ADD_DOCTOR",
       module: "Doctor",
-      description: `Added Doctor ${doctor.fullName}`,
+      description: `Added Doctor ${user.fullName}`,
       ipAddress: req.ip,
     });
 
@@ -117,6 +118,28 @@ export const createDoctorByAdmin = async (req, res) => {
 export const getDoctorsByAdmin = async (req, res) => {
   try {
     const filter = { isActive: true };
+    const searchRegex = createCaseInsensitiveSearchRegex(req.query.search);
+
+    if (req.query.department) {
+      filter.department = req.query.department;
+    }
+
+    if (searchRegex) {
+      const matchingUserIds = await User.find({
+        role: "doctor",
+        $or: [
+          { fullName: searchRegex },
+          { email: searchRegex },
+          { phone: searchRegex },
+        ],
+      }).distinct("_id");
+
+      filter.$or = [
+        { user: { $in: matchingUserIds } },
+        { specialization: searchRegex },
+      ];
+    }
+
     const response = await paginateQuery({
       model: Doctor,
       filter,
@@ -135,9 +158,14 @@ export const getDoctorsByAdmin = async (req, res) => {
       email: doctor.user.email,
       phone: doctor.user.phone,
       department: doctor.department.name,
+      departmentId: doctor.department._id,
       specialization: doctor.specialization,
       experience: doctor.experience,
       consultationFee: doctor.consultationFee,
+      qualification: doctor.qualification,
+      licenseNumber: doctor.licenseNumber,
+      bio: doctor.bio,
+      profilePhoto: doctor.profilePhoto,
       isAvailable: doctor.isAvailable,
     }));
 
@@ -153,7 +181,7 @@ export const getDoctorsByAdmin = async (req, res) => {
 export const getDoctorByIdByAdmin = async (req, res) => {
   try {
     const doctor = await Doctor.findById(req.params.id)
-      .populate("user", "fullName email phone")
+      .populate("user", "fullName email phone isActive")
       .populate("department", "name code");
 
     if (!doctor) {
@@ -177,6 +205,7 @@ export const getDoctorByIdByAdmin = async (req, res) => {
         consultationFee: doctor.consultationFee,
         licenseNumber: doctor.licenseNumber,
         bio: doctor.bio,
+        profilePhoto: doctor.profilePhoto,
         isAvailable: doctor.isAvailable,
       },
     });
@@ -212,12 +241,37 @@ export const updateDoctorByAdmin = async (req, res) => {
       consultationFee,
       licenseNumber,
       bio,
+      profilePhoto,
       isAvailable,
     } = req.body;
 
+    if (email && email !== user.email) {
+      const existingEmail = await User.findOne({ email });
+
+      if (existingEmail) {
+        return res.status(400).json({
+          success: false,
+          message: "Email already exists.",
+        });
+      }
+
+      user.email = email;
+    }
+
+    if (phone && phone !== user.phone) {
+      const existingPhone = await User.findOne({ phone });
+
+      if (existingPhone) {
+        return res.status(400).json({
+          success: false,
+          message: "Phone already exists.",
+        });
+      }
+
+      user.phone = phone;
+    }
+
     if (fullName) user.fullName = fullName;
-    if (email) user.email = email;
-    if (phone) user.phone = phone;
 
     await user.save();
 
@@ -228,6 +282,7 @@ export const updateDoctorByAdmin = async (req, res) => {
     if (consultationFee !== undefined) doctor.consultationFee = consultationFee;
     if (licenseNumber) doctor.licenseNumber = licenseNumber;
     if (bio !== undefined) doctor.bio = bio;
+    if (profilePhoto !== undefined) doctor.profilePhoto = profilePhoto;
     if (isAvailable !== undefined) doctor.isAvailable = isAvailable;
 
     await doctor.save();
@@ -236,7 +291,7 @@ export const updateDoctorByAdmin = async (req, res) => {
       role: req.user.role,
       action: "UPDATE_DOCTOR",
       module: "Doctor",
-      description: `Updated Doctor ${doctor.fullName}`,
+      description: `Updated Doctor ${user.fullName}`,
       ipAddress: req.ip,
     });
 
@@ -254,14 +309,6 @@ export const updateDoctorByAdmin = async (req, res) => {
 
 export const deleteDoctorByAdmin = async (req, res) => {
   try {
-    await logActivity({
-      user: req.user._id,
-      role: req.user.role,
-      action: "DELETE_DOCTOR",
-      module: "Doctor",
-      description: `Deleted Doctor ${doctor.fullName}`,
-      ipAddress: req.ip,
-    });
     const doctor = await Doctor.findById(req.params.id);
 
     if (!doctor) {
@@ -277,6 +324,15 @@ export const deleteDoctorByAdmin = async (req, res) => {
 
     await User.findByIdAndUpdate(doctor.user, {
       isActive: false,
+    });
+
+    await logActivity({
+      user: req.user._id,
+      role: req.user.role,
+      action: "DELETE_DOCTOR",
+      module: "Doctor",
+      description: `Deleted Doctor ${doctor._id}`,
+      ipAddress: req.ip,
     });
 
     return res.status(200).json({

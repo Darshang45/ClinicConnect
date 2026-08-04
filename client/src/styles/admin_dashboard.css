@@ -1313,4 +1313,823 @@ img {
   width: 100%;
 }
 
+/* Staff management: shared Doctors, Receptionists and Pharmacists UI */
+.staff-management-page {
+  --staff-primary: var(--primary);
+  --staff-primary-hover: #005a25;
+  --staff-primary-soft: color-mix(in srgb, var(--primary) 9%, var(--surface-container-lowest));
+  --staff-danger: #c62828;
+  --staff-danger-soft: color-mix(in srgb, var(--error) 11%, var(--surface-container-lowest));
+  --staff-border: var(--outline-variant);
+  --staff-muted: var(--on-surface-variant);
+  --staff-card: var(--surface-container-lowest);
+  --staff-subtle: var(--surface-container-low);
+  --staff-shadow: 0 2px 4px rgb(15 23 42 / 0.03), 0 12px 28px rgb(15 23 42 / 0.06);
+  width: min(100%, 1500px);
+  min-height: auto;
+  margin: 0 auto;
+  padding: 8px 0 40px;
+  background: transparent;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.staff-management-page .text-muted {
+  color: var(--staff-muted) !important;
+}
+
+.staff-management-page .text-dark {
+  color: var(--on-surface) !important;
+}
+
+.staff-management-page .text-primary {
+  color: var(--staff-primary) !important;
+}
+
+.staff-management-page .text-success {
+  color: var(--primary) !important;
+}
+
+.staff-management-page .bg-light {
+  background: var(--staff-subtle) !important;
+}
+
+.staff-list-page,
+.staff-form-page,
+.staff-details-page {
+  display: grid;
+  gap: 24px;
+}
+
+.staff-management-page .admin-page-header {
+  align-items: flex-end;
+  gap: 24px;
+  margin: 0;
+}
+
+.staff-management-page .admin-page-heading {
+  min-width: 0;
+}
+
+.staff-management-page .page-title-heading {
+  margin: 0;
+  color: var(--on-surface);
+  font-size: clamp(1.75rem, 2vw, 2.25rem);
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  line-height: 1.2;
+}
+
+.staff-management-page .page-subtitle {
+  max-width: 760px;
+  margin: 8px 0 0;
+  color: var(--staff-muted);
+  font-size: 0.9375rem;
+  line-height: 1.6;
+}
+
+.staff-management-page .admin-page-actions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.staff-management-page .card.staff-ui-card,
+.staff-management-page .admin-empty-state {
+  border: 1px solid var(--staff-border);
+  border-radius: 16px;
+  background: var(--staff-card);
+  box-shadow: var(--staff-shadow);
+}
+
+.staff-management-page .card.staff-ui-card {
+  overflow: hidden;
+  transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+
+.staff-management-page .card.staff-ui-card:hover {
+  border-color: color-mix(in srgb, var(--staff-primary) 25%, var(--staff-border));
+  box-shadow: 0 4px 8px rgb(15 23 42 / 0.04), 0 16px 34px rgb(15 23 42 / 0.08);
+}
+
+.staff-management-page .staff-card-header,
+.staff-management-page .card-header {
+  min-height: 72px;
+  border-bottom: 1px solid var(--staff-border);
+  background: transparent;
+  padding: 20px 32px;
+}
+
+.staff-management-page .card-title {
+  color: var(--on-surface);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.staff-management-page .staff-card-body,
+.staff-management-page .card-body {
+  padding: 32px;
+}
+
+.staff-management-page .staff-card-footer,
+.staff-management-page .card-footer {
+  border-top: 1px solid var(--staff-border);
+  background: var(--staff-subtle);
+  padding: 20px 32px;
+}
+
+.staff-management-page .staff-search-card {
+  overflow: visible !important;
+}
+
+.staff-management-page .staff-search-card .card-body {
+  padding: 24px 32px;
+}
+
+.staff-management-page .staff-search-input {
+  min-height: 48px;
+}
+
+.staff-management-page .staff-search-input .input-group-text,
+.staff-management-page .staff-search-input .form-control,
+.staff-management-page .staff-search-input .btn {
+  border-color: var(--staff-border);
+  background: var(--staff-card);
+}
+
+.staff-management-page .staff-search-input .input-group-text {
+  min-width: 48px;
+  justify-content: center;
+  color: var(--staff-muted);
+  padding: 0 8px 0 16px;
+}
+
+.staff-management-page .staff-search-input .form-control {
+  min-height: 48px;
+  color: var(--on-surface);
+  padding: 11px 12px 11px 0;
+}
+
+.staff-management-page .staff-search-input .form-control:focus {
+  border-color: var(--staff-primary);
+  box-shadow: none;
+}
+
+.staff-management-page .staff-search-input:focus-within {
+  border-radius: 10px;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--staff-primary) 14%, transparent);
+}
+
+.staff-management-page .staff-search-input .btn {
+  min-width: 48px;
+  border-left: 0;
+  color: var(--staff-muted);
+}
+
+.staff-management-page .staff-filters {
+  gap: 12px !important;
+}
+
+.staff-management-page .staff-filter-select,
+.staff-management-page .staff-form-select,
+.staff-management-page .staff-form-control {
+  min-height: 48px;
+  border: 1px solid var(--staff-border);
+  border-radius: 10px;
+  background-color: var(--staff-card);
+  color: var(--on-surface);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+}
+
+.staff-management-page .staff-form-control,
+.staff-management-page .staff-form-select {
+  padding: 11px 14px;
+}
+
+.staff-management-page .staff-filter-select {
+  width: auto;
+  min-width: 210px;
+  padding: 10px 40px 10px 14px;
+}
+
+.staff-management-page .staff-filter-select:focus,
+.staff-management-page .staff-form-select:focus,
+.staff-management-page .staff-form-control:focus {
+  border-color: var(--staff-primary);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--staff-primary) 14%, transparent);
+}
+
+.staff-management-page .staff-form-control::placeholder {
+  color: color-mix(in srgb, var(--staff-muted) 72%, transparent);
+}
+
+.staff-management-page .staff-textarea {
+  min-height: 144px;
+  line-height: 1.6;
+  resize: vertical;
+}
+
+.staff-management-page .staff-form-card {
+  width: min(100%, 1180px);
+  margin: 0 auto;
+}
+
+.staff-management-page .staff-form {
+  display: grid;
+  gap: 0;
+}
+
+.staff-management-page .staff-form-section-title {
+  margin: 0 0 20px;
+  color: var(--staff-primary);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  line-height: 1.5;
+}
+
+.staff-management-page .staff-form-group {
+  margin-bottom: 0 !important;
+}
+
+.staff-management-page .staff-form-label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--on-surface);
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.staff-management-page .staff-form-divider {
+  height: 1px;
+  margin: 32px 0;
+  border: 0;
+  background: var(--staff-border);
+  opacity: 1;
+}
+
+.staff-management-page .invalid-feedback,
+.staff-management-page .text-danger.small {
+  margin-top: 8px;
+  color: var(--staff-danger) !important;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+.staff-management-page .form-actions-sticky {
+  position: sticky;
+  bottom: -1px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 32px;
+  border-top: 1px solid var(--staff-border);
+  background: var(--staff-card);
+  padding: 24px 0 0;
+  z-index: 2;
+}
+
+.staff-management-page .staff-button {
+  min-height: 44px;
+  border-radius: 10px;
+  padding: 10px 18px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.25;
+  transition: background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease, color 160ms ease, transform 160ms ease;
+}
+
+.staff-management-page .staff-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.staff-management-page .staff-button:focus-visible,
+.staff-management-page .pagination-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--staff-primary) 18%, transparent);
+}
+
+.staff-management-page .btn-primary {
+  border-color: var(--staff-primary);
+  background: var(--staff-primary);
+  color: var(--on-primary);
+}
+
+.staff-management-page .btn-primary:hover:not(:disabled),
+.staff-management-page .btn-primary:focus:not(:disabled) {
+  border-color: var(--staff-primary-hover);
+  background: var(--staff-primary-hover);
+  color: var(--on-primary);
+}
+
+.staff-management-page .btn-secondary,
+.staff-management-page .btn-outline-secondary {
+  border-color: var(--staff-border);
+  background: var(--staff-card);
+  color: var(--on-surface);
+}
+
+.staff-management-page .btn-secondary:hover:not(:disabled),
+.staff-management-page .btn-outline-secondary:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--staff-primary) 30%, var(--staff-border));
+  background: var(--staff-subtle);
+  color: var(--staff-primary);
+}
+
+.staff-management-page .btn-soft-primary {
+  border-color: transparent;
+  background: var(--staff-primary-soft);
+  color: var(--staff-primary);
+}
+
+.staff-management-page .btn-soft-primary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--staff-primary) 16%, var(--staff-card));
+  color: var(--staff-primary);
+}
+
+.staff-management-page .btn-danger {
+  border-color: var(--staff-danger);
+  background: var(--staff-danger);
+  color: #fff;
+}
+
+.staff-management-page .btn-soft-danger {
+  border-color: transparent;
+  background: var(--staff-danger-soft);
+  color: var(--staff-danger);
+}
+
+.staff-management-page .btn-soft-danger:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--staff-danger) 16%, var(--staff-card));
+  color: var(--staff-danger);
+}
+
+.staff-management-page .btn-icon {
+  width: 40px;
+  min-width: 40px;
+  height: 40px;
+  min-height: 40px;
+  padding: 0;
+}
+
+.staff-management-page .staff-table-card {
+  overflow: hidden;
+}
+
+.staff-management-page .staff-table-responsive {
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.staff-management-page .staff-table {
+  min-width: 900px;
+  margin: 0;
+  color: var(--on-surface);
+}
+
+.staff-management-page .staff-table th {
+  border-bottom: 1px solid var(--staff-border);
+  background: var(--staff-subtle);
+  color: var(--staff-muted);
+  padding: 16px 24px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1.4;
+}
+
+.staff-management-page .staff-table td {
+  height: 80px;
+  border-bottom: 1px solid var(--staff-border);
+  background: var(--staff-card);
+  color: var(--on-surface);
+  padding: 18px 24px;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.staff-management-page .staff-table tbody tr {
+  transition: background-color 160ms ease;
+}
+
+.staff-management-page .staff-table tbody tr:hover td {
+  background: color-mix(in srgb, var(--staff-primary) 3%, var(--staff-card));
+}
+
+.staff-management-page .staff-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.staff-management-page .staff-table td:last-child,
+.staff-management-page .staff-table th:last-child {
+  white-space: nowrap;
+}
+
+.staff-management-page .staff-table h6 {
+  margin-bottom: 2px !important;
+  color: var(--on-surface) !important;
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+.staff-management-page .staff-table .small {
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.staff-management-page .staff-table .user-avatar-circle,
+.staff-management-page .staff-table img.rounded-circle.object-fit-cover {
+  width: 44px !important;
+  height: 44px !important;
+  border: 2px solid color-mix(in srgb, var(--staff-primary) 16%, var(--staff-card));
+  box-shadow: none;
+}
+
+.staff-management-page .staff-table .user-avatar-circle {
+  flex: 0 0 44px;
+  background: linear-gradient(135deg, var(--staff-primary), color-mix(in srgb, var(--staff-primary) 68%, #4ade80)) !important;
+  color: var(--on-primary);
+  font-size: 0.8125rem;
+}
+
+.staff-management-page .staff-table .action-buttons {
+  gap: 8px;
+}
+
+.staff-management-page .staff-badge {
+  min-height: 28px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.staff-management-page .badge-primary {
+  border: 1px solid color-mix(in srgb, var(--staff-primary) 18%, transparent);
+  background: var(--staff-primary-soft);
+  color: var(--staff-primary);
+}
+
+.staff-management-page .badge-success {
+  border: 1px solid color-mix(in srgb, var(--primary) 18%, transparent);
+  background: color-mix(in srgb, var(--primary) 9%, var(--staff-card));
+  color: var(--primary);
+}
+
+.staff-management-page .badge-danger {
+  border: 1px solid color-mix(in srgb, var(--staff-danger) 18%, transparent);
+  background: var(--staff-danger-soft);
+  color: var(--staff-danger);
+}
+
+.staff-management-page .badge-warning {
+  border: 1px solid rgb(217 119 6 / 0.2);
+  background: rgb(245 158 11 / 0.1);
+  color: #a16207;
+}
+
+.staff-management-page .badge-info {
+  border: 1px solid rgb(8 145 178 / 0.2);
+  background: rgb(6 182 212 / 0.1);
+  color: #0e7490;
+}
+
+.staff-management-page .badge-dot {
+  flex: 0 0 6px;
+}
+
+.staff-management-page .admin-pagination {
+  min-height: 80px;
+  border-top: 1px solid var(--staff-border);
+  background: var(--staff-card);
+  padding: 20px 24px;
+  gap: 16px;
+}
+
+.staff-management-page .pagination-text {
+  color: var(--staff-muted);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.staff-management-page .pagination-controls {
+  gap: 8px;
+}
+
+.staff-management-page .pagination-btn {
+  width: 40px;
+  min-width: 40px;
+  height: 40px;
+  border-color: var(--staff-border);
+  border-radius: 10px;
+  background: var(--staff-card);
+  color: var(--on-surface);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.staff-management-page .pagination-btn:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--staff-primary) 32%, var(--staff-border));
+  background: var(--staff-primary-soft);
+  color: var(--staff-primary);
+}
+
+.staff-management-page .pagination-btn.active {
+  border-color: var(--staff-primary);
+  background: var(--staff-primary);
+  color: var(--on-primary);
+}
+
+.staff-management-page .admin-empty-state {
+  min-height: 320px;
+  padding: 48px 32px;
+}
+
+.staff-management-page .empty-state-icon-wrapper {
+  width: 72px;
+  height: 72px;
+  margin-bottom: 24px;
+  background: var(--staff-primary-soft);
+  color: var(--staff-primary);
+}
+
+.staff-management-page .empty-state-title {
+  margin: 0 0 8px;
+  color: var(--on-surface);
+  font-size: 1.125rem;
+}
+
+.staff-management-page .empty-state-desc {
+  margin: 0 0 24px;
+  color: var(--staff-muted);
+  line-height: 1.6;
+}
+
+.staff-management-page .admin-loader-container {
+  min-height: 280px;
+  padding: 48px 32px;
+}
+
+.staff-management-page .spinner-erp {
+  width: 44px;
+  height: 44px;
+  border-color: color-mix(in srgb, var(--staff-primary) 16%, transparent);
+  border-top-color: var(--staff-primary);
+}
+
+.staff-management-page .loader-text {
+  margin-top: 16px;
+  color: var(--staff-muted);
+}
+
+.staff-management-page .admin-alert {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 0;
+  border: 1px solid color-mix(in srgb, var(--staff-danger) 24%, transparent);
+  border-radius: 12px;
+  background: var(--staff-danger-soft);
+  color: var(--staff-danger);
+  padding: 16px 20px;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.staff-management-page .admin-alert .btn-close {
+  margin: 1px 0 0;
+  opacity: 0.7;
+}
+
+.staff-management-page .staff-details-page .card-body {
+  padding: 32px;
+}
+
+.staff-management-page .staff-details-page .rounded-3 {
+  min-height: 88px;
+  border: 1px solid color-mix(in srgb, var(--staff-border) 85%, transparent);
+  border-radius: 12px !important;
+  padding: 16px !important;
+}
+
+.staff-management-page .staff-details-page .rounded-3 > span {
+  margin-bottom: 4px;
+}
+
+.staff-management-page .modal-backdrop-custom {
+  background: rgb(15 23 42 / 0.52);
+  padding: 24px;
+}
+
+.staff-management-page .staff-modal {
+  max-height: min(680px, calc(100vh - 48px));
+  border: 1px solid var(--staff-border);
+  border-radius: 16px;
+  background: var(--staff-card);
+  box-shadow: 0 24px 56px rgb(15 23 42 / 0.24);
+}
+
+.staff-management-page .modal-header-custom {
+  min-height: 76px;
+  padding: 20px 24px;
+}
+
+.staff-management-page .modal-header-custom .modal-title {
+  color: var(--on-surface);
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.staff-management-page .modal-body-custom {
+  max-height: calc(100vh - 220px);
+  overflow-y: auto;
+  padding: 32px 24px;
+}
+
+.staff-management-page .modal-footer-custom {
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 16px 24px;
+  border-top-color: var(--staff-border);
+  background: var(--staff-subtle);
+}
+
+.staff-management-page .delete-modal-content {
+  display: grid;
+  justify-items: center;
+  text-align: center;
+}
+
+.staff-management-page .delete-modal-icon {
+  display: inline-flex;
+  width: 64px;
+  height: 64px;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+  border-radius: 50%;
+  background: var(--staff-danger-soft);
+  color: var(--staff-danger);
+}
+
+.staff-management-page .delete-modal-content h6 {
+  margin: 0 0 8px;
+  color: var(--on-surface);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.staff-management-page .delete-modal-content p {
+  max-width: 320px;
+  margin: 0;
+  color: var(--staff-muted);
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+.staff-management-page .delete-modal-content strong {
+  color: var(--on-surface);
+  font-weight: 700;
+}
+
+@media (max-width: 991.98px) {
+  .staff-management-page {
+    padding-bottom: 32px;
+  }
+
+  .staff-management-page .staff-table {
+    min-width: 820px;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .staff-management-page {
+    padding: 0 0 24px;
+  }
+
+  .staff-list-page,
+  .staff-form-page,
+  .staff-details-page {
+    gap: 20px;
+  }
+
+  .staff-management-page .admin-page-header {
+    align-items: stretch;
+    gap: 16px;
+  }
+
+  .staff-management-page .page-title-heading {
+    font-size: 1.75rem;
+  }
+
+  .staff-management-page .admin-page-actions {
+    justify-content: stretch;
+    width: 100%;
+  }
+
+  .staff-management-page .admin-page-actions .staff-button {
+    flex: 1 1 auto;
+  }
+
+  .staff-management-page .staff-card-header,
+  .staff-management-page .card-header,
+  .staff-management-page .staff-card-body,
+  .staff-management-page .card-body,
+  .staff-management-page .staff-card-footer,
+  .staff-management-page .card-footer,
+  .staff-management-page .staff-search-card .card-body {
+    padding-right: 24px;
+    padding-left: 24px;
+  }
+
+  .staff-management-page .staff-search-card .row > * {
+    width: 100%;
+  }
+
+  .staff-management-page .staff-filter-select {
+    width: 100%;
+  }
+
+  .staff-management-page .staff-filters,
+  .staff-management-page .staff-filters .staff-button {
+    width: 100%;
+  }
+
+  .staff-management-page .staff-table {
+    min-width: 760px;
+  }
+
+  .staff-management-page .staff-table th,
+  .staff-management-page .staff-table td {
+    padding-right: 16px;
+    padding-left: 16px;
+  }
+
+  .staff-management-page .admin-pagination {
+    align-items: stretch;
+    flex-direction: column;
+    padding: 20px 24px;
+  }
+
+  .staff-management-page .pagination-controls {
+    justify-content: space-between;
+  }
+
+  .staff-management-page .form-actions-sticky {
+    align-items: stretch;
+    flex-direction: column-reverse;
+    padding-top: 20px;
+  }
+
+  .staff-management-page .form-actions-sticky .staff-button {
+    width: 100%;
+  }
+
+  .staff-management-page .modal-backdrop-custom {
+    align-items: flex-end;
+    padding: 12px;
+  }
+
+  .staff-management-page .staff-modal {
+    max-height: calc(100vh - 24px);
+    border-radius: 16px;
+  }
+
+  .staff-management-page .modal-header-custom,
+  .staff-management-page .modal-footer-custom {
+    padding-right: 20px;
+    padding-left: 20px;
+  }
+
+  .staff-management-page .modal-body-custom {
+    padding: 28px 20px;
+  }
+
+  .staff-management-page .modal-footer-custom .staff-button {
+    flex: 1 1 0;
+  }
+}
+
+}
+.button-danger {
+  background: #dc2626;
+  color: white;
+}
+
+.button-danger:hover {
+  background: #b91c1c;
 }

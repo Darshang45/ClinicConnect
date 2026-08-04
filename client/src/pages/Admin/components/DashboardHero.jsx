@@ -26,8 +26,7 @@ function DashboardHero() {
       <div>
         <h2>Welcome Back, {user.shortName}</h2>
         <p>
-          Clinic Connect Central Operations is running smoothly. 14 pending lab
-          approvals require your signature.
+          Clinic Connect Central Operations is running smoothly. 
         </p>
       </div>
       <div className="hero-meta">

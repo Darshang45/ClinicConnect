@@ -1,0 +1,43 @@
+const doctors = [
+  {
+    id: "DOC001",
+    firstName: "Atharva",
+    lastName: "Naik",
+    department: "General Medicine",
+    specialization: "Physician",
+    phone: "9876543210",
+    email: "atharva@example.com",
+    qualification: "MBBS, MD",
+    experience: "8 Years",
+    status: "Available",
+    gender: "Male",
+  },
+  {
+    id: "DOC002",
+    firstName: "Priya",
+    lastName: "Sharma",
+    department: "Cardiology",
+    specialization: "Cardiologist",
+    phone: "9876543211",
+    email: "priya@example.com",
+    qualification: "MBBS, DM",
+    experience: "12 Years",
+    status: "Unavailable",
+    gender: "Female",
+  },
+  {
+    id: "DOC003",
+    firstName: "Rahul",
+    lastName: "Patil",
+    department: "Orthopedics",
+    specialization: "Orthopedic Surgeon",
+    phone: "9876543212",
+    email: "rahul@example.com",
+    qualification: "MBBS, MS",
+    experience: "10 Years",
+    status: "Available",
+    gender: "Male",
+  },
+];
+
+export default doctors;
