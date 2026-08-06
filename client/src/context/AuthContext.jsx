@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import AuthContext from "./authStore";
 
 import {
@@ -96,23 +96,26 @@ export function AuthProvider({ children }) {
   // ==========================================
 
   const patientLogin = async (email, otp) => {
+  try {
     const response = await verifyPatientOtp(email, otp);
 
+    console.log("Verify OTP Response:", response);
+
     localStorage.setItem(TOKEN_KEY, response.token);
-
     setToken(response.token);
-
-    // Patient Login doesn't return User
-    // Fetch authenticated user
 
     const currentUser = await getCurrentUser();
 
     localStorage.setItem(USER_KEY, JSON.stringify(currentUser.user));
-
     setUser(currentUser.user);
 
     return currentUser.user;
-  };
+  } catch (error) {
+    console.log("Status:", error.response?.status);
+    console.log("Response:", error.response?.data);
+    throw error;
+  }
+};
 
   // ==========================================
   // Save Registration Session
@@ -138,31 +141,19 @@ export function AuthProvider({ children }) {
   // ==========================================
 
   const completePatientRegistration = async (profileData) => {
-    const { registrationToken } = getRegistrationSession();
+  const { registrationToken } = getRegistrationSession();
 
-    if (!registrationToken) {
-      throw new Error("Registration session expired.");
-    }
+  if (!registrationToken) {
+    throw new Error("Registration session expired.");
+  }
 
-    const response = await completePatientProfile(
-      profileData,
-      registrationToken,
-    );
+  const response = await completePatientProfile(
+    profileData,
+    registrationToken
+  );
 
-    localStorage.setItem(TOKEN_KEY, response.token);
-
-    setToken(response.token);
-
-    const currentUser = await getCurrentUser();
-
-    localStorage.setItem(USER_KEY, JSON.stringify(currentUser.user));
-
-    setUser(currentUser.user);
-
-    clearRegistrationSession();
-
-    return currentUser.user;
-  };
+  return response;
+};
 
   // ==========================================
   // Context Value
@@ -184,8 +175,15 @@ export function AuthProvider({ children }) {
     logout,
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+  <AuthContext.Provider value={value}>
+    {children}
+  </AuthContext.Provider>
+);
 }
+
+export const useAuth = () => useContext(AuthContext);
+
 
 // import { useMemo, useState } from "react";
 // import AuthContext from "./authStore";

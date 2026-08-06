@@ -5,7 +5,7 @@ const timeline = [
   {
     step: 1,
     title: "2004 - Foundation",
-    description: "LuxeHealth opened its first multispecialty wing with 50 beds.",
+    description: "Clinic Connect opened its first multispecialty wing with 50 beds.",
   },
   {
     step: 2,

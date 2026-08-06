@@ -21,4 +21,7 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+export const getApiErrorMessage = (error, fallbackMessage) =>
+  error?.response?.data?.message || error?.message || fallbackMessage;
+
 export default api;

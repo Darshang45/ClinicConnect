@@ -12,13 +12,13 @@ function Footer() {
             compassionate service.
           </p>
           <div className="footer-social">
-            <a href="#" aria-label="Facebook">
+            <a href="#footer" aria-label="Facebook">
               <span className="material-symbols-outlined">face_nod</span>
             </a>
-            <a href="#" aria-label="Twitter">
+            <a href="#footer" aria-label="Twitter">
               <span className="material-symbols-outlined">public</span>
             </a>
-            <a href="#" aria-label="Email">
+            <a href="mailto:clinicconnect.auth@gmail.com" aria-label="Email">
               <span className="material-symbols-outlined">mail</span>
             </a>
           </div>
@@ -26,20 +26,20 @@ function Footer() {
 
         <div className="footer-column">
           <h4>Quick Links</h4>
-          <a href="#">Find a Doctor</a>
-          <a href="#">Patient Portal</a>
+          <a href="#doctors">Find a Doctor</a>
+          <a href="/login">Patient Portal</a>
           <a href="#facilities">Facilities &amp; Services</a>
-          <a href="#">Medical Records</a>
-          <a href="#">Health Packages</a>
+          <a href="">Medical Records</a>
+          <a href="">Health Packages</a>
         </div>
 
         <div className="footer-column">
           <h4>Departments</h4>
-          <a href="#">Cardiology</a>
-          <a href="#">Neurology</a>
-          <a href="#">Orthopedics</a>
-          <a href="#">Pediatrics</a>
-          <a href="#">Diagnostics</a>
+          <a href="#cardiology">Cardiology</a>
+          <a href="#neurology">Neurology</a>
+          <a href="#orthopedics">Orthopedics</a>
+          <a href="#pediatrics">Pediatrics</a>
+          <a href="#diagnostics">Diagnostics</a>
         </div>
 
         <div className="footer-column">
@@ -58,7 +58,7 @@ function Footer() {
           </div>
           <div className="footer-contact-item">
             <span className="material-symbols-outlined">mail</span>
-            <span>clinicconnect.com</span>
+            <span>clinicconnect.auth@gmail.com</span>
           </div>
         </div>
       </div>
@@ -66,9 +66,9 @@ function Footer() {
       <div className="footer-bottom">
         <p>© 2026 Clinic Connect Medical Group. All rights reserved.</p>
         <div className="footer-bottom-links">
-          <a href="#">Privacy Policy</a>
-          <a href="#">Terms of Service</a>
-          <a href="#">Cookie Policy</a>
+          <a href="">Privacy Policy</a>
+          <a href="">Terms of Service</a>
+          <a href="">Cookie Policy</a>
         </div>
       </div>
     </footer>

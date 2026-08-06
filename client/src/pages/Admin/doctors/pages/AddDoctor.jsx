@@ -1,4 +1,4 @@
-import PatientRegistration from "../../reception_dashboard/patient_registration/PatientRegistration";
+import PatientRegistration from "../../../reception_dashboard/patient_registration/PatientRegistration";
 
 const doctorFields = [
   { label: "Doctor ID", name: "doctorId", placeholder: "DOC-1001", required: true },

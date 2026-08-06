@@ -1,6 +1,7 @@
 import User from "../models/User.js";
 import { logActivity } from "../utils/activityLogger.js";
 import { paginateQuery } from "../utils/paginate.js";
+import { createCaseInsensitiveSearchRegex } from "../utils/search.js";
 
 export const createReceptionist = async (req, res) => {
   try {
@@ -60,6 +61,16 @@ export const getReceptionists = async (req, res) => {
       role: "receptionist",
       isActive: true,
     };
+    const searchRegex = createCaseInsensitiveSearchRegex(req.query.search);
+
+    if (searchRegex) {
+      filter.$or = [
+        { fullName: searchRegex },
+        { email: searchRegex },
+        { phone: searchRegex },
+      ];
+    }
+
     const response = await paginateQuery({
       model: User,
       filter,
@@ -155,6 +166,15 @@ export const updateReceptionist = async (req, res) => {
 
     await receptionist.save();
 
+    await logActivity({
+      user: req.user._id,
+      role: req.user.role,
+      action: "UPDATE_RECEPTIONIST",
+      module: "Receptionist",
+      description: `Updated Receptionist ${receptionist.fullName}`,
+      ipAddress: req.ip,
+    });
+
     return res.status(200).json({
       success: true,
       message: "Receptionist updated successfully.",
@@ -169,14 +189,6 @@ export const updateReceptionist = async (req, res) => {
 
 export const deleteReceptionist = async (req, res) => {
   try {
-    await logActivity({
-      user: req.user._id,
-      role: req.user.role,
-      action: "DELETE_RECEPTIONIST",
-      module: "Receptionist",
-      description: `Deleted Receptionist ${receptionist.fullName}`,
-      ipAddress: req.ip,
-    });
     const receptionist = await User.findOne({
       _id: req.params.id,
       role: "receptionist",
@@ -193,6 +205,15 @@ export const deleteReceptionist = async (req, res) => {
     receptionist.isActive = false;
 
     await receptionist.save();
+
+    await logActivity({
+      user: req.user._id,
+      role: req.user.role,
+      action: "DELETE_RECEPTIONIST",
+      module: "Receptionist",
+      description: `Deleted Receptionist ${receptionist.fullName}`,
+      ipAddress: req.ip,
+    });
 
     return res.status(200).json({
       success: true,

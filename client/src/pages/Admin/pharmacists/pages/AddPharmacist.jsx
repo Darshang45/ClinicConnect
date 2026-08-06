@@ -1,4 +1,4 @@
-import PatientRegistration from "../../reception_dashboard/patient_registration/PatientRegistration";
+import PatientRegistration from "../../../reception_dashboard/patient_registration/PatientRegistration";
 
 const pharmacistFields = [
   { label: "Pharmacist ID", name: "pharmacistId", placeholder: "PHA-1001", required: true },

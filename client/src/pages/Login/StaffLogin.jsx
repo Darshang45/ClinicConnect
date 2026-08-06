@@ -71,7 +71,7 @@ const { staffLogin } = useAuth();
       );
     }
 
-    navigate(selectedRole.route);
+    navigate(selectedRole.route, { state: { successMessage: "Welcome back!" }, replace: true });
   } catch (error) {
     alert(
       error.response?.data?.message ||
