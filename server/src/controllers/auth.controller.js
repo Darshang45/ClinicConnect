@@ -451,7 +451,7 @@ export const completePatientProfile = async (req, res) => {
             email,
             phone,
             gender,
-            dateOfBirth: dob,
+            dateOfBirth: dob || undefined,
             bloodGroup,
             address,
             emergencyContact: emergencyContact || {},
@@ -524,9 +524,25 @@ await sendEmail(
       throw error;
     }
   } catch (error) {
+    console.error("completePatientProfile error:", error);
+
+    // Sanitize MongoDB duplicate key errors
+    if (error.code === 11000) {
+      const field = Object.keys(error.keyPattern || {})[0];
+      const fieldMessages = {
+        email: "This email is already registered.",
+        phone: "This phone number is already registered.",
+      };
+
+      return res.status(409).json({
+        success: false,
+        message: fieldMessages[field] || "An account with these details already exists.",
+      });
+    }
+
     return res.status(500).json({
       success: false,
-      message: error.message,
+      message: "Something went wrong. Please try again later.",
     });
   }
 };

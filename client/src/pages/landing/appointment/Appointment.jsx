@@ -3,6 +3,7 @@ import {
   getPublicDepartments,
   getPublicDoctorsByDepartment,
   getAvailableSlots,
+  createAppointment,
 } from "../../../services/appointmentService";
 import { sendPatientOtp } from "../../../services/authService";
 import { useAppointmentBooking } from "../../../context/AppointmentBookingContext";
@@ -10,7 +11,10 @@ import { useAuth } from "../../../context/AuthContext";
 import useAppointmentFlow from "../../../hooks/useAppointmentFlow";
 import { useNavigate } from "react-router-dom";
 
-export function AppointmentForm({
+import AppointmentForm from "../../../components/common/AppointmentForm";
+
+// Simple form wrapper - used by PatientRegistration.jsx
+export function AppointmentFormWrapper({
   children,
   className = "appointment-form",
   onSubmit,
@@ -25,13 +29,13 @@ export function AppointmentForm({
 function Appointment() {
   const navigate = useNavigate();
 
-  const { isAuthenticated, saveRegistrationSession } = useAuth();
-  const { saveAppointment, pendingAppointment } = useAppointmentBooking();
+  const { isAuthenticated, user, saveRegistrationSession } = useAuth();
+  const { saveAppointment, clearAppointment, pendingAppointment } = useAppointmentBooking();
   const { completePendingAppointment } = useAppointmentFlow();
 
-  const [formData, setFormData] = useState({
-    fullName: "",
-    email: "",
+  const initialBookingState = {
+    fullName: isAuthenticated && user ? (user.fullName || user.name || "Patient") : "",
+    email: isAuthenticated && user ? (user.email || "") : "",
     departmentId: "",
     doctorId: "",
     appointmentDate: "",
@@ -39,7 +43,9 @@ function Appointment() {
     consultationType: "Offline",
     reason: "",
     symptoms: "",
-  });
+  };
+
+  const [formData, setFormData] = useState(initialBookingState);
 
   const [departments, setDepartments] = useState([]);
   const [doctors, setDoctors] = useState([]);
@@ -50,16 +56,28 @@ function Appointment() {
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Restore saved appointment data if available
+  // Prefill authenticated user info, or restore saved unauthenticated guest data
   useEffect(() => {
-    if (pendingAppointment && Object.values(pendingAppointment).some((val) => val !== "")) {
+    if (isAuthenticated && user) {
+      setFormData({
+        fullName: user.fullName || user.name || "Patient",
+        email: user.email || "",
+        departmentId: "",
+        doctorId: "",
+        appointmentDate: "",
+        appointmentTime: "",
+        consultationType: "Offline",
+        reason: "",
+        symptoms: "",
+      });
+    } else if (!isAuthenticated && pendingAppointment && Object.values(pendingAppointment).some((val) => val !== "")) {
       setFormData((prev) => ({
         ...prev,
         ...pendingAppointment,
         consultationType: pendingAppointment.consultationType || "Offline",
       }));
     }
-  }, [pendingAppointment]);
+  }, [isAuthenticated, user]);
 
   // Generic Input Handler
   const handleChange = (event) => {
@@ -151,9 +169,12 @@ function Appointment() {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
+    const finalFullName = isAuthenticated ? (user?.fullName || user?.name || formData.fullName || "Patient") : formData.fullName;
+    const finalEmail = isAuthenticated ? (user?.email || formData.email || "") : formData.email;
+
     if (
-      !formData.fullName ||
-      !formData.email ||
+      !finalFullName ||
+      !finalEmail ||
       !formData.departmentId ||
       !formData.doctorId ||
       !formData.appointmentDate ||
@@ -166,6 +187,8 @@ function Appointment() {
 
     const appointmentPayload = {
       ...formData,
+      fullName: finalFullName,
+      email: finalEmail,
       consultationType: formData.consultationType === "In-Person" ? "Offline" : (formData.consultationType || "Offline"),
     };
 
@@ -173,9 +196,14 @@ function Appointment() {
 
     if (isAuthenticated) {
       try {
-        await completePendingAppointment();
+        setIsSubmitting(true);
+        await completePendingAppointment(appointmentPayload);
+        alert("Appointment booked successfully!");
       } catch (err) {
-        console.error(err);
+        console.error("Booking error:", err);
+        alert(err?.response?.data?.message || "Failed to book appointment.");
+      } finally {
+        setIsSubmitting(false);
       }
       return;
     }
@@ -230,140 +258,21 @@ function Appointment() {
             </div>
           </div>
 
-          <AppointmentForm onSubmit={handleSubmit}>
-            <div className="form-group">
-              <label>Full Patient Name</label>
-              <input
-                type="text"
-                name="fullName"
-                value={formData.fullName}
-                onChange={handleChange}
-                placeholder="John Doe"
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label>Email Address</label>
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                placeholder="john@example.com"
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label>Select Department</label>
-              <select
-                name="departmentId"
-                value={formData.departmentId}
-                onChange={handleChange}
-                disabled={loadingDepartments}
-                required
-              >
-                <option value="">Select Department</option>
-
-                {departments.map((department) => (
-                  <option key={department._id} value={department._id}>
-                    {department.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="form-group">
-              <label>Select Doctor</label>
-              <select
-                name="doctorId"
-                value={formData.doctorId}
-                onChange={handleChange}
-                disabled={loadingDoctors || !formData.departmentId}
-                required
-              >
-                <option value="">Select Doctor</option>
-
-                {doctors.map((doctor) => (
-                  <option key={doctor._id} value={doctor._id}>
-                    {doctor.user.fullName}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="form-group">
-              <label>Preferred Date</label>
-              <input
-                type="date"
-                name="appointmentDate"
-                value={formData.appointmentDate}
-                onChange={handleChange}
-                min={new Date().toISOString().split("T")[0]}
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label>Preferred Time</label>
-              <select
-                name="appointmentTime"
-                value={formData.appointmentTime}
-                onChange={handleChange}
-                disabled={
-                  loadingSlots ||
-                  !formData.doctorId ||
-                  !formData.appointmentDate
-                }
-                required
-              >
-                <option value="">Select Time</option>
-
-                {slots.map((slot) => (
-                  <option key={slot.start} value={slot.start}>
-                    {slot.start} - {slot.end}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="form-group">
-              <label>Consultation Type</label>
-              <select
-                name="consultationType"
-                value={formData.consultationType}
-                onChange={handleChange}
-              >
-                <option value="Offline">Offline</option>
-                <option value="Online">Online</option>
-              </select>
-            </div>
-            <div className="form-group form-group-full">
-              <label>Reason for Visit</label>
-              <textarea
-                rows="2"
-                name="reason"
-                value={formData.reason}
-                onChange={handleChange}
-                placeholder="Reason for appointment (e.g. Annual Checkup, Consultation)"
-                required
-              />
-            </div>
-            <div className="form-group form-group-full">
-              <label>Brief Description of Symptoms</label>
-              <textarea
-                rows="4"
-                name="symptoms"
-                value={formData.symptoms}
-                onChange={handleChange}
-                placeholder="How can we help you today?"
-              />
-            </div>
-            <div className="form-group form-group-full">
-              <button
-                type="submit"
-                className="btn btn-primary btn-block"
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? "Processing..." : "Request Appointment"}
-              </button>
-            </div>
-          </AppointmentForm>
+          <AppointmentForm
+            mode="book"
+            formData={formData}
+            handleChange={handleChange}
+            departments={departments}
+            doctors={doctors}
+            slots={slots}
+            loadingDepartments={loadingDepartments}
+            loadingDoctors={loadingDoctors}
+            loadingSlots={loadingSlots}
+            isSubmitting={isSubmitting}
+            isAuthenticated={isAuthenticated}
+            onSubmit={handleSubmit}
+            submitButtonText="Request Appointment"
+          />
         </div>
       </div>
     </section>

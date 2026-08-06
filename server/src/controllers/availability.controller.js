@@ -76,9 +76,32 @@ export const getAvailability = async (req, res) => {
     }).populate("doctor");
 
     if (!availability) {
-      return res.status(404).json({
-        success: false,
-        message: "Availability not found.",
+      // Return a default availability so the frontend can show slots
+      const defaultAvailability = {
+        doctor: req.params.doctorId,
+        consultationDuration: 15,
+        schedule: [
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday",
+          "Sunday",
+        ].map((d) => ({
+          day: d,
+          isAvailable: d !== "Sunday",
+          startTime: "09:00",
+          endTime: "17:00",
+          breakStart: "13:00",
+          breakEnd: "14:00",
+        })),
+      };
+
+      return res.status(200).json({
+        success: true,
+        availability: defaultAvailability,
+        isDefault: true,
       });
     }
 
@@ -199,15 +222,30 @@ export const getAvailableSlots = async (req, res) => {
 
     const day = getDayName(date);
 
-    const availability = await DoctorAvailability.findOne({
+    let availability = await DoctorAvailability.findOne({
       doctor: doctorId,
     });
 
     if (!availability) {
-      return res.status(404).json({
-        success: false,
-        message: "Doctor availability not found.",
-      });
+      availability = {
+        consultationDuration: 15,
+        schedule: [
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday",
+          "Sunday",
+        ].map((d) => ({
+          day: d,
+          isAvailable: d !== "Sunday",
+          startTime: "09:00",
+          endTime: "17:00",
+          breakStart: "13:00",
+          breakEnd: "14:00",
+        })),
+      };
     }
 
     const schedule = availability.schedule.find((item) => item.day === day);
@@ -250,10 +288,12 @@ export const getAvailableSlots = async (req, res) => {
     const bookedSlots = bookedAppointments.map((appointment) => {
       const date = new Date(appointment.appointmentStart);
 
-      const hours = String(date.getUTCHours()).padStart(2, "0");
-      const minutes = String(date.getUTCMinutes()).padStart(2, "0");
-
-      return `${hours}:${minutes}`;
+      return date.toLocaleTimeString("en-IN", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+        timeZone: "Asia/Kolkata",
+      });
     });
 
     // Remove booked slots

@@ -20,15 +20,32 @@ import {
   getMyPrescriptions,
   getAvailableDoctors,
   getAvailableDepartments,
+  getAppointmentDetails,
+  rescheduleAppointment,
 } from "../controllers/patient.controller.js";
 
 const router = express.Router();
 
-router.post("/", createPatient);
+router.post(
+  "/",
+  authenticate,
+  authorize("receptionist", "admin", "doctor"),
+  createPatient
+);
 
-router.get("/", getPatients);
+router.get(
+  "/",
+  authenticate,
+  authorize("receptionist", "doctor", "admin"),
+  getPatients
+);
 
-router.get("/search", searchPatients);
+router.get(
+  "/search",
+  authenticate,
+  authorize("receptionist", "doctor", "admin"),
+  searchPatients
+);
 
 router.get(
   "/dashboard",
@@ -40,6 +57,13 @@ router.get(
 router.get("/profile", authenticate, authorize("patient"), getMyProfile);
 
 router.put("/profile", authenticate, authorize("patient"), updateMyProfile);
+
+router.get(
+  "/appointments",
+  authenticate,
+  authorize("patient"),
+  getUpcomingAppointments,
+);
 
 router.get(
   "/appointments/upcoming",
@@ -67,18 +91,52 @@ router.get("/departments", authenticate, authorize("patient"), getAvailableDepar
 router.get("/doctors", authenticate, authorize("patient"), getAvailableDoctors);
 
 router.put(
-  "/appointments/:id/cancel",
+  "/appointments/:appointmentId/cancel",
   authenticate,
   authorize("patient"),
   cancelAppointment,
 );
 
-router.get("/phone/:phone", getPatientByPhone);
+router.get(
+  "/appointments/:appointmentId/details",
+  authenticate,
+  authorize("patient"),
+  getAppointmentDetails,
+);
 
-router.get("/:id", getPatientById);
+router.patch(
+  "/appointments/:appointmentId/reschedule",
+  authenticate,
+  authorize("patient"),
+  rescheduleAppointment,
+);
 
-router.put("/:id", updatePatient);
+router.get(
+  "/phone/:phone",
+  authenticate,
+  authorize("receptionist", "doctor", "admin"),
+  getPatientByPhone
+);
 
-router.delete("/:id", deletePatient);
+router.get(
+  "/:id",
+  authenticate,
+  authorize("receptionist", "doctor", "admin"),
+  getPatientById
+);
+
+router.put(
+  "/:id",
+  authenticate,
+  authorize("receptionist", "admin"),
+  updatePatient
+);
+
+router.delete(
+  "/:id",
+  authenticate,
+  authorize("admin", "receptionist"),
+  deletePatient
+);
 
 export default router;

@@ -22,7 +22,7 @@ function SignOut({
   const menuRef = useRef(null);
   const menuId = useId();
   const user = userProp || authenticatedUser;
-  const displayName = user?.name || user?.shortName || "Staff member";
+  const displayName = user?.fullName || user?.name || user?.shortName || "User";
   const displayRole = role || user?.roleTitle || user?.role || "Staff";
   const details = profileDetails || [
     { label: "Full name", value: displayName },

@@ -9,6 +9,8 @@ import StaffLogin from "../pages/Login/StaffLogin";
 import PatientDashboard from "../pages/patient_dashboard/PatientDashboard";
 import PatientDashboardPage from "../pages/patient_dashboard/PatientDashboardPage";
 import PatientBooking from "../pages/patient_dashboard/booking/PatientBooking";
+import PatientAppointmentsPage from "../pages/patient_dashboard/appointments/PatientAppointmentsPage";
+import RescheduleAppointment from "../pages/patient_dashboard/appointments/RescheduleAppointment";
 import BillingInsurance from "../pages/patient_dashboard/billing/BillingInsurance";
 import DoctorDirectory from "../pages/patient_dashboard/doctor_directory/DoctorDirectory";
 import PatientInbox from "../pages/patient_dashboard/inbox/Inbox";
@@ -45,6 +47,8 @@ function AppRoutes() {
         <Route element={<ProtectedRoute allowedRoles={["patient"]} loginPath="/login" />}>
           <Route path="/patient/dashboard" element={<PatientDashboard />} />
           <Route path="/patient/book" element={<PatientBooking />} />
+          <Route path="/patient/appointments" element={<PatientAppointmentsPage />} />
+          <Route path="/patient/reschedule" element={<RescheduleAppointment />} />
           <Route path="/patient/billing" element={<PatientDashboardPage><BillingInsurance /></PatientDashboardPage>} />
           <Route path="/patient/doctors" element={<PatientDashboardPage><DoctorDirectory /></PatientDashboardPage>} />
           <Route path="/patient/profile" element={<PatientProfilePage />} />

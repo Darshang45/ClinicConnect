@@ -41,7 +41,11 @@ const patientSchema = new mongoose.Schema(
 
     dateOfBirth: {
       type: Date,
-      required: true,
+      required: false,
+    },
+
+    age: {
+      type: Number,
     },
 
     bloodGroup: {

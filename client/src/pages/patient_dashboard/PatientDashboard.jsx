@@ -1,5 +1,6 @@
 import Container from "../../components/common/Container";
 import "../../styles/patient_dashboard.css";
+import usePatientDashboard from "../../hooks/usePatientDashboard";
 import AppointmentHistory from "./appointment_history/AppointmentHistory";
 import UpcomingAppointments from "./appointments/UpcomingAppointments";
 import DashboardHeader from "./dashboard_header/DashboardHeader";
@@ -13,12 +14,14 @@ import QuickActions from "./quick_actions/QuickActions";
 import WelcomeBanner from "./welcome_banner/WelcomeBanner";
 
 function PatientDashboard() {
+  const { dashboardData, loading, refetch } = usePatientDashboard();
+
   return (
     <Container className="patient-dashboard">
       <DashboardHeader />
-      <WelcomeBanner />
-      <HealthSummary />
-      <UpcomingAppointments />
+      <WelcomeBanner patientName={dashboardData?.patientName} />
+      <HealthSummary stats={dashboardData?.stats} bloodGroup={dashboardData?.bloodGroup} />
+      <UpcomingAppointments nextAppointment={dashboardData?.nextAppointment} loading={loading} onRefresh={refetch} />
       <AppointmentHistory />
       <MedicalRecords />
       <Prescriptions />

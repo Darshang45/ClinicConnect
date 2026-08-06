@@ -21,7 +21,7 @@ function Hero() {
           </div>
 
           <h1 className="hero-title">
-            Trusted <span className="text-primary">Healthcare</span> for Every Family
+            Trusted <span className="hero-title-accent">Healthcare</span> for Every Family
           </h1>
 
           <p className="hero-description">

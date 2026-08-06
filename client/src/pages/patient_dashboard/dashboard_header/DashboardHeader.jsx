@@ -36,10 +36,11 @@ function DashboardHeader() {
   const [showScrollButton, setShowScrollButton] = useState(false);
   const location = useLocation();
   const { user } = useAuth();
-  const profile = user || {
-    name: "Atharva Srivastava",
-    roleTitle: "Platinum Member",
-    avatar: patientPhoto,
+  const profile = {
+    name: user?.fullName || user?.name || "Patient",
+    roleTitle: user?.roleTitle || "Patient Portal",
+    avatar: user?.avatar || patientPhoto,
+    email: user?.email || "",
   };
   const isInboxOpen = location.pathname === "/patient/inbox";
   const activeSection = mainNavigation.find((item) => item.to === location.pathname)?.label || "Dashboard";

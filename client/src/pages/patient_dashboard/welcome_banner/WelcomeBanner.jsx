@@ -5,13 +5,14 @@ import Button from "../../../components/common/Button";
 import "../../../styles/patient_dashboard.css";
 import useAuth from "../../../hooks/useAuth";
 
-function WelcomeBanner() {
+function WelcomeBanner({ patientName }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
   const [successMessage, setSuccessMessage] = useState("");
 
-  const firstName = user?.fullName?.split(" ")[0] || "there";
+  const displayName = patientName || user?.fullName;
+  const firstName = displayName ? displayName.split(" ")[0] : "there";
 
   useEffect(() => {
     if (location.state?.successMessage) {
