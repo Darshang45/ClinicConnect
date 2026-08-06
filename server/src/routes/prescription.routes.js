@@ -15,7 +15,12 @@ router.post("/", authenticate, authorize("doctor"), createPrescription);
 
 router.get("/", authenticate, authorize("doctor"), getAllPrescriptions);
 
-router.get("/appointment/:appointmentId", getPrescriptionByAppointment);
+router.get(
+  "/appointment/:appointmentId",
+  authenticate,
+  authorize("doctor", "patient", "pharmacist", "admin"),
+  getPrescriptionByAppointment
+);
 
 router.get(
   "/:id",

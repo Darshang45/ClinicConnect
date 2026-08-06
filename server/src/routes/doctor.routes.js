@@ -13,11 +13,15 @@ import {
   getTodayAppointments,
   getAppointmentDetails,
   getPatientHistory,
+  getPatientRecord,
   startConsultation,
   completeConsultation,
   getUpcomingAppointments,
   getRecentPatients,
   getRecentPrescriptions,
+  getDoctorDashboard,
+  updateConsultation,
+  searchPatients,
 } from "../controllers/doctor.controller.js";
 
 const router = express.Router();
@@ -62,17 +66,42 @@ router.get(
 );
 
 router.get(
-  "/:id",
+  "/dashboard",
   authenticate,
-  authorize("admin", "doctor", "receptionist"),
-  getDoctorById,
+  authorize("doctor"),
+  getDoctorDashboard
 );
+
+
 
 router.put("/:id", authenticate, authorize("admin", "doctor"), updateDoctor);
 
 router.delete("/:id", authenticate, authorize("admin"), deleteDoctor);
 
 router.get("/today-appointments/:doctorId", getTodayAppointments);
+
+
+router.get(
+  "/search-patient",
+  authenticate,
+  authorize("doctor"),
+  searchPatients
+);
+
+router.get(
+  "/patient-record/:patientId",
+  authenticate,
+  authorize("doctor"),
+  getPatientRecord
+);
+
+
+router.get(
+  "/:id",
+  authenticate,
+  authorize("admin", "doctor", "receptionist"),
+  getDoctorById,
+);
 
 router.get("/appointment/:appointmentId", getAppointmentDetails);
 
@@ -81,5 +110,12 @@ router.get("/patient-history/:patientId", getPatientHistory);
 router.put("/start-consultation/:appointmentId", startConsultation);
 
 router.put("/complete-consultation/:appointmentId", completeConsultation);
+
+router.put(
+  "/consultation/:appointmentId",
+  authenticate,
+  authorize("doctor"),
+  updateConsultation
+);
 
 export default router;

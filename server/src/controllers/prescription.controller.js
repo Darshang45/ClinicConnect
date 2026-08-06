@@ -42,12 +42,29 @@ export const createPrescription = async (req, res) => {
       });
     }
 
+    if (!appointmentExists.doctor.equals(doctor)) {
+      return res.status(403).json({
+        success: false,
+        message:
+          "You are not authorized to create a prescription for this appointment.",
+      });
+    }
+
     // Only completed appointments can have prescriptions
-    if (appointmentExists.status !== "Completed") {
+    // Prescription can be created while consultation is in progress
+    // or after it has been completed.
+    if (!["In Consultation", "Completed"].includes(appointmentExists.status)) {
       return res.status(400).json({
         success: false,
         message:
-          "Prescription can only be created after consultation is completed.",
+          "Prescription can only be created during or after consultation.",
+      });
+    }
+
+    if (["Cancelled", "No Show"].includes(appointmentExists.status)) {
+      return res.status(400).json({
+        success: false,
+        message: "Prescription cannot be created for cancelled appointments.",
       });
     }
 
@@ -84,6 +101,7 @@ export const createPrescription = async (req, res) => {
     }
 
     // Create Prescription
+    // Create Prescription
     const prescription = await Prescription.create({
       appointment,
       patient,
@@ -93,12 +111,26 @@ export const createPrescription = async (req, res) => {
       followUpDate,
     });
 
+    // Link prescription to appointment
+    appointmentExists.prescription = prescription._id;
+
+    // Automatically complete consultation if not already completed
+    if (appointmentExists.status !== "Completed") {
+      appointmentExists.status = "Completed";
+
+      if (!appointmentExists.consultationEndTime) {
+        appointmentExists.consultationEndTime = new Date();
+      }
+    }
+
+    await appointmentExists.save();
+
     await logActivity({
       user: req.user._id,
       role: req.user.role,
       action: "CREATE_PRESCRIPTION",
       module: "Prescription",
-      description: `Prescription created for patient ${patient.fullName}.`,
+      description: `Prescription created for patient ${patientExists.fullName}.`,
       ipAddress: req.ip,
     });
 
@@ -159,7 +191,7 @@ export const createPrescription = async (req, res) => {
     // Notify Pharmacists
     await createNotification({
       title: "Prescription Issued",
-      message: `A new prescription has been issued for ${populatedPrescription.patient.fullName} by Dr. ${populatedPrescription.doctor.user.fullName}.`,
+      message: `A new prescription has been issued for ${populatedPrescription.patient.user.fullName} by Dr. ${populatedPrescription.doctor.user.fullName}.`,
       sender: populatedPrescription.doctor.user._id,
       receiverRole: "pharmacist",
     });
@@ -194,12 +226,14 @@ export const getAllPrescriptions = async (req, res) => {
       legacy: { dataKey: "prescriptions", totalKey: "count" },
     });
 
-    const prescriptionIds = response.data.map((prescription) => prescription._id);
+    const prescriptionIds = response.data.map(
+      (prescription) => prescription._id,
+    );
     const prescriptionItems = prescriptionIds.length
       ? await PrescriptionItem.find({
           prescription: { $in: prescriptionIds },
         })
-          .populate("medicine")
+          .populate("medicine", "genericName")
           .lean()
       : [];
     const medicinesByPrescription = new Map();
@@ -240,14 +274,16 @@ export const getPrescriptionById = async (req, res) => {
     }
 
     const medicines = await PrescriptionItem.find({
-      prescription: prescription._id,
-    }).populate("medicine");
+    prescription: prescription._id,
+}).populate("medicine", "genericName");
 
-    return res.status(200).json({
-      success: true,
-      prescription,
-      medicines,
-    });
+return res.status(200).json({
+    success:true,
+    prescription:{
+        ...prescription.toObject(),
+        medicines,
+    }
+});
   } catch (error) {
     return res.status(500).json({
       success: false,
@@ -258,6 +294,7 @@ export const getPrescriptionById = async (req, res) => {
 
 export const getPrescriptionByAppointment = async (req, res) => {
   try {
+    
     const prescription = await Prescription.findOne({
       appointment: req.params.appointmentId,
     })
@@ -273,14 +310,19 @@ export const getPrescriptionByAppointment = async (req, res) => {
     }
 
     const medicines = await PrescriptionItem.find({
-      prescription: prescription._id,
-    }).populate("medicine");
+  prescription: prescription._id,
+}).populate(
+  "medicine",
+  "name genericName strength category manufacturer"
+);
 
-    return res.status(200).json({
-      success: true,
-      prescription,
-      medicines,
-    });
+return res.status(200).json({
+    success:true,
+    prescription:{
+        ...prescription.toObject(),
+        medicines,
+    }
+});
   } catch (error) {
     return res.status(500).json({
       success: false,
@@ -311,6 +353,18 @@ export const updatePrescription = async (req, res) => {
     if (status) prescription.status = status;
 
     await prescription.save();
+
+    const appointment = await Appointment.findById(prescription.appointment);
+
+    if (appointment && appointment.status !== "Completed") {
+      appointment.status = "Completed";
+
+      if (!appointment.consultationEndTime) {
+        appointment.consultationEndTime = new Date();
+      }
+
+      await appointment.save();
+    }
 
     return res.status(200).json({
       success: true,
