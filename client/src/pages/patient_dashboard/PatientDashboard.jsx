@@ -1,3 +1,4 @@
+import { useState } from "react";
 import Container from "../../components/common/Container";
 import "../../styles/patient_dashboard.css";
 import usePatientDashboard from "../../hooks/usePatientDashboard";
@@ -12,9 +13,11 @@ import MedicalRecords from "./medical_records/MedicalRecords";
 import Prescriptions from "./prescriptions/Prescriptions";
 import QuickActions from "./quick_actions/QuickActions";
 import WelcomeBanner from "./welcome_banner/WelcomeBanner";
+import UploadReportModal from "../doctor_dashboard/diagnostic_reports/UploadReportModal";
 
 function PatientDashboard() {
   const { dashboardData, loading, refetch } = usePatientDashboard();
+  const [showUploadModal, setShowUploadModal] = useState(false);
 
   return (
     <Container className="patient-dashboard">
@@ -27,8 +30,17 @@ function PatientDashboard() {
       <Prescriptions />
       <LabReports />
       <HealthMetrics />
-      <QuickActions />
+      <QuickActions onUploadReport={() => setShowUploadModal(true)} />
       <EmergencyContact />
+
+      {showUploadModal && (
+        <UploadReportModal
+          onClose={() => setShowUploadModal(false)}
+          onUploaded={() => {
+            refetch();
+          }}
+        />
+      )}
     </Container>
   );
 }

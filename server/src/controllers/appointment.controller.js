@@ -208,11 +208,9 @@ export const bookAppointment = async (req, res) => {
     // Step 11: Get Booked Slots
     // ==============================
 
-    const startOfDay = new Date(appointmentDate);
-    startOfDay.setHours(0, 0, 0, 0);
-
-    const endOfDay = new Date(appointmentDate);
-    endOfDay.setHours(23, 59, 59, 999);
+    // Use IST midnight boundaries to match how appointmentStart is stored
+    const startOfDay = new Date(`${appointmentDate}T00:00:00+05:30`);
+    const endOfDay = new Date(`${appointmentDate}T23:59:59.999+05:30`);
 
     const bookedAppointments = await Appointment.find({
       doctor: doctorId,

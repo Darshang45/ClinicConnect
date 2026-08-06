@@ -9,7 +9,7 @@ import { sendPatientOtp } from "../../../services/authService";
 import { useAppointmentBooking } from "../../../context/AppointmentBookingContext";
 import { useAuth } from "../../../context/AuthContext";
 import useAppointmentFlow from "../../../hooks/useAppointmentFlow";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 import AppointmentForm from "../../../components/common/AppointmentForm";
 
@@ -28,6 +28,7 @@ export function AppointmentFormWrapper({
 
 function Appointment() {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const { isAuthenticated, user, saveRegistrationSession } = useAuth();
   const { saveAppointment, clearAppointment, pendingAppointment } = useAppointmentBooking();
@@ -36,8 +37,8 @@ function Appointment() {
   const initialBookingState = {
     fullName: isAuthenticated && user ? (user.fullName || user.name || "Patient") : "",
     email: isAuthenticated && user ? (user.email || "") : "",
-    departmentId: "",
-    doctorId: "",
+    departmentId: location.state?.departmentId || "",
+    doctorId: location.state?.doctorId || "",
     appointmentDate: "",
     appointmentTime: "",
     consultationType: "Offline",
@@ -56,20 +57,20 @@ function Appointment() {
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Prefill authenticated user info, or restore saved unauthenticated guest data
+  // Prefill authenticated user info & prefilled doctor/department state from location
   useEffect(() => {
-    if (isAuthenticated && user) {
-      setFormData({
+    if (location.state?.doctorId && location.state?.departmentId) {
+      setFormData((prev) => ({
+        ...prev,
+        departmentId: location.state.departmentId,
+        doctorId: location.state.doctorId,
+      }));
+    } else if (isAuthenticated && user) {
+      setFormData((prev) => ({
+        ...prev,
         fullName: user.fullName || user.name || "Patient",
         email: user.email || "",
-        departmentId: "",
-        doctorId: "",
-        appointmentDate: "",
-        appointmentTime: "",
-        consultationType: "Offline",
-        reason: "",
-        symptoms: "",
-      });
+      }));
     } else if (!isAuthenticated && pendingAppointment && Object.values(pendingAppointment).some((val) => val !== "")) {
       setFormData((prev) => ({
         ...prev,
@@ -77,7 +78,7 @@ function Appointment() {
         consultationType: pendingAppointment.consultationType || "Offline",
       }));
     }
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, user, location.state]);
 
   // Generic Input Handler
   const handleChange = (event) => {
@@ -232,6 +233,18 @@ function Appointment() {
     }
   };
 
+  const prefilledDeptName =
+    location.state?.departmentName ||
+    departments.find((d) => d._id === formData.departmentId)?.name ||
+    "Department";
+
+  const prefilledDocName =
+    location.state?.doctorName ||
+    doctors.find((d) => (d._id || d.id || d.doctorId) === formData.doctorId)?.user?.fullName ||
+    doctors.find((d) => (d._id || d.id || d.doctorId) === formData.doctorId)?.fullName ||
+    doctors.find((d) => (d._id || d.id || d.doctorId) === formData.doctorId)?.name ||
+    "Doctor";
+
   return (
     <section className="appointment" id="book">
       <div className="appointment-inner">
@@ -271,7 +284,10 @@ function Appointment() {
             isSubmitting={isSubmitting}
             isAuthenticated={isAuthenticated}
             onSubmit={handleSubmit}
+            departmentName={prefilledDeptName}
+            doctorName={prefilledDocName}
             submitButtonText="Request Appointment"
+            isPrefilled={Boolean(location.state?.isPrefilled || (location.state?.doctorId && location.state?.departmentId))}
           />
         </div>
       </div>

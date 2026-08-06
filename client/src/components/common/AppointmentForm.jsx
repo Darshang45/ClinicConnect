@@ -16,6 +16,7 @@ export function AppointmentForm({
   doctorName = "",
   departmentName = "",
   submitButtonText = "Request Appointment",
+  isPrefilled = false,
 }) {
   const isReschedule = mode === "reschedule";
 
@@ -49,14 +50,23 @@ export function AppointmentForm({
       )}
 
       <div className="form-group">
-        <label>Select Department</label>
-        {isReschedule ? (
+        <label>Department</label>
+        {isPrefilled ? (
+          <>
+            <input
+              type="text"
+              value={departmentName || "Department"}
+              readOnly
+              style={{ cursor: "default" }}
+            />
+            <input type="hidden" name="departmentId" value={formData.departmentId || ""} />
+          </>
+        ) : isReschedule ? (
           <input
             type="text"
             value={departmentName || "Department"}
-            disabled
             readOnly
-            style={{ opacity: 0.8, cursor: "not-allowed" }}
+            style={{ opacity: 0.8, cursor: "default" }}
           />
         ) : (
           <select
@@ -77,14 +87,23 @@ export function AppointmentForm({
       </div>
 
       <div className="form-group">
-        <label>Select Doctor</label>
-        {isReschedule ? (
+        <label>Doctor</label>
+        {isPrefilled ? (
+          <>
+            <input
+              type="text"
+              value={doctorName || "Doctor"}
+              readOnly
+              style={{ cursor: "default" }}
+            />
+            <input type="hidden" name="doctorId" value={formData.doctorId || ""} />
+          </>
+        ) : isReschedule ? (
           <input
             type="text"
             value={doctorName || "Doctor"}
-            disabled
             readOnly
-            style={{ opacity: 0.8, cursor: "not-allowed" }}
+            style={{ opacity: 0.8, cursor: "default" }}
           />
         ) : (
           <select
@@ -96,8 +115,8 @@ export function AppointmentForm({
           >
             <option value="">Select Doctor</option>
             {doctors.map((doctor) => (
-              <option key={doctor._id} value={doctor._id}>
-                {doctor.user?.fullName || doctor.fullName}
+              <option key={doctor._id || doctor.id || doctor.doctorId} value={doctor._id || doctor.id || doctor.doctorId}>
+                {doctor.user?.fullName || doctor.fullName || doctor.name}
               </option>
             ))}
           </select>

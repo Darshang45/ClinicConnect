@@ -18,11 +18,24 @@ import {
   updateMyProfile,
   getUpcomingAppointments,
   getMyPrescriptions,
+  downloadPrescriptionPDF,
   getAvailableDoctors,
   getAvailableDepartments,
   getAppointmentDetails,
   rescheduleAppointment,
+  getPatientTimeline,
+  getPatientHealthMetrics,
+  createPatientHealthMetric,
+  updatePatientHealthMetric,
+  deletePatientHealthMetric,
 } from "../controllers/patient.controller.js";
+
+import {
+  createMedicalReport,
+  getReportsByPatient,
+  deleteMedicalReport,
+} from "../controllers/medicalReport.controller.js";
+import uploadReport from "../uploads/uploadReport.js";
 
 const router = express.Router();
 
@@ -54,6 +67,63 @@ router.get(
   getPatientDashboard,
 );
 
+router.get(
+  "/timeline",
+  authenticate,
+  authorize("patient"),
+  getPatientTimeline,
+);
+
+router.get(
+  "/health-metrics",
+  authenticate,
+  authorize("patient"),
+  getPatientHealthMetrics,
+);
+
+router.post(
+  "/health-metrics",
+  authenticate,
+  authorize("patient"),
+  createPatientHealthMetric,
+);
+
+router.put(
+  "/health-metrics/:metricId",
+  authenticate,
+  authorize("patient"),
+  updatePatientHealthMetric,
+);
+
+router.delete(
+  "/health-metrics/:metricId",
+  authenticate,
+  authorize("patient"),
+  deletePatientHealthMetric,
+);
+
+router.get(
+  "/medical-reports",
+  authenticate,
+  authorize("patient"),
+  getReportsByPatient,
+);
+
+router.post(
+  "/medical-reports",
+  authenticate,
+  authorize("patient"),
+  uploadReport.single("reportFile"),
+  createMedicalReport,
+);
+
+router.delete(
+  "/medical-reports/:id",
+  authenticate,
+  authorize("patient"),
+  deleteMedicalReport,
+);
+
 router.get("/profile", authenticate, authorize("patient"), getMyProfile);
 
 router.put("/profile", authenticate, authorize("patient"), updateMyProfile);
@@ -77,6 +147,13 @@ router.get(
   authenticate,
   authorize("patient"),
   getMyPrescriptions,
+);
+
+router.get(
+  "/prescriptions/:prescriptionId/pdf",
+  authenticate,
+  authorize("patient"),
+  downloadPrescriptionPDF,
 );
 
 router.post(

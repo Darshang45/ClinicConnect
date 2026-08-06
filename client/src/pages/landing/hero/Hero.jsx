@@ -1,8 +1,12 @@
+import { useState } from "react";
 import heroImage from "../../../assets/images/hero/hero-doctors.jpg";
 import patient1 from "../../../assets/images/hero/patient1.jpg";
 import patient2 from "../../../assets/images/hero/patient2.jpg";
+import EmergencyModal from "../../../components/common/EmergencyModal";
 
 function Hero() {
+  const [showEmergencyModal, setShowEmergencyModal] = useState(false);
+
   const handleScroll = (e, href) => {
     e.preventDefault();
     const target = document.querySelector(href);
@@ -33,10 +37,18 @@ function Hero() {
             <a href="#book" className="btn btn-primary btn-lg" onClick={(e) => handleScroll(e, "#book")}>
               Book Appointment <span className="material-symbols-outlined">calendar_month</span>
             </a>
-            <button type="button" className="btn btn-emergency btn-lg">
+            <button
+              type="button"
+              className="btn btn-emergency btn-lg"
+              onClick={() => setShowEmergencyModal(true)}
+            >
               Emergency Support <span className="material-symbols-outlined">call</span>
             </button>
           </div>
+          <EmergencyModal
+            isOpen={showEmergencyModal}
+            onClose={() => setShowEmergencyModal(false)}
+          />
 
           <div className="hero-stats">
             <div className="hero-stat">

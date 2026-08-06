@@ -17,6 +17,7 @@ const router = express.Router();
 
 router.post(
   "/",
+  authenticate,
   uploadReport.single("reportFile"),
   createMedicalReport
 );
