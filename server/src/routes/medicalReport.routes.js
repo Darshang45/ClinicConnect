@@ -1,4 +1,5 @@
 import express from "express";
+import { authenticate } from "../middleware/auth.middleware.js";
 
 import {
   createMedicalReport,
@@ -29,6 +30,7 @@ router.get(
 
 router.get(
   "/appointment/:appointmentId",
+  authenticate,
   getReportByAppointment
 );
 

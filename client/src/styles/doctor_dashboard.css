@@ -110,7 +110,37 @@
 .doc-icon-button:hover { background: var(--surface-container-high); }
 .doc-icon-button.is-open { color: #16a34a; background: rgb(22 163 74 / 0.1); }
 .doc-icon-button .material-symbols-outlined { font-size: 21px; }
-.doc-notification-dot { position: absolute; top: 9px; right: 9px; width: 8px; height: 8px; border: 2px solid var(--surface); border-radius: 50%; background: var(--error); }
+.doc-notification-button{
+    position:relative;
+}
+
+.doc-notification-badge{
+
+    position:absolute;
+
+    top:-4px;
+    right:-4px;
+
+    min-width:20px;
+    height:20px;
+
+    padding:0 6px;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    border-radius:999px;
+
+    background:#ef4444;
+
+    color:#fff;
+
+    font-size:11px;
+    font-weight:700;
+
+    border:2px solid #fff;
+}
 
 .doc-notification-dropdown {
   --pd-primary: #16a34a;
@@ -277,9 +307,40 @@
 }
 .doc-section-heading span { color: #16a34a; font-size: 11px; font-weight: 700; }
 .doc-queue-list { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
-.doc-queue-card { min-width: 0; padding: 13px; border: 1px solid rgb(189 202 186 / 0.32); border-radius: 13px; transition: border-color 0.2s; }
-.doc-queue-card:hover { border-color: rgb(22 163 74 / 0.5); }
-.doc-queue-card.active { border: 2px solid #16a34a; padding: 12px; }
+.doc-queue-card {
+  min-width: 0;
+  padding: 13px;
+  border: 1px solid rgb(189 202 186 / 0.32);
+  border-radius: 13px;
+  transition: all 0.25s ease;
+}
+
+.doc-queue-card:hover {
+  border-color: #16a34a;
+  background: rgb(22 163 74 / 0.05);
+  box-shadow: 0 6px 16px rgb(22 163 74 / 0.12);
+  transform: translateY(-2px);
+}
+.doc-queue-card.active {
+  border: 2px solid #16a34a;
+  padding: 12px;
+  background: rgb(22 163 74 / 0.08);
+  box-shadow: 0 8px 20px rgb(22 163 74 / 0.15);
+  transform: translateY(-2px);
+}
+
+.doc-queue-card.active .doc-queue-status {
+  background: #16a34a;
+  color: #fff;
+}
+
+.doc-queue-card.active strong {
+  color: #16a34a;
+}
+
+.doc-queue-card.active p {
+  color: var(--on-surface);
+}
 .doc-queue-card-top { justify-content: space-between; gap: 8px; margin-bottom: 10px; }
 .doc-queue-status { padding: 3px 7px; border-radius: 999px; color: var(--on-surface-variant); background: var(--surface-container-highest); font-size: 8px; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; white-space: nowrap; }
 .doc-queue-status.active { color: #16a34a; background: rgb(22 163 74 / 0.1); }
@@ -287,13 +348,7 @@
 .doc-queue-card strong { display: block; font-size: 14px; }
 .doc-queue-card p { margin-top: 2px; overflow: hidden; color: var(--on-surface-variant); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
 
-.doc-patient-search { position: relative; display: flex; align-items: center; min-height: 50px; padding: 0 10px 0 16px; border: 1px solid rgb(189 202 186 / 0.32); border-radius: 16px; background: #fff; box-shadow: 0 2px 5px rgb(25 28 28 / 0.03); }
-.doc-search-person { color: #16a34a; font-size: 21px; }
-.doc-search-divider { width: 1px; height: 23px; margin: 0 12px; background: rgb(189 202 186 / 0.32); }
-.doc-patient-search input { width: 100%; min-width: 0; border: 0; outline: 0; color: var(--on-surface); font: 500 15px var(--font-body); }
-.doc-patient-search input::placeholder { color: rgb(25 28 28 / 0.76); opacity: 1; }
-.doc-search-button { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px; padding: 9px 17px; border-radius: 12px; color: #fff; background: #16a34a; font-size: 12px; font-weight: 700; }
-.doc-search-button .material-symbols-outlined { font-size: 17px; }
+
 
 .doc-workspace { overflow: hidden; border: 1px solid rgb(189 202 186 / 0.24); border-radius: 19px; box-shadow: 0 14px 26px rgb(25 28 28 / 0.08); }
 .doc-workspace-header { padding: 20px 30px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgb(22 163 74 / 0.11); background: rgb(22 163 74 / 0.05); }
@@ -373,8 +428,57 @@
 .doc-small-action { display: grid; width: 27px; height: 27px; place-items: center; border: 1px solid rgb(189 202 186 / 0.32); border-radius: 7px; color: var(--on-surface); background: #fff; }
 .doc-small-action .material-symbols-outlined { font-size: 16px; }
 .doc-small-action.delete { border-color: rgb(186 26 26 / 0.25); color: var(--error); }
-.doc-manual-entry { width: 100%; margin-top: 9px; padding: 9px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 2px dashed rgb(189 202 186 / 0.5); border-radius: 12px; color: var(--on-surface-variant); background: transparent; font-size: 9px; font-weight: 700; }
-.doc-manual-entry .material-symbols-outlined { font-size: 16px; }
+.doc-manual-entry {
+  width: 100%;
+  min-height: 44px;
+  margin-top: 14px;
+  padding: 10px 18px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  border: 2px dashed rgb(22 163 74 / 0.35);
+  border-radius: 12px;
+
+  color: #16a34a;
+  background: rgb(22 163 74 / 0.05);
+
+  font-size: 13px;
+  font-weight: 700;
+
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.doc-manual-entry:hover {
+  border-color: #16a34a;
+  background: #16a34a;
+  color: #fff;
+  box-shadow: 0 8px 18px rgb(22 163 74 / 0.18);
+  transform: translateY(-2px);
+}
+
+.doc-manual-entry:active {
+  transform: translateY(0);
+}
+
+.doc-manual-entry:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+.doc-manual-entry .material-symbols-outlined {
+  font-size: 18px;
+  transition: transform 0.25s ease;
+}
+
+.doc-manual-entry:hover .material-symbols-outlined {
+  transform: rotate(90deg);
+}
 .doc-follow-up { margin-top: 11px; padding-top: 16px; border-top: 1px solid rgb(22 163 74 / 0.1); }
 .doc-follow-up h4 { color: #16a34a; font-family: var(--font-display); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; }
 .doc-follow-up-field { display: grid; gap: 7px; margin-top: 13px; }
@@ -385,30 +489,21 @@
 .doc-date-field > div > .material-symbols-outlined { position: absolute; top: 50%; left: 10px; color: #16a34a; font-size: 16px; transform: translateY(-50%); }
 .doc-date-field input { padding: 9px 9px 9px 12px; font-size: 10px; }
 
-.doc-prescription-preview-section { margin-top: 0; }
-.doc-prescription-preview { position: relative; overflow: hidden; padding: 25px; border: 1px solid rgb(189 202 186 / 0.32); border-radius: 12px; background: #fff; box-shadow: inset 0 1px 4px rgb(25 28 28 / 0.03); }
-.doc-preview-top-line { position: absolute; top: 0; right: 0; left: 0; height: 5px; background: rgb(22 163 74 / 0.22); }
-.doc-preview-header { justify-content: space-between; gap: 16px; padding-bottom: 17px; border-bottom: 1px solid rgb(189 202 186 / 0.25); }
-.doc-preview-header > div:last-child { text-align: right; }
-.doc-preview-header strong { font-family: var(--font-display); color: #16a34a; font-size: 14px; }
-.doc-preview-header > div:last-child strong { font-family: var(--font-body); color: var(--on-surface); font-size: 10px; }
-.doc-preview-header p { margin-top: 2px; color: var(--on-surface-variant); font-size: 8px; }
-.doc-preview-patient { justify-content: space-between; margin: 20px 0; }
-.doc-preview-patient > div { display: grid; gap: 3px; }
-.doc-preview-patient > div:last-child { text-align: right; }
-.doc-preview-patient span { margin: 0; font-size: 8px; }
-.doc-preview-patient strong { font-size: 10px; }
-.doc-preview-medicines { display: flex; gap: 13px; }
-.doc-preview-medicines > span { color: #16a34a; font-family: var(--font-display); font-size: 22px; font-weight: 700; }
-.doc-preview-medicines ol { display: grid; gap: 9px; padding-left: 14px; }
-.doc-preview-medicines li { padding-left: 1px; font-size: 10px; }
-.doc-preview-medicines li strong { font-size: 10px; }
-.doc-preview-medicines li p { margin-top: 2px; color: var(--on-surface-variant); font-size: 9px; font-style: italic; }
-.doc-preview-footer { align-items: end; justify-content: space-between; margin-top: 37px; }
-.doc-preview-signature { display: grid; width: 94px; height: 40px; align-items: end; border-bottom: 1px solid rgb(189 202 186 / 0.32); color: rgb(22 163 74 / 0.32); font-family: var(--font-display); font-size: 17px; font-weight: 700; transform: rotate(-12deg); }
-.doc-preview-qr { display: grid; justify-items: end; gap: 3px; color: rgb(62 74 61 / 0.4); }
-.doc-preview-qr .material-symbols-outlined { display: grid; width: 42px; height: 42px; place-items: center; border-radius: 3px; background: var(--surface-container); font-size: 21px; }
-.doc-preview-qr small { font-size: 5px; }
+.doc-preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 32px;
+}
+
+.doc-clinic-info {
+  flex: 1;
+}
+
+.doc-doctor-info {
+  flex: 1;
+  text-align: right;
+}
 
 .doc-action-footer { justify-content: space-between; gap: 18px; padding: 16px; border-radius: 15px; background: var(--surface-container-high); }
 .doc-utility-actions,
@@ -493,4 +588,1601 @@
   .doc-prescription-preview { padding: 18px; }
   .doc-utility-actions { flex-direction: column; }
   .doc-utility-button { width: 100%; }
+}
+
+
+.doc-consultation-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.doc-consultation-actions .doc-complete-button,
+.doc-consultation-actions .doc-save-button {
+  min-width: 220px;
+}
+
+.doc-consultation-actions button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.doc-consultation-actions button .material-symbols-outlined {
+  font-size: 18px;
+}
+
+@media (max-width: 768px) {
+  .doc-consultation-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .doc-consultation-actions .doc-complete-button,
+  .doc-consultation-actions .doc-save-button {
+    width: 100%;
+  }
+}
+
+.doc-consultation-completed {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 12px;
+  color: #16a34a;
+  background: rgb(22 163 74 / 0.1);
+  border: 1px solid rgb(22 163 74 / 0.2);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.doc-consultation-completed .material-symbols-outlined {
+  font-size: 20px;
+}
+
+.doc-prescription-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+.doc-prescription-actions .doc-save-button {
+  min-width: 240px;
+}
+
+.doc-prescription-actions .material-symbols-outlined {
+  font-size: 18px;
+}
+
+.doc-save-button .material-symbols-outlined {
+  font-family: "Material Symbols Outlined" !important;
+  font-size: 18px;
+  line-height: 1;
+}
+
+/* ==========================================================
+   Prescription Preview - New Layout
+========================================================== */
+
+.doc-prescription-preview {
+  padding: 32px;
+  background: #fff;
+  border-radius: 18px;
+  border: 1px solid rgb(189 202 186 / 0.32);
+  box-shadow: 0 2px 10px rgb(0 0 0 / 0.05);
+}
+
+.doc-preview-divider {
+  border: none;
+  border-top: 1px solid rgb(22 163 74 / 0.15);
+  margin: 22px 0;
+}
+
+.doc-clinic-info h2 {
+  color: #16a34a;
+  font-family: var(--font-display);
+  font-size: 28px;
+  margin-bottom: 4px;
+}
+
+.doc-clinic-info p {
+  color: var(--on-surface-variant);
+  font-size: 13px;
+}
+
+.doc-doctor-info {
+  text-align: right;
+}
+
+.doc-doctor-info h3 {
+  font-size: 20px;
+  margin-bottom: 4px;
+}
+
+.doc-doctor-info p {
+  color: #16a34a;
+  font-weight: 600;
+}
+
+.doc-doctor-info small {
+  color: var(--on-surface-variant);
+}
+
+.doc-preview-section {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.doc-preview-section h4 {
+  color: #16a34a;
+  font-family: var(--font-display);
+  font-size: 15px;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+
+.doc-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0,1fr));
+  gap: 18px;
+}
+
+.doc-preview-grid label {
+  display: block;
+  margin-bottom: 4px;
+  color: rgb(62 74 61 / .6);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+
+.doc-preview-grid p {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.doc-status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  width: fit-content;
+}
+
+.doc-status-badge.completed {
+  background: rgb(22 163 74 / .12);
+  color: #16a34a;
+}
+
+.doc-status-badge.scheduled {
+  background: #fff7d6;
+  color: #d97706;
+}
+
+.doc-status-badge.in-consultation {
+  background: #dbeafe;
+  color: #2563eb;
+}
+
+.doc-status-badge.checked-in {
+  background: #ede9fe;
+  color: #7c3aed;
+}
+
+.doc-diagnosis-box,
+.doc-notes-box {
+  padding: 18px;
+  border-radius: 12px;
+  background: rgb(22 163 74 / .05);
+  border-left: 5px solid #16a34a;
+}
+
+.doc-diagnosis-box p,
+.doc-notes-box p {
+  line-height: 1.7;
+}
+
+.doc-preview-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.doc-preview-table thead {
+  background: rgb(22 163 74 / .08);
+}
+
+.doc-preview-table th {
+  padding: 12px;
+  text-align: left;
+  color: #16a34a;
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.doc-preview-table td {
+  padding: 14px 12px;
+  border-bottom: 1px solid rgb(189 202 186 / .25);
+  vertical-align: top;
+}
+
+.doc-preview-table strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.doc-medicine-instruction {
+  margin-top: 6px;
+  color: var(--on-surface-variant);
+  font-size: 12px;
+  font-style: italic;
+}
+
+.doc-empty-table {
+  padding: 18px;
+  text-align: center;
+  color: var(--on-surface-variant);
+  background: var(--surface-container-low);
+  border-radius: 12px;
+}
+
+.doc-followup-date {
+  color: #16a34a;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.doc-preview-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 32px;
+}
+
+.doc-preview-signature {
+  width: 280px;
+}
+
+.doc-sign-line {
+  width: 220px;
+  margin-bottom: 12px;
+  border-bottom: 2px solid #222;
+}
+
+.doc-preview-signature h4 {
+  margin-bottom: 4px;
+}
+
+.doc-preview-signature p {
+  color: #16a34a;
+  font-weight: 600;
+}
+
+.doc-preview-signature small {
+  color: var(--on-surface-variant);
+}
+
+.doc-preview-appointment {
+  text-align: center;
+}
+
+.doc-preview-appointment strong {
+  word-break: break-word;
+}
+
+.doc-preview-qr {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+
+.doc-preview-qr .material-symbols-outlined {
+  font-size: 70px;
+  color: #555;
+}
+
+.doc-preview-bottom {
+  margin-top: 28px;
+  padding-top: 18px;
+  border-top: 1px dashed rgb(189 202 186 / .4);
+  text-align: center;
+}
+
+.doc-preview-bottom p {
+  color: var(--on-surface-variant);
+  margin-bottom: 6px;
+}
+
+.doc-preview-bottom small {
+  color: rgb(62 74 61 / .6);
+}
+
+@media (max-width: 900px) {
+  .doc-preview-grid {
+    grid-template-columns: repeat(2,1fr);
+  }
+
+  .doc-preview-footer {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .doc-preview-signature {
+    width: 100%;
+  }
+}
+
+@media (max-width: 600px) {
+  .doc-preview-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .doc-preview-table {
+    display: block;
+    overflow-x: auto;
+  }
+
+  .doc-prescription-preview {
+    padding: 20px;
+  }
+
+  .doc-clinic-info h2 {
+    font-size: 22px;
+  }
+}
+
+/* ==========================================
+   Medicine Dropdown
+========================================== */
+
+.doc-follow-up-field select {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 14px;
+
+  border: 1px solid rgb(189 202 186 / 0.32);
+  border-radius: 12px;
+
+  background: #fff;
+
+  color: var(--on-surface);
+
+  font-size: 13px;
+  font-family: var(--font-body);
+
+  cursor: pointer;
+
+  transition: all 0.2s ease;
+
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2316a34a' viewBox='0 0 16 16'%3E%3Cpath d='M4.646 6.646a.5.5 0 0 1 .708 0L8 9.293l2.646-2.647a.5.5 0 0 1 .708.708l-3 3a.5.5 0 0 1-.708 0l-3-3a.5.5 0 0 1 0-.708z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 16px;
+}
+
+.doc-follow-up-field select:hover {
+  border-color: #16a34a;
+}
+
+.doc-follow-up-field select:focus {
+  outline: none;
+  border-color: #16a34a;
+  box-shadow: 0 0 0 3px rgb(22 163 74 / 0.12);
+}
+
+.doc-follow-up-field select:disabled {
+  background: var(--surface-container-low);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.doc-follow-up-field select option {
+  color: var(--on-surface);
+  background: #fff;
+}
+
+
+
+/* ==========================================================
+   Prescription Preview - Additional Styles
+========================================================== */
+
+.doc-followup-card {
+  padding: 16px 20px;
+  border-left: 4px solid #16a34a;
+  border-radius: 12px;
+  background: rgb(22 163 74 / 0.05);
+}
+
+.doc-followup-card strong {
+  color: #16a34a;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.doc-followup-card p {
+  color: var(--on-surface-variant);
+}
+
+/* Symptoms */
+
+.doc-symptoms-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+
+  padding: 0;
+  margin: 0;
+
+  list-style: none;
+}
+
+.doc-symptoms-list li {
+  padding: 8px 14px;
+
+  border-radius: 999px;
+
+  background: rgb(22 163 74 / 0.08);
+
+  color: #16a34a;
+
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* Timeline */
+
+.doc-timeline {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+
+.doc-timeline-card {
+  padding: 20px;
+
+  text-align: center;
+
+  border: 1px solid rgb(189 202 186 / 0.25);
+  border-radius: 14px;
+
+  background: #fff;
+
+  transition: all .25s ease;
+}
+
+.doc-timeline-card:hover {
+  transform: translateY(-2px);
+
+  box-shadow: 0 8px 18px rgb(22 163 74 / .08);
+}
+
+.doc-timeline-card .material-symbols-outlined {
+  margin-bottom: 10px;
+
+  color: #16a34a;
+
+  font-size: 30px;
+}
+
+.doc-timeline-card small {
+  display: block;
+
+  margin-bottom: 8px;
+
+  color: var(--on-surface-variant);
+
+  font-size: 11px;
+
+  text-transform: uppercase;
+
+  letter-spacing: .08em;
+}
+
+.doc-timeline-card strong {
+  font-size: 15px;
+}
+
+/* Action Buttons */
+
+.doc-preview-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 16px;
+
+  margin-top: 30px;
+}
+
+.doc-preview-actions button {
+  min-width: 190px;
+}
+
+.doc-preview-actions .material-symbols-outlined {
+  font-size: 18px;
+}
+
+/* QR */
+
+.doc-preview-appointment {
+  min-width: 180px;
+}
+
+.doc-preview-appointment small {
+  display: block;
+
+  margin-top: 8px;
+
+  color: var(--on-surface-variant);
+}
+
+/* Responsive */
+
+@media (max-width:900px){
+
+  .doc-timeline{
+    grid-template-columns:1fr;
+  }
+
+  .doc-preview-actions{
+    flex-direction:column;
+  }
+
+  .doc-preview-actions button{
+    width:100%;
+  }
+
+}
+
+@media (max-width:600px){
+
+  .doc-symptoms-list{
+    gap:8px;
+  }
+
+  .doc-symptoms-list li{
+    width:100%;
+    text-align:center;
+  }
+
+}
+
+/* ==========================================================
+   Next Patient
+========================================================== */
+
+.doc-next-patient {
+  margin-top: 8px;
+}
+
+.doc-next-patient h3 {
+  margin-bottom: 16px;
+
+  color: var(--on-surface-variant);
+
+  font-family: var(--font-display);
+
+  font-size: 12px;
+
+  font-weight: 700;
+
+  letter-spacing: .08em;
+
+  text-transform: uppercase;
+}
+
+.doc-next-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  gap: 20px;
+
+  padding: 22px;
+
+  border: 1px solid rgb(189 202 186 / 0.28);
+  border-radius: 18px;
+
+  background: #fff;
+
+  box-shadow: 0 4px 12px rgb(25 28 28 / 0.05);
+
+  transition: all .25s ease;
+}
+
+.doc-next-card:hover {
+  border-color: #16a34a;
+
+  transform: translateY(-2px);
+
+  box-shadow: 0 10px 24px rgb(22 163 74 / .12);
+}
+
+.doc-next-details {
+  flex: 1;
+}
+
+.doc-next-details strong {
+  display: block;
+
+  margin-bottom: 6px;
+
+  color: var(--on-surface);
+
+  font-size: 18px;
+
+  font-weight: 700;
+}
+
+.doc-next-meta {
+  display: flex;
+  flex-wrap: wrap;
+
+  gap: 12px;
+
+  margin-top: 10px;
+}
+
+.doc-next-chip {
+  padding: 6px 12px;
+
+  border-radius: 999px;
+
+  background: rgb(22 163 74 / .08);
+
+  color: #16a34a;
+
+  font-size: 12px;
+
+  font-weight: 700;
+}
+
+.doc-next-status {
+  display: inline-flex;
+  align-items: center;
+
+  padding: 6px 12px;
+
+  border-radius: 999px;
+
+  background: rgb(22 163 74 / .12);
+
+  color: #16a34a;
+
+  font-size: 12px;
+
+  font-weight: 700;
+}
+
+.doc-next-open {
+  min-width: 160px;
+}
+
+.doc-next-empty {
+  padding: 40px 20px;
+
+  border: 2px dashed rgb(189 202 186 / .35);
+  border-radius: 18px;
+
+  text-align: center;
+
+  color: var(--on-surface-variant);
+
+  background: rgb(22 163 74 / .03);
+}
+
+.doc-next-empty .material-symbols-outlined {
+  display: block;
+
+  margin-bottom: 12px;
+
+  color: #16a34a;
+
+  font-size: 42px;
+}
+
+@media (max-width:768px){
+
+  .doc-next-card{
+    flex-direction:column;
+    align-items:flex-start;
+  }
+
+  .doc-next-open{
+    width:100%;
+  }
+
+}
+
+/* /* ==========================================
+   Print Prescription
+========================================== */
+
+@media print {
+
+  body * {
+    visibility: hidden !important;
+  }
+
+  #doc-print-area,
+  #doc-print-area * {
+    visibility: visible !important;
+  }
+
+  #doc-print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    background: #fff;
+    padding: 20px;
+  }
+
+  .doc-preview-actions,
+  .doc-action-footer,
+  .doc-navbar,
+  .doc-sidebar,
+  .doc-workspace-header {
+    display: none !important;
+  }
+
+  @page {
+    size: A4;
+    margin: 12mm;
+  }
+}
+/* ==========================================================
+   Patient Medical Record
+========================================================== */
+
+.doc-patient-record-header{
+    display:flex;
+    flex-direction:column;
+    gap:20px;
+}
+
+.doc-patient-record-header h2{
+    font-size:30px;
+    font-weight:700;
+    color:var(--on-surface);
+}
+
+.doc-patient-record-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:18px;
+}
+
+.doc-patient-record-item{
+    padding:18px;
+    border:1px solid rgb(189 202 186 / .28);
+    border-radius:14px;
+    background:#fff;
+    transition:.25s;
+}
+
+.doc-patient-record-item:hover{
+    border-color:#16a34a;
+    box-shadow:0 8px 20px rgb(22 163 74 /.08);
+}
+
+.doc-patient-record-item label{
+    display:block;
+    margin-bottom:8px;
+    color:#64748b;
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+}
+
+.doc-patient-record-item p{
+    margin:0;
+    font-size:15px;
+    font-weight:600;
+    color:var(--on-surface);
+    line-height:1.5;
+}
+
+/* ========================================================== */
+
+.doc-record-section{
+    display:flex;
+    flex-direction:column;
+    gap:18px;
+}
+
+.doc-record-section h3{
+    margin:0;
+    padding-bottom:10px;
+    border-bottom:1px solid rgb(189 202 186 /.25);
+    color:#16a34a;
+    font-size:18px;
+    font-weight:700;
+}
+
+/* ========================================================== */
+
+.doc-record-prescription{
+    padding:24px;
+    border:1px solid rgb(189 202 186 /.25);
+    border-radius:18px;
+    background:#fff;
+}
+
+.doc-record-prescription-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:20px;
+    margin-bottom:20px;
+}
+
+.doc-record-prescription-header h4{
+    margin:0;
+    font-size:20px;
+    font-weight:700;
+}
+
+.doc-record-prescription-header small{
+    color:#64748b;
+    font-size:13px;
+}
+
+.doc-record-prescription-body{
+    display:grid;
+    gap:22px;
+}
+
+.doc-record-field{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+}
+
+.doc-record-field strong{
+    color:#16a34a;
+    font-size:13px;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+}
+
+.doc-record-field p{
+    margin:0;
+    line-height:1.7;
+}
+
+/* ========================================================== */
+
+.doc-medicine-list{
+    display:grid;
+    gap:14px;
+}
+
+.doc-medicine-item{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:18px;
+    padding:16px 18px;
+    border-radius:14px;
+    background:rgb(22 163 74 /.05);
+    border-left:4px solid #16a34a;
+}
+
+.doc-medicine-details{
+    display:flex;
+    flex-direction:column;
+    gap:5px;
+}
+
+.doc-medicine-title{
+    font-size:15px;
+    font-weight:700;
+}
+
+.doc-medicine-meta{
+    color:#64748b;
+    font-size:13px;
+}
+
+.doc-no-data{
+    padding:18px;
+    border-radius:12px;
+    text-align:center;
+    background:#f8faf9;
+    color:#64748b;
+    font-size:14px;
+}
+
+@media (max-width:768px){
+
+    .doc-patient-record-grid{
+        grid-template-columns:1fr;
+    }
+
+    .doc-record-prescription-header{
+        flex-direction:column;
+    }
+
+    .doc-medicine-item{
+        flex-direction:column;
+        align-items:flex-start;
+    }
+
+}
+
+/* ==========================================
+   Patient Search (New)
+========================================== */
+
+.doc-patient-search {
+  position: relative;
+  width: 100%;
+  margin: 24px 0;
+}
+
+.doc-search-input {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  width: 100%;
+  padding: 14px 18px;
+
+  border: 1px solid #dbe3ea;
+  border-radius: 14px;
+
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.doc-search-input input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 15px;
+}
+
+.doc-search-input .material-symbols-outlined {
+  color: #64748b;
+  font-size: 22px;
+}
+
+.doc-search-results {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+
+  background: #fff;
+
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+
+  overflow: hidden;
+
+  box-shadow: 0 10px 25px rgba(0, 0, 0, .08);
+
+  z-index: 999;
+}
+
+.doc-search-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+
+  padding: 18px;
+
+  cursor: pointer;
+
+  transition: .2s;
+
+  border-bottom: 1px solid #eef2f7;
+}
+
+.doc-search-item:last-child {
+  border-bottom: none;
+}
+
+.doc-search-item:hover {
+  background: #f8fafc;
+}
+
+.doc-search-patient {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.doc-search-patient strong {
+  font-size: 16px;
+}
+
+.doc-search-patient small {
+  color: #64748b;
+  font-weight: 600;
+}
+
+.doc-search-patient p {
+  margin: 0;
+  color: #64748b;
+}
+
+.doc-search-info {
+  font-size: 13px;
+  color: #64748b;
+}
+
+.doc-search-tags {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.doc-search-loading,
+.doc-search-empty {
+  padding: 20px;
+  text-align: center;
+  color: #64748b;
+}
+
+/* ==========================================================
+   Diagnostic Reports
+========================================================== */
+
+.doc-reports-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:22px;
+}
+
+.doc-upload-report-btn{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+
+    padding:11px 18px;
+
+    border:none;
+    border-radius:12px;
+
+    background:#16a34a;
+    color:#fff;
+
+    font-size:14px;
+    font-weight:600;
+
+    cursor:pointer;
+    transition:.25s;
+}
+
+.doc-upload-report-btn:hover{
+    background:#14833d;
+    transform:translateY(-2px);
+    box-shadow:0 10px 22px rgb(22 163 74 /.18);
+}
+
+/* ==========================================================
+   Empty State
+========================================================== */
+
+.doc-report-empty{
+    padding:60px 30px;
+
+    text-align:center;
+
+    border:2px dashed rgb(189 202 186 /.35);
+    border-radius:18px;
+
+    background:#fafdfb;
+
+    color:#64748b;
+}
+
+.doc-report-empty
+.material-symbols-outlined{
+
+    display:block;
+
+    margin-bottom:14px;
+
+    color:#16a34a;
+
+    font-size:56px;
+}
+
+.doc-report-empty h3{
+    margin-bottom:6px;
+}
+
+.doc-report-empty p{
+    margin:0;
+}
+
+/* ==========================================================
+   Report Cards
+========================================================== */
+
+.doc-report-list{
+    display:grid;
+    
+  }
+
+.doc-report-card{
+
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+
+
+
+    padding:20px;
+
+    border:1px solid rgb(189 202 186 /.30);
+    border-radius:16px;
+
+    background:#fff;
+
+    transition:.25s;
+}
+
+.doc-report-card:hover{
+
+    border-color:#16a34a;
+
+    transform:translateY(-2px);
+
+    box-shadow:0 12px 28px rgb(22 163 74 /.12);
+
+}
+
+.doc-report-left{
+    display:flex;
+    align-items:center;
+}
+
+.doc-report-file{
+
+    width:30px;
+    height:58px;
+
+    display:grid;
+    place-items:center;
+
+    border-radius:14px;
+
+    background:rgb(22 163 74 /.08);
+
+    color:#16a34a;
+
+    font-size:28px;
+}
+
+.doc-report-info{
+    display:flex;
+    flex-direction:column;
+    gap:3px;
+    flex:1;
+}
+
+.doc-report-info strong{
+    margin:0;
+
+    font-size:15px;
+    font-weight:600;
+
+    color:#1f2937;
+
+    line-height:1.2;
+}
+
+.doc-report-info small{
+    margin:0;
+
+    font-size:12px;
+    font-weight:500;
+
+    color:#6b7280;
+
+    line-height:1.3;
+}
+
+.doc-report-info p{
+    margin:0;
+
+    font-size:13px;
+
+    color:#9ca3af;
+
+    line-height:1.3;
+}
+
+.doc-report-status{
+
+    width:min-content;
+
+    margin-top:10px;
+
+    padding:5px 12px;
+
+    border-radius:999px;
+
+    font-size:11px;
+    font-weight:700;
+}
+
+.doc-report-status.completed{
+    background:#dcfce7;
+    color:#166534;
+}
+
+.doc-report-status.pending{
+    background:#fef3c7;
+    color:#92400e;
+}
+
+/* ==========================================================
+   Actions
+========================================================== */
+
+.doc-report-actions{
+    display:flex;
+    gap:10px;
+}
+
+.doc-report-actions button,
+.doc-report-actions a{
+
+    min-width:50px;
+
+    padding:10px 10px;
+
+    border:none;
+    border-radius:10px;
+
+    background:#f3f4f6;
+
+    color:#374151;
+
+    text-decoration:none;
+
+    font-size:13px;
+    font-weight:600;
+
+    cursor:pointer;
+
+    transition:.25s;
+}
+
+.doc-report-actions button:hover,
+.doc-report-actions a:hover{
+
+    background:#16a34a;
+    color:#fff;
+
+}
+
+.doc-report-actions .danger{
+
+    background:#fee2e2;
+    color:#dc2626;
+
+}
+
+.doc-report-actions .danger:hover{
+
+    background:#dc2626;
+    color:#fff;
+
+}
+
+/* ==========================================================
+   Upload Modal
+========================================================== */
+
+.doc-modal-overlay{
+
+    position:fixed;
+    inset:0;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    padding:24px;
+
+    background:rgba(15,23,42,.45);
+    backdrop-filter:blur(6px);
+
+    z-index:9999;
+}
+
+.doc-upload-modal{
+
+    width:min(720px,100%);
+    max-height:90vh;
+
+    overflow:hidden;
+
+    display:flex;
+    flex-direction:column;
+
+    border-radius:20px;
+
+    background:#fff;
+
+    box-shadow:
+        0 25px 60px rgba(0,0,0,.18);
+
+    animation:docModal .25s ease;
+}
+
+/* ==========================================================
+   Header
+========================================================== */
+
+.doc-upload-header{
+
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+
+    padding:24px;
+
+    border-bottom:1px solid #edf1f5;
+}
+
+.doc-upload-header h2{
+
+    margin:0;
+
+    font-size:22px;
+    font-weight:700;
+}
+
+.doc-close-btn{
+
+    width:40px;
+    height:40px;
+
+    display:grid;
+    place-items:center;
+
+    border:none;
+    border-radius:50%;
+
+    background:#f3f4f6;
+
+    cursor:pointer;
+
+    transition:.2s;
+}
+
+.doc-close-btn:hover{
+
+    background:#16a34a;
+    color:#fff;
+}
+
+/* ==========================================================
+   Form
+========================================================== */
+
+.doc-upload-form{
+
+    padding:24px;
+
+    display:grid;
+    gap:18px;
+
+    overflow-y:auto;
+}
+
+.doc-form-group{
+
+    display:grid;
+    gap:8px;
+}
+
+.doc-form-group label{
+
+    font-size:13px;
+    font-weight:600;
+}
+
+.doc-form-group input,
+.doc-form-group select,
+.doc-form-group textarea{
+
+    width:100%;
+
+    padding:13px 15px;
+
+    border:1px solid #dbe3ea;
+    border-radius:12px;
+
+    font-size:14px;
+
+    transition:.25s;
+}
+
+.doc-form-group textarea{
+
+    min-height:110px;
+
+    resize:vertical;
+}
+
+.doc-form-group input:focus,
+.doc-form-group textarea:focus,
+.doc-form-group select:focus{
+
+    outline:none;
+
+    border-color:#16a34a;
+
+    box-shadow:0 0 0 4px rgb(22 163 74 /.12);
+}
+
+/* ==========================================================
+   Upload Area
+========================================================== */
+
+.doc-upload-drop{
+
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+
+    gap:10px;
+
+    padding:42px;
+
+    border:2px dashed rgb(22 163 74 /.35);
+    border-radius:16px;
+
+    background:#f7fcf8;
+
+    cursor:pointer;
+
+    transition:.25s;
+}
+
+.doc-upload-drop:hover{
+
+    background:#eefaf1;
+
+    border-color:#16a34a;
+}
+
+.doc-upload-drop
+.material-symbols-outlined{
+
+    font-size:52px;
+
+    color:#16a34a;
+}
+
+/* ==========================================================
+   Footer
+========================================================== */
+
+.doc-upload-actions{
+
+    display:flex;
+    justify-content:flex-end;
+    gap:14px;
+
+    padding:22px 24px;
+
+    border-top:1px solid #edf1f5;
+
+    background:#fafafa;
+}
+
+.doc-btn-primary,
+.doc-btn-secondary{
+
+    min-width:130px;
+    height:46px;
+
+    border:none;
+    border-radius:12px;
+
+    font-size:14px;
+    font-weight:600;
+
+    cursor:pointer;
+
+    transition:.25s;
+}
+
+.doc-btn-secondary{
+
+    background:#eef2f7;
+}
+
+.doc-btn-secondary:hover{
+
+    background:#dde3ea;
+}
+
+.doc-btn-primary{
+
+    background:#16a34a;
+    color:#fff;
+}
+
+.doc-btn-primary:hover{
+
+    background:#14833d;
+
+    transform:translateY(-1px);
+
+    box-shadow:0 8px 18px rgb(22 163 74 /.18);
+}
+
+/* ==========================================================
+   Animation
+========================================================== */
+
+@keyframes docModal{
+
+    from{
+
+        opacity:0;
+        transform:translateY(-18px) scale(.96);
+    }
+
+    to{
+
+        opacity:1;
+        transform:translateY(0) scale(1);
+    }
+
+}
+
+/* ==========================================================
+   Responsive
+========================================================== */
+
+@media (max-width:768px){
+
+    .doc-report-card{
+        flex-direction:column;
+        align-items:flex-start;
+    }
+
+    .doc-report-actions{
+        width:100%;
+        flex-wrap:wrap;
+    }
+
+    .doc-upload-modal{
+        width:100%;
+        max-height:95vh;
+    }
+
+    .doc-upload-actions{
+        flex-direction:column;
+    }
+
+    .doc-btn-primary,
+    .doc-btn-secondary{
+        width:100%;
+    }
+
 }

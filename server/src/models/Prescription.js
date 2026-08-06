@@ -32,6 +32,40 @@ const prescriptionSchema = new mongoose.Schema(
       default: "",
     },
 
+    medicines: [
+      {
+        medicineName: {
+          type: String,
+          required: true,
+          trim: true,
+        },
+
+        dosage: {
+          type: String,
+          required: true,
+          trim: true,
+        },
+
+        frequency: {
+          type: String,
+          required: true,
+          trim: true,
+        },
+
+        duration: {
+          type: String,
+          required: true,
+          trim: true,
+        },
+
+        instructions: {
+          type: String,
+          default: "",
+          trim: true,
+        },
+      },
+    ],
+
     followUpDate: {
       type: Date,
     },
@@ -44,7 +78,7 @@ const prescriptionSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 prescriptionSchema.index({ patient: 1, createdAt: -1 });
