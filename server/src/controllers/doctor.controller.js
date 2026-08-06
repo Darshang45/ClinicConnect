@@ -309,13 +309,13 @@ export const getTodayAppointments = async (req, res) => {
   try {
     const { doctorId } = req.params;
 
-    // Start of today
-    const startOfDay = new Date();
-    startOfDay.setHours(0, 0, 0, 0);
+    // Use IST (UTC+05:30) day boundaries to match how appointments are stored
+    const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
+    const nowIST = new Date(Date.now() + IST_OFFSET_MS);
+    const istDateStr = nowIST.toISOString().slice(0, 10); // "YYYY-MM-DD"
 
-    // End of today
-    const endOfDay = new Date();
-    endOfDay.setHours(23, 59, 59, 999);
+    const startOfDay = new Date(`${istDateStr}T00:00:00+05:30`);
+    const endOfDay = new Date(`${istDateStr}T23:59:59.999+05:30`);
 
     const filter = {
       doctor: doctorId,
@@ -387,9 +387,10 @@ export const getAppointmentDetails = async (req, res) => {
       });
     }
 
-    const age =
-      new Date().getFullYear() -
-      new Date(appointment.patient.dateOfBirth).getFullYear();
+    const age = appointment.patient?.dateOfBirth
+      ? new Date().getFullYear() -
+        new Date(appointment.patient.dateOfBirth).getFullYear()
+      : appointment.patient?.age || null;
 
     const formattedAppointment = {
       appointmentId: appointment._id,
@@ -412,15 +413,15 @@ export const getAppointmentDetails = async (req, res) => {
       notes: appointment.notes,
 
       patient: {
-        _id: appointment.patient._id,
-        patientId: appointment.patient.patientId,
-        fullName: appointment.patient.fullName,
-        gender: appointment.patient.gender,
+        _id: appointment.patient?._id,
+        patientId: appointment.patient?.patientId,
+        fullName: appointment.patient?.fullName,
+        gender: appointment.patient?.gender,
         age,
-        phone: appointment.patient.phone,
-        bloodGroup: appointment.patient.bloodGroup,
-        allergies: appointment.patient.allergies,
-        chronicDiseases: appointment.patient.chronicDiseases,
+        phone: appointment.patient?.phone,
+        bloodGroup: appointment.patient?.bloodGroup,
+        allergies: appointment.patient?.allergies,
+        chronicDiseases: appointment.patient?.chronicDiseases,
       },
 
       doctor: {
@@ -565,12 +566,13 @@ export const searchPatients = async (req, res) => {
       .limit(15)
       .lean();
 
-    // Today's date range
-    const startOfDay = new Date();
-    startOfDay.setHours(0, 0, 0, 0);
+    // Use IST (UTC+05:30) day boundaries to match how appointments are stored
+    const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
+    const nowIST = new Date(Date.now() + IST_OFFSET_MS);
+    const istDateStr = nowIST.toISOString().slice(0, 10);
 
-    const endOfDay = new Date();
-    endOfDay.setHours(23, 59, 59, 999);
+    const startOfDay = new Date(`${istDateStr}T00:00:00+05:30`);
+    const endOfDay = new Date(`${istDateStr}T23:59:59.999+05:30`);
 
     const results = await Promise.all(
       patients.map(async (patient) => {
@@ -1014,12 +1016,13 @@ export const getDoctorDashboard = async (req, res) => {
       });
     }
 
-    // Start & end of today
-    const startOfDay = new Date();
-    startOfDay.setHours(0, 0, 0, 0);
+    // Use IST (UTC+05:30) day boundaries to match how appointments are stored
+    const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
+    const nowIST = new Date(Date.now() + IST_OFFSET_MS);
+    const istDateStr = nowIST.toISOString().slice(0, 10); // "YYYY-MM-DD"
 
-    const endOfDay = new Date();
-    endOfDay.setHours(23, 59, 59, 999);
+    const startOfDay = new Date(`${istDateStr}T00:00:00+05:30`);
+    const endOfDay = new Date(`${istDateStr}T23:59:59.999+05:30`);
 
     // ===========================================
     // Today's Queue
@@ -1038,11 +1041,11 @@ export const getDoctorDashboard = async (req, res) => {
     const formattedTodayQueue = todayQueue.map((appointment) => ({
       appointmentId: appointment._id,
 
-      patientId: appointment.patient.patientId,
+      patientId: appointment.patient?.patientId || "N/A",
 
-      patientName: appointment.patient.fullName,
+      patientName: appointment.patient?.fullName || "Patient",
 
-      patientPhone: appointment.patient.phone,
+      patientPhone: appointment.patient?.phone || "N/A",
 
       appointmentTime: appointment.appointmentStart,
 

@@ -1,8 +1,8 @@
 import { useState } from "react";
 
 import {
-  createMedicalReport,
-} from "../../../services/medicalReportService";
+  uploadPatientReport,
+} from "../../../services/patientService";
 
 import "../../../styles/doctor_dashboard.css";
 
@@ -58,10 +58,12 @@ function UploadReportModal({
 
       const formData = new FormData();
 
-      formData.append(
-        "appointment",
-        appointment.appointmentId
-      );
+      if (appointment?.appointmentId) {
+        formData.append(
+          "appointment",
+          appointment.appointmentId
+        );
+      }
 
       formData.append(
         "reportType",
@@ -88,18 +90,19 @@ function UploadReportModal({
         file
       );
 
-      const response =
-  await createMedicalReport(formData);
+      const response = await uploadPatientReport(formData);
 
-if (response.success) {
-  if (onUploaded) {
-    await onUploaded();
-  }
+      if (response.success) {
+        window.dispatchEvent(new Event("patient-report-uploaded"));
 
-  onClose();
+        if (onUploaded) {
+          await onUploaded();
+        }
 
-  alert("Medical report uploaded successfully.");
-}
+        onClose();
+
+        alert("Medical report uploaded successfully.");
+      }
 
     } catch (error) {
 

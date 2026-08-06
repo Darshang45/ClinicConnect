@@ -2,16 +2,19 @@ import { useEffect, useState } from "react";
 import { FiAlertTriangle, FiCalendar, FiCheckCircle } from "react-icons/fi";
 import { useLocation, useNavigate } from "react-router-dom";
 import Button from "../../../components/common/Button";
+import EmergencyModal from "../../../components/common/EmergencyModal";
 import "../../../styles/patient_dashboard.css";
 import useAuth from "../../../hooks/useAuth";
 
-function WelcomeBanner() {
+function WelcomeBanner({ patientName }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
   const [successMessage, setSuccessMessage] = useState("");
+  const [showEmergencyModal, setShowEmergencyModal] = useState(false);
 
-  const firstName = user?.fullName?.split(" ")[0] || "there";
+  const displayName = patientName || user?.fullName;
+  const firstName = displayName ? displayName.split(" ")[0] : "there";
 
   useEffect(() => {
     if (location.state?.successMessage) {
@@ -39,11 +42,18 @@ function WelcomeBanner() {
           <FiCalendar />
           Book Appointment
         </Button>
-        <Button className="pd-action-emergency">
+        <Button
+          className="pd-action-emergency"
+          onClick={() => setShowEmergencyModal(true)}
+        >
           <FiAlertTriangle />
           Emergency
         </Button>
       </div>
+      <EmergencyModal
+        isOpen={showEmergencyModal}
+        onClose={() => setShowEmergencyModal(false)}
+      />
       {successMessage && (
         <div
           className="pd-success-toast"

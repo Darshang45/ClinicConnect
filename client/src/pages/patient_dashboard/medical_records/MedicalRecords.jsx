@@ -1,10 +1,42 @@
+import { useState, useEffect, useCallback } from "react";
 import { FiDownload, FiFileText } from "react-icons/fi";
 import Button from "../../../components/common/Button";
 import Card from "../../../components/common/Card";
-import { medicalRecords } from "../data/appointments";
+import { medicalRecords as staticRecords } from "../data/appointments";
+import { getPatientReports } from "../../../services/patientService";
 import "../../../styles/patient_dashboard.css";
 
 function MedicalRecords() {
+  const [recordsList, setRecordsList] = useState(staticRecords);
+
+  const fetchRecords = useCallback(async () => {
+    try {
+      const res = await getPatientReports();
+      const fetched = res?.reports || res?.data || [];
+      if (fetched && fetched.length > 0) {
+        const formatted = fetched.map((item) => ({
+          id: item._id,
+          diagnosis: item.title,
+          visitDate: item.createdAt ? new Date(item.createdAt).toLocaleDateString() : new Date().toLocaleDateString(),
+          doctor: item.doctor?.user?.fullName || item.doctor?.name || "Self / Lab",
+          hospital: "ClinicConnect Medical Center",
+          reportFile: item.reportFile,
+        }));
+        setRecordsList(formatted);
+      }
+    } catch (err) {
+      console.error("Error fetching medical records:", err);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchRecords();
+    window.addEventListener("patient-report-uploaded", fetchRecords);
+    return () => {
+      window.removeEventListener("patient-report-uploaded", fetchRecords);
+    };
+  }, [fetchRecords]);
+
   return (
     <section className="pd-detail-section" id="medical-records">
       <div className="pd-section-heading">
@@ -12,7 +44,7 @@ function MedicalRecords() {
         <a href="#reports">View repository</a>
       </div>
       <div className="pd-detail-grid">
-        {medicalRecords.map((record) => (
+        {recordsList.map((record) => (
           <Card className="pd-record-card" key={record.id}>
             <span className="pd-detail-icon">
               <FiFileText />
@@ -33,10 +65,23 @@ function MedicalRecords() {
                 <dd>{record.hospital}</dd>
               </div>
             </dl>
-            <Button className="pd-compact-button">
-              <FiDownload />
-              Download
-            </Button>
+            {record.reportFile ? (
+              <a
+                href={`http://localhost:5000/${record.reportFile.replace(/\\/g, "/")}`}
+                target="_blank"
+                rel="noreferrer"
+                className="pd-compact-button"
+                style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "6px", textDecoration: "none" }}
+              >
+                <FiDownload />
+                Download
+              </a>
+            ) : (
+              <Button className="pd-compact-button">
+                <FiDownload />
+                Download
+              </Button>
+            )}
           </Card>
         ))}
       </div>

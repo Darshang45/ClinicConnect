@@ -575,15 +575,30 @@ export const createWalkInAppointment = async (req, res) => {
     // Step 8: Get Doctor Availability
     // ==============================
 
-    const availability = await DoctorAvailability.findOne({
+    let availability = await DoctorAvailability.findOne({
       doctor: doctorId,
     });
 
     if (!availability) {
-      return res.status(404).json({
-        success: false,
-        message: "Doctor availability not found.",
-      });
+      availability = {
+        consultationDuration: 15,
+        schedule: [
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday",
+          "Sunday",
+        ].map((d) => ({
+          day: d,
+          isAvailable: d !== "Sunday",
+          startTime: "09:00",
+          endTime: "17:00",
+          breakStart: "13:00",
+          breakEnd: "14:00",
+        })),
+      };
     }
 
     // ==============================

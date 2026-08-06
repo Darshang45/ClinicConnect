@@ -5,22 +5,22 @@ import api from "./api";
 ========================================== */
 
 export const getDoctorDashboard = async () => {
-  const { data } = await api.get("/doctor/dashboard");
+  const { data } = await api.get("/doctors/dashboard");
   return data;
 };
 
 export const getUpcomingAppointments = async () => {
-  const { data } = await api.get("/doctor/dashboard/upcoming");
+  const { data } = await api.get("/doctors/dashboard/upcoming");
   return data;
 };
 
 export const getRecentPatients = async () => {
-  const { data } = await api.get("/doctor/dashboard/patients");
+  const { data } = await api.get("/doctors/dashboard/patients");
   return data;
 };
 
 export const getRecentPrescriptions = async () => {
-  const { data } = await api.get("/doctor/dashboard/prescriptions");
+  const { data } = await api.get("/doctors/dashboard/prescriptions");
   return data;
 };
 
@@ -30,7 +30,7 @@ export const getRecentPrescriptions = async () => {
 
 export const getTodayAppointments = async (doctorId) => {
   const { data } = await api.get(
-    `/doctor/today-appointments/${doctorId}`
+    `/doctors/today-appointments/${doctorId}`
   );
 
   return data;
@@ -42,7 +42,7 @@ export const getTodayAppointments = async (doctorId) => {
 
 export const getAppointmentDetails = async (appointmentId) => {
   const { data } = await api.get(
-    `/doctor/appointment/${appointmentId}`
+    `/doctors/appointment/${appointmentId}`
   );
 
   return data;
@@ -54,7 +54,7 @@ export const getAppointmentDetails = async (appointmentId) => {
 
 export const getPatientHistory = async (patientId) => {
   const { data } = await api.get(
-    `/doctor/patient-history/${patientId}`
+    `/doctors/patient-history/${patientId}`
   );
 
   return data;
@@ -62,7 +62,7 @@ export const getPatientHistory = async (patientId) => {
 
 export const getPatientRecord = async (patientId) => {
   const { data } = await api.get(
-    `/doctor/patient-record/${patientId}`
+    `/doctors/patient-record/${patientId}`
   );
 
   return data;
@@ -74,7 +74,7 @@ export const getPatientRecord = async (patientId) => {
 
 export const startConsultation = async (appointmentId) => {
   const { data } = await api.put(
-    `/doctor/start-consultation/${appointmentId}`
+    `/doctors/start-consultation/${appointmentId}`
   );
 
   return data;
@@ -85,7 +85,7 @@ export const updateConsultation = async (
   consultationData
 ) => {
   const { data } = await api.put(
-    `/doctor/consultation/${appointmentId}`,
+    `/doctors/consultation/${appointmentId}`,
     consultationData
   );
 
@@ -94,7 +94,7 @@ export const updateConsultation = async (
 
 export const completeConsultation = async (appointmentId) => {
   const { data } = await api.put(
-    `/doctor/complete-consultation/${appointmentId}`
+    `/doctors/complete-consultation/${appointmentId}`
   );
 
   return data;
@@ -141,7 +141,7 @@ export const updatePrescription = async (
 
 export const searchPatients = async (query) => {
   const { data } = await api.get(
-    `/doctor/search-patient?q=${encodeURIComponent(query)}`
+    `/doctors/search-patient?q=${encodeURIComponent(query)}`
   );
 
   return data;
