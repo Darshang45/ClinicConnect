@@ -21,6 +21,7 @@ import {
   downloadPrescriptionPDF,
   getAvailableDoctors,
   getAvailableDepartments,
+  getPatientByPatientId,
   getAppointmentDetails,
   rescheduleAppointment,
   getPatientTimeline,
@@ -163,7 +164,12 @@ router.post(
   bookAppointment,
 );
 
-router.get("/departments", authenticate, authorize("patient"), getAvailableDepartments);
+router.get(
+  "/departments",
+  authenticate,
+  authorize("patient"),
+  getAvailableDepartments,
+);
 
 router.get("/doctors", authenticate, authorize("patient"), getAvailableDoctors);
 
@@ -181,6 +187,9 @@ router.get(
   getAppointmentDetails,
 );
 
+router.get("/patient-id/:patientId", getPatientByPatientId);
+
+router.get("/:id", getPatientById);
 router.patch(
   "/appointments/:appointmentId/reschedule",
   authenticate,

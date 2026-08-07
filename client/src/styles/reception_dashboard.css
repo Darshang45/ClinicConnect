@@ -2276,6 +2276,19 @@
   box-shadow: 0 0 0 3px rgb(0 107 44 / 12%);
 }
 
+.rc-patient-avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: #5d8f4d;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  font-weight: 700;
+}
+
 @media (max-width: 640px) {
   .rc-priority-toggle {
     width: 100%;
@@ -2304,5 +2317,39 @@
   .rc-patient-profile .pd-profile-edit {
     padding: 0 10px;
     font-size: 12px;
+  }
+}
+
+
+/* =========================================
+   Edit Patient Modal
+========================================= */
+
+.rc-edit-patient-form {
+  scrollbar-width: thin;
+}
+
+.rc-edit-patient-form::-webkit-scrollbar {
+  width: 6px;
+}
+
+.rc-edit-patient-form::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.rc-edit-patient-form::-webkit-scrollbar-thumb {
+  background: #b8c9bc;
+  border-radius: 10px;
+}
+
+/* Prevent form fields from becoming too wide */
+.rc-edit-patient-form .rc-form-field {
+  min-width: 0;
+}
+
+/* Mobile */
+@media (max-width: 700px) {
+  .rc-edit-patient-form .rc-form-grid {
+    grid-template-columns: 1fr !important;
   }
 }

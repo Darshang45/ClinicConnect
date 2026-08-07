@@ -11,15 +11,40 @@ import {
   getPendingCheckIns,
   getTodayWalkIns,
   getQueue,
+  getReceptionistDepartments,
+  getReceptionistDoctors,
+  getReceptionistAvailableSlots,
+  getDoctorsStatus,
+  updateDoctorStatus,
 } from "../controllers/receptionist.controller.js";
 
+import {
+  getAvailableDoctors,
+  getAvailableDepartments,
+} from "../controllers/patient.controller.js";
+
 const router = express.Router();
+
+// Live Doctor Availability Status
+router.get(
+  "/doctors/status",
+  authenticate,
+  authorize("receptionist", "admin"),
+  getDoctorsStatus,
+);
+
+router.patch(
+  "/doctors/:id/status",
+  authenticate,
+  authorize("receptionist", "admin"),
+  updateDoctorStatus,
+);
 
 // Today's Appointments
 router.get(
   "/today-appointments",
   authenticate,
-  authorize( "receptionist", "admin"),
+  authorize("receptionist", "admin"),
   getTodayAppointments,
 );
 
@@ -27,28 +52,59 @@ router.get(
   "/dashboard",
   authenticate,
   authorize("receptionist"),
-  getReceptionistDashboard
+  getReceptionistDashboard,
 );
 
 router.get(
   "/dashboard/pending-checkins",
   authenticate,
   authorize("receptionist"),
-  getPendingCheckIns
+  getPendingCheckIns,
+);
+
+// Departments for walk-in registration
+router.get(
+  "/departments",
+  authenticate,
+  authorize("receptionist"),
+  getReceptionistDepartments,
+);
+
+// Doctors for walk-in registration
+router.get(
+  "/doctors",
+  authenticate,
+  authorize("receptionist"),
+  getReceptionistDoctors,
+);
+
+// Available appointment slots
+router.get(
+  "/available-slots",
+  authenticate,
+  authorize("receptionist"),
+  getReceptionistAvailableSlots,
+);
+
+router.post(
+  "/walk-in",
+  authenticate,
+  authorize("receptionist"),
+  createWalkInAppointment,
 );
 
 router.get(
   "/dashboard/walkins",
   authenticate,
   authorize("receptionist"),
-  getTodayWalkIns
+  getTodayWalkIns,
 );
 
 router.get(
   "/dashboard/queue",
   authenticate,
   authorize("receptionist"),
-  getQueue
+  getQueue,
 );
 
 router.patch(
@@ -79,11 +135,5 @@ router.patch(
   cancelAppointment,
 );
 
-router.post(
-  "/walk-in",
-  authenticate,
-  authorize("receptionist"),
-  createWalkInAppointment,
-);
 
 export default router;

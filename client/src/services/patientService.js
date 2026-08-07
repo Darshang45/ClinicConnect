@@ -1,5 +1,30 @@
 import api from "./api";
 
+// Search patients
+export const searchPatients = async (keyword) => {
+  const response = await api.get("/patients/search", {
+    params: {
+      keyword,
+      limit: 10,
+    },
+  });
+
+  return response.data;
+};
+
+// Get patient details
+export const getPatientByPatientId = async (patientId) => {
+  const response = await api.get(`/patients/patient-id/${patientId}`);
+
+  return response.data;
+};
+
+// Update patient profile
+export const updatePatientProfile = async (patientId, patientData) => {
+  const response = await api.put(`/patients/${patientId}`, patientData);
+
+  return response.data;
+};
 export const getPatientDashboardData = async () => {
   const response = await api.get("/v1/patients/dashboard");
   return response.data;
@@ -32,10 +57,10 @@ export const getPatientProfile = async () => {
   return response.data;
 };
 
-export const updatePatientProfile = async (profileData) => {
-  const response = await api.put("/v1/patients/profile", profileData);
-  return response.data;
-};
+// export const updatePatientProfile = async (profileData) => {
+//   const response = await api.put("/v1/patients/profile", profileData);
+//   return response.data;
+// };
 
 export const getPatientPrescriptions = async (params = {}) => {
   const response = await api.get("/v1/patients/prescriptions", { params });

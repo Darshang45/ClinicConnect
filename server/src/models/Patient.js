@@ -24,6 +24,8 @@ const patientSchema = new mongoose.Schema(
       type: String,
       lowercase: true,
       trim: true,
+      sparse: true,
+      unique: true,
     },
 
     phone: {
@@ -50,10 +52,7 @@ const patientSchema = new mongoose.Schema(
 
     bloodGroup: {
       type: String,
-      enum: [
-        "A+","A-","B+","B-",
-        "AB+","AB-","O+","O-"
-      ],
+      enum: ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"],
     },
 
     address: {
@@ -70,13 +69,13 @@ const patientSchema = new mongoose.Schema(
     allergies: [
       {
         type: String,
-      }
+      },
     ],
 
     chronicDiseases: [
       {
         type: String,
-      }
+      },
     ],
 
     insurance: {
@@ -91,7 +90,7 @@ const patientSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 patientSchema.index({ isActive: 1, createdAt: -1 });
