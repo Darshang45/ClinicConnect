@@ -61,6 +61,22 @@ const doctorSchema = new mongoose.Schema(
       default: true,
     },
 
+    status: {
+      type: String,
+      enum: ["Available", "In Consultation", "Off Duty"],
+      default: "Available",
+    },
+
+    roomNumber: {
+      type: String,
+      default: "101",
+    },
+
+    offDutyUntil: {
+      type: Date,
+      default: null,
+    },
+
     isActive: {
       type: Boolean,
       default: true,

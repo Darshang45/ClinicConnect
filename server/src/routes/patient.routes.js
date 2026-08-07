@@ -20,6 +20,7 @@ import {
   getMyPrescriptions,
   getAvailableDoctors,
   getAvailableDepartments,
+  getPatientByPatientId,
 } from "../controllers/patient.controller.js";
 
 const router = express.Router();
@@ -62,7 +63,12 @@ router.post(
   bookAppointment,
 );
 
-router.get("/departments", authenticate, authorize("patient"), getAvailableDepartments);
+router.get(
+  "/departments",
+  authenticate,
+  authorize("patient"),
+  getAvailableDepartments,
+);
 
 router.get("/doctors", authenticate, authorize("patient"), getAvailableDoctors);
 
@@ -74,6 +80,8 @@ router.put(
 );
 
 router.get("/phone/:phone", getPatientByPhone);
+
+router.get("/patient-id/:patientId", getPatientByPatientId);
 
 router.get("/:id", getPatientById);
 
