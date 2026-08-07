@@ -1062,13 +1062,8 @@ export const getAvailableDoctors = async (req, res) => {
       doctorId: doctor._id,
       name: doctor.user.fullName,
       specialization: doctor.specialization,
-<<<<<<< HEAD
       department: doctor.department?.name || "",
       departmentId: doctor.department?._id || null,
-=======
-      department: doctor.department.name,
-      departmentId: doctor.department._id,
->>>>>>> 0e10cca088f8a8097fd8dbbf950e2ba2650b1532
       qualification: doctor.qualification,
       experience: doctor.experience,
       consultationFee: doctor.consultationFee,

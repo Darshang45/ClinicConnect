@@ -21,9 +21,7 @@ import {
   downloadPrescriptionPDF,
   getAvailableDoctors,
   getAvailableDepartments,
-<<<<<<< HEAD
   getPatientByPatientId,
-=======
   getAppointmentDetails,
   rescheduleAppointment,
   getPatientTimeline,
@@ -31,7 +29,6 @@ import {
   createPatientHealthMetric,
   updatePatientHealthMetric,
   deletePatientHealthMetric,
->>>>>>> 0e10cca088f8a8097fd8dbbf950e2ba2650b1532
 } from "../controllers/patient.controller.js";
 
 import {
@@ -190,18 +187,15 @@ router.get(
   getAppointmentDetails,
 );
 
-<<<<<<< HEAD
 router.get("/patient-id/:patientId", getPatientByPatientId);
 
 router.get("/:id", getPatientById);
-=======
 router.patch(
   "/appointments/:appointmentId/reschedule",
   authenticate,
   authorize("patient"),
   rescheduleAppointment,
 );
->>>>>>> 0e10cca088f8a8097fd8dbbf950e2ba2650b1532
 
 router.get(
   "/phone/:phone",

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { AppointmentForm } from "../../landing/appointment/Appointment";
+// import { AppointmentForm } from "../../landing/appointment/Appointment";
 import { AppointmentFormWrapper as AppointmentForm } from "../../landing/appointment/Appointment";
 import Button from "../../../components/common/Button";
 import Card from "../../../components/common/Card";

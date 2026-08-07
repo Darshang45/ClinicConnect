@@ -1,6 +1,5 @@
 import api from "./api";
 
-<<<<<<< HEAD
 // Search patients
 export const searchPatients = async (keyword) => {
   const response = await api.get("/patients/search", {
@@ -26,7 +25,6 @@ export const updatePatientProfile = async (patientId, patientData) => {
 
   return response.data;
 };
-=======
 export const getPatientDashboardData = async () => {
   const response = await api.get("/v1/patients/dashboard");
   return response.data;
@@ -59,10 +57,10 @@ export const getPatientProfile = async () => {
   return response.data;
 };
 
-export const updatePatientProfile = async (profileData) => {
-  const response = await api.put("/v1/patients/profile", profileData);
-  return response.data;
-};
+// export const updatePatientProfile = async (profileData) => {
+//   const response = await api.put("/v1/patients/profile", profileData);
+//   return response.data;
+// };
 
 export const getPatientPrescriptions = async (params = {}) => {
   const response = await api.get("/v1/patients/prescriptions", { params });
@@ -125,4 +123,3 @@ export const getPatientDoctors = async (params = {}) => {
   const response = await api.get('/v1/patients/doctors', { params });
   return response.data;
 };
->>>>>>> 0e10cca088f8a8097fd8dbbf950e2ba2650b1532
