@@ -6,6 +6,7 @@ import Appointment from "../models/Appointment.js";
 import Patient from "../models/Patient.js";
 import Prescription from "../models/Prescription.js";
 import { paginateQuery } from "../utils/paginate.js";
+import PrescriptionItem from "../models/PrescriptionItem.js";
 
 export const createDoctor = async (req, res) => {
   try {
@@ -308,13 +309,13 @@ export const getTodayAppointments = async (req, res) => {
   try {
     const { doctorId } = req.params;
 
-    // Start of today
-    const startOfDay = new Date();
-    startOfDay.setHours(0, 0, 0, 0);
+    // Use IST (UTC+05:30) day boundaries to match how appointments are stored
+    const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
+    const nowIST = new Date(Date.now() + IST_OFFSET_MS);
+    const istDateStr = nowIST.toISOString().slice(0, 10); // "YYYY-MM-DD"
 
-    // End of today
-    const endOfDay = new Date();
-    endOfDay.setHours(23, 59, 59, 999);
+    const startOfDay = new Date(`${istDateStr}T00:00:00+05:30`);
+    const endOfDay = new Date(`${istDateStr}T23:59:59.999+05:30`);
 
     const filter = {
       doctor: doctorId,
@@ -331,7 +332,7 @@ export const getTodayAppointments = async (req, res) => {
       filter,
       query: Appointment.find(filter)
         .populate("patient", "patientId fullName phone gender")
-        .sort({ tokenNumber: 1 }),
+        .sort({ appointmentStart: 1 }),
       pagination: req.query,
       message: "Today's appointments retrieved successfully.",
       legacy: { dataKey: "appointments", totalKey: "total" },
@@ -386,9 +387,10 @@ export const getAppointmentDetails = async (req, res) => {
       });
     }
 
-    const age =
-      new Date().getFullYear() -
-      new Date(appointment.patient.dateOfBirth).getFullYear();
+    const age = appointment.patient?.dateOfBirth
+      ? new Date().getFullYear() -
+        new Date(appointment.patient.dateOfBirth).getFullYear()
+      : appointment.patient?.age || null;
 
     const formattedAppointment = {
       appointmentId: appointment._id,
@@ -411,17 +413,19 @@ export const getAppointmentDetails = async (req, res) => {
       notes: appointment.notes,
 
       patient: {
-        patientId: appointment.patient.patientId,
-        fullName: appointment.patient.fullName,
-        gender: appointment.patient.gender,
+        _id: appointment.patient?._id,
+        patientId: appointment.patient?.patientId,
+        fullName: appointment.patient?.fullName,
+        gender: appointment.patient?.gender,
         age,
-        phone: appointment.patient.phone,
-        bloodGroup: appointment.patient.bloodGroup,
-        allergies: appointment.patient.allergies,
-        chronicDiseases: appointment.patient.chronicDiseases,
+        phone: appointment.patient?.phone,
+        bloodGroup: appointment.patient?.bloodGroup,
+        allergies: appointment.patient?.allergies,
+        chronicDiseases: appointment.patient?.chronicDiseases,
       },
 
       doctor: {
+        _id: appointment.doctor._id,
         doctorId: appointment.doctor._id,
         name: appointment.doctor.user.fullName,
         specialization: appointment.doctor.specialization,
@@ -449,10 +453,6 @@ export const getAppointmentDetails = async (req, res) => {
     });
   }
 };
-
-
-
-
 
 // ===========================================
 // Get Patient History
@@ -486,9 +486,7 @@ export const getPatientHistory = async (req, res) => {
 
     response.data = response.data.map((appointment) => ({
       appointmentId: appointment._id,
-      appointmentDate: appointment.appointmentStart
-        .toISOString()
-        .split("T")[0],
+      appointmentDate: appointment.appointmentStart.toISOString().split("T")[0],
 
       consultationType: appointment.consultationType,
 
@@ -514,9 +512,219 @@ export const getPatientHistory = async (req, res) => {
   }
 };
 
+// ===========================================
+// Search Patients
+// ===========================================
 
+export const searchPatients = async (req, res) => {
+  try {
+    const keyword = (req.query.q || "").trim();
 
+    if (!keyword) {
+      return res.status(200).json({
+        success: true,
+        patients: [],
+      });
+    }
 
+    // Get logged-in doctor
+    const doctor = await Doctor.findOne({
+      user: req.user._id,
+      isActive: true,
+    }).lean();
+
+    if (!doctor) {
+      return res.status(404).json({
+        success: false,
+        message: "Doctor not found.",
+      });
+    }
+
+    // Search patients by name, patient ID or phone
+    const patients = await Patient.find({
+      $or: [
+        {
+          fullName: {
+            $regex: keyword,
+            $options: "i",
+          },
+        },
+        {
+          patientId: {
+            $regex: keyword,
+            $options: "i",
+          },
+        },
+        {
+          phone: {
+            $regex: keyword,
+            $options: "i",
+          },
+        },
+      ],
+    })
+      .limit(15)
+      .lean();
+
+    // Use IST (UTC+05:30) day boundaries to match how appointments are stored
+    const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
+    const nowIST = new Date(Date.now() + IST_OFFSET_MS);
+    const istDateStr = nowIST.toISOString().slice(0, 10);
+
+    const startOfDay = new Date(`${istDateStr}T00:00:00+05:30`);
+    const endOfDay = new Date(`${istDateStr}T23:59:59.999+05:30`);
+
+    const results = await Promise.all(
+      patients.map(async (patient) => {
+        const appointment = await Appointment.findOne({
+          patient: patient._id,
+          doctor: doctor._id,
+          appointmentStart: {
+            $gte: startOfDay,
+            $lte: endOfDay,
+          },
+        })
+          .select("_id status tokenNumber appointmentStart")
+          .lean();
+
+        const lastAppointment = await Appointment.findOne({
+          patient: patient._id,
+        })
+          .sort({ appointmentStart: -1 })
+          .select("appointmentStart")
+          .lean();
+
+        return {
+          _id: patient._id,
+
+          patientId: patient.patientId,
+
+          fullName: patient.fullName,
+
+          phone: patient.phone,
+
+          gender: patient.gender,
+
+          bloodGroup: patient.bloodGroup,
+
+          hasAppointmentToday: Boolean(appointment),
+
+          appointmentId: appointment?._id || null,
+
+          appointmentStatus: appointment?.status || null,
+
+          appointmentTime: appointment?.appointmentStart || null,
+
+          tokenNumber: appointment?.tokenNumber || null,
+
+          lastVisit: lastAppointment?.appointmentStart || null,
+        };
+      }),
+    );
+
+    return res.status(200).json({
+      success: true,
+      total: results.length,
+      patients: results,
+    });
+  } catch (error) {
+    console.error("Search Patient Error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// ===========================================
+// Get Patient Medical Record
+// ===========================================
+
+export const getPatientRecord = async (req, res) => {
+  try {
+    const { patientId } = req.params;
+
+    const patient = await Patient.findById(patientId).lean();
+
+    if (!patient) {
+      return res.status(404).json({
+        success: false,
+        message: "Patient not found.",
+      });
+    }
+
+    const appointments = await Appointment.find({
+      patient: patientId,
+    })
+      .populate({
+        path: "doctor",
+        populate: {
+          path: "user",
+          select: "fullName",
+        },
+      })
+      .populate("department", "name")
+      .sort({
+        appointmentStart: -1,
+      })
+      .lean();
+
+    let prescriptions = await Prescription.find({
+      patient: patientId,
+    })
+      .populate("doctor", "specialization")
+      .sort({
+        createdAt: -1,
+      })
+      .lean();
+
+    // ==========================================
+    // Fetch Prescription Items
+    // ==========================================
+
+    const prescriptionIds = prescriptions.map((p) => p._id);
+
+   const prescriptionItems = await PrescriptionItem.find({
+  prescription: { $in: prescriptionIds },
+})
+.populate(
+  "medicine",
+  "name genericName strength brand category"
+)
+.lean();
+
+    const medicinesMap = new Map();
+
+    prescriptionItems.forEach((item) => {
+      const key = item.prescription.toString();
+
+      if (!medicinesMap.has(key)) {
+        medicinesMap.set(key, []);
+      }
+
+      medicinesMap.get(key).push(item);
+    });
+
+    prescriptions = prescriptions.map((prescription) => ({
+      ...prescription,
+      medicines: medicinesMap.get(prescription._id.toString()) || [],
+    }));
+    
+
+    return res.status(200).json({
+      success: true,
+      patient,
+      appointments,
+      prescriptions,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
 
 // ===========================================
 // Start Consultation
@@ -535,10 +743,27 @@ export const startConsultation = async (req, res) => {
       });
     }
 
-    if (appointment.status !== "Checked-In") {
+    if (appointment.status === "In Consultation") {
       return res.status(400).json({
         success: false,
-        message: "Only checked-in patients can start consultation.",
+        message: "Consultation has already started.",
+      });
+    }
+
+    if (appointment.status === "Completed") {
+      return res.status(400).json({
+        success: false,
+        message: "Consultation has already been completed.",
+      });
+    }
+
+    if (
+      appointment.status !== "Scheduled" &&
+      appointment.status !== "Checked-In"
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Consultation cannot be started.",
       });
     }
 
@@ -563,9 +788,6 @@ export const startConsultation = async (req, res) => {
     });
   }
 };
-
-
-
 
 // ===========================================
 // Complete Consultation
@@ -614,11 +836,8 @@ export const completeConsultation = async (req, res) => {
   }
 };
 
-
-
 export const getUpcomingAppointments = async (req, res) => {
   try {
-
     const doctor = await Doctor.findOne({
       user: req.user._id,
       isActive: true,
@@ -663,22 +882,16 @@ export const getUpcomingAppointments = async (req, res) => {
     }));
 
     return res.status(200).json(response);
-
   } catch (error) {
-
     return res.status(500).json({
       success: false,
       message: error.message,
     });
-
   }
 };
 
-
-
 export const getRecentPatients = async (req, res) => {
   try {
-
     const doctor = await Doctor.findOne({
       user: req.user._id,
       isActive: true,
@@ -709,11 +922,9 @@ export const getRecentPatients = async (req, res) => {
     const seen = new Set();
 
     appointments.forEach((appointment) => {
-
       const patient = appointment.patient;
 
       if (!seen.has(patient._id.toString())) {
-
         seen.add(patient._id.toString());
 
         uniquePatients.push({
@@ -724,9 +935,7 @@ export const getRecentPatients = async (req, res) => {
           bloodGroup: patient.bloodGroup,
           lastVisit: appointment.consultationEndTime,
         });
-
       }
-
     });
 
     return res.status(200).json({
@@ -734,21 +943,16 @@ export const getRecentPatients = async (req, res) => {
       total: uniquePatients.length,
       patients: uniquePatients,
     });
-
   } catch (error) {
-
     return res.status(500).json({
       success: false,
       message: error.message,
     });
-
   }
 };
 
-
 export const getRecentPrescriptions = async (req, res) => {
   try {
-
     const doctor = await Doctor.findOne({
       user: req.user._id,
       isActive: true,
@@ -786,13 +990,191 @@ export const getRecentPrescriptions = async (req, res) => {
       total: data.length,
       prescriptions: data,
     });
-
   } catch (error) {
-
     return res.status(500).json({
       success: false,
       message: error.message,
     });
+  }
+};
 
+// ===========================================
+// Doctor Dashboard
+// ===========================================
+
+export const getDoctorDashboard = async (req, res) => {
+  try {
+    const doctor = await Doctor.findOne({
+      user: req.user._id,
+      isActive: true,
+    }).lean();
+
+    if (!doctor) {
+      return res.status(404).json({
+        success: false,
+        message: "Doctor not found.",
+      });
+    }
+
+    // Use IST (UTC+05:30) day boundaries to match how appointments are stored
+    const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
+    const nowIST = new Date(Date.now() + IST_OFFSET_MS);
+    const istDateStr = nowIST.toISOString().slice(0, 10); // "YYYY-MM-DD"
+
+    const startOfDay = new Date(`${istDateStr}T00:00:00+05:30`);
+    const endOfDay = new Date(`${istDateStr}T23:59:59.999+05:30`);
+
+    // ===========================================
+    // Today's Queue
+    // ===========================================
+    const todayQueue = await Appointment.find({
+      doctor: doctor._id,
+      appointmentStart: {
+        $gte: startOfDay,
+        $lte: endOfDay,
+      },
+    })
+      .populate("patient", "patientId fullName phone")
+      .sort({ appointmentStart: 1 })
+      .lean();
+
+    const formattedTodayQueue = todayQueue.map((appointment) => ({
+      appointmentId: appointment._id,
+
+      patientId: appointment.patient?.patientId || "N/A",
+
+      patientName: appointment.patient?.fullName || "Patient",
+
+      patientPhone: appointment.patient?.phone || "N/A",
+
+      appointmentTime: appointment.appointmentStart,
+
+      consultationType: appointment.consultationType,
+
+      reason: appointment.reason,
+
+      status: appointment.status,
+
+      tokenNumber: appointment.tokenNumber,
+    }));
+
+    // Upcoming Appointments
+    const upcomingAppointments = await Appointment.find({
+      doctor: doctor._id,
+      status: {
+        $in: ["Scheduled", "Checked-In"],
+      },
+    })
+      .populate("patient", "patientId fullName phone")
+      .sort({ appointmentStart: 1 })
+      .limit(5)
+      .lean();
+
+    // Recent Patients
+    const recentPatients = await Appointment.find({
+      doctor: doctor._id,
+      status: "Completed",
+    })
+      .populate("patient", "patientId fullName gender bloodGroup phone")
+      .sort({ consultationEndTime: -1 })
+      .limit(5)
+      .lean();
+
+    // Recent Prescriptions
+    const recentPrescriptions = await Prescription.find({
+      doctor: doctor._id,
+    })
+      .populate("patient", "patientId fullName")
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .lean();
+
+    // Dashboard Stats
+    const stats = {
+      todayPatients: todayQueue.length,
+
+      pendingConsultations: todayQueue.filter(
+        (appointment) =>
+          appointment.status === "Scheduled" ||
+          appointment.status === "Checked-In" ||
+          appointment.status === "In Consultation",
+      ).length,
+
+      completedConsultations: todayQueue.filter(
+        (appointment) => appointment.status === "Completed",
+      ).length,
+
+      prescriptionsIssued: await Prescription.countDocuments({
+        doctor: doctor._id,
+        createdAt: {
+          $gte: startOfDay,
+          $lte: endOfDay,
+        },
+      }),
+    };
+
+    return res.status(200).json({
+      success: true,
+      stats,
+      todayQueue: formattedTodayQueue,
+      upcomingAppointments,
+      recentPatients,
+      recentPrescriptions,
+    });
+  } catch (error) {
+    console.error("Doctor Dashboard Error:");
+    console.error(error);
+
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+      stack: error.stack,
+    });
+  }
+};
+
+// ===========================================
+// Update Consultation
+// ===========================================
+
+export const updateConsultation = async (req, res) => {
+  try {
+    const { appointmentId } = req.params;
+
+    const { symptoms, notes, followUpDate } = req.body;
+
+    const appointment = await Appointment.findById(appointmentId);
+
+    if (!appointment) {
+      return res.status(404).json({
+        success: false,
+        message: "Appointment not found.",
+      });
+    }
+
+    if (symptoms !== undefined) {
+      appointment.symptoms = symptoms;
+    }
+
+    if (notes !== undefined) {
+      appointment.notes = notes;
+    }
+
+    if (followUpDate !== undefined) {
+      appointment.followUpDate = followUpDate;
+    }
+
+    await appointment.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Consultation updated successfully.",
+      appointment,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
 };

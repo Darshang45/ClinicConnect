@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FiEdit3, FiX } from "react-icons/fi";
 import Button from "../../../components/common/Button";
 import Card from "../../../components/common/Card";
@@ -7,57 +7,53 @@ import patientPhoto from "../../../assets/images/hero/patient1.jpg";
 import "../../../styles/patient_dashboard.css";
 
 const defaultProfileDetails = [
-  
-  // { label: "Gender", value: "Male" },
-  // { label: "Blood group", value: "O+" },
-  // { label: "Height", value: "178 cm" },
-  // { label: "Weight", value: "72 kg" },
-  // { label: "Allergies", value: "No known allergies" },
-  // { label: "Chronic diseases", value: "Hypertension" },
-  // { label: "Emergency contact", value: "Ananya Srivastava" },
-  // { label: "Insurance", value: "CareSecure Health" },
-  
   { label: "First name", value: "firstName" },
   { label: "Last name", value: "lastName" },
   { label: "Gender", value: "gender" },
   { label: "Blood group", value: "bloodGroup" },
-  { label: "Height", value: "height" },
-  { label: "Weight", value: "weight" },
-  { label: "Age", value: "28 years" },
+  { label: "Age", value: "age" },
   { label: "Phone", value: "phone" },
   { label: "Email", value: "email" },
   { label: "Address", value: "address" },
-  { label: "Doctor",  value: "doctor" },
-  { label: "Symptoms", value: "symptoms" },
-
-  { label: "Allergies", value: "No known allergies" },
-  { label: "Chronic diseases", value: "Hypertension" },
-  { label: "Emergency contact", value: "Ananya Srivastava" },
-  { label: "Insurance", value: "CareSecure Health" },
+  { label: "Allergies", value: "allergies" },
+  { label: "Chronic diseases", value: "chronicDiseases" },
+  { label: "Emergency contact", value: "emergencyContact" },
+  { label: "Insurance", value: "insurance" },
 ];
 
+const bloodGroupOptions = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
+
+const formatEmergencyContactSummary = (ec) => {
+  if (!ec) return "Not provided";
+  if (typeof ec === "string") return ec || "Not provided";
+  if (typeof ec === "object") {
+    const parts = [
+      ec.name,
+      ec.relation ? `(${ec.relation})` : "",
+      ec.phone ? `- ${ec.phone}` : "",
+    ].filter(Boolean);
+    return parts.length ? parts.join(" ") : "Not provided";
+  }
+  return "Not provided";
+};
+
 const getSummaryProfileDetails = (patient) => [
-  { label: "FirstName", value: patient?.firstName || "John" },
-  { label: "LastName", value: patient?.lastName || "Doe" },
-  { label: "Gender", value: patient?.gender || "Male" },
-  { label: "Blood group", value: patient?.bloodGroup || "O+" },
-  { label: "Height", value: patient?.height || "178 cm" },
-  { label: "Weight", value: patient?.weight || "72 kg" },
-  { label: "Age", value: patient?.age || "28 years" },
-   { label: "Phone", value: patient?.phone || "9157821134" },
-  { label: "Email", value: patient?.email || "john.doe@example.com" },
-  { label: "Address", value: patient?.address || "123 Main Street" },
-  { label: "Doctor",  value: patient?.doctor || patient?.primaryDoctor || "Dr. Jane Smith" },
-  { label: "Symptoms", value: patient?.symptoms || "Headache, Fever" },
-
-  { label: "Allergies", value: patient?.allergies || "No known allergies" },
-  { label: "Chronic diseases", value: patient?.chronicDiseases || "Hypertension" },
-
+  { label: "First name", key: "firstName", value: patient?.firstName || "" },
+  { label: "Last name", key: "lastName", value: patient?.lastName || "" },
+  { label: "Gender", key: "gender", value: patient?.gender || "" },
+  { label: "Blood group", key: "bloodGroup", value: patient?.bloodGroup || "" },
+  { label: "Age", key: "age", value: patient?.age ?? "" },
+  { label: "Phone", key: "phone", value: patient?.phone || "" },
+  { label: "Email", key: "email", value: patient?.email || "", readOnly: true },
+  { label: "Address", key: "address", value: patient?.address || "" },
+  { label: "Allergies", key: "allergies", value: patient?.allergies || "None" },
+  { label: "Chronic diseases", key: "chronicDiseases", value: patient?.chronicDiseases || "None" },
   {
     label: "Emergency contact",
-    value: patient?.emergencyContact || "Ananya Srivastava",
+    key: "emergencyContact",
+    value: formatEmergencyContactSummary(patient?.emergencyContact),
   },
-  { label: "Insurance", value: patient?.insurance || "CareSecure Health" },
+  { label: "Insurance", key: "insurance", value: patient?.insurance || "Not provided" },
 ];
 
 const editableFields = [
@@ -65,15 +61,11 @@ const editableFields = [
   { label: "Last name", key: "lastName" },
   { label: "Gender", key: "gender" },
   { label: "Blood group", key: "bloodGroup" },
-  { label: "Height", key: "height" },
-  { label: "Weight", key: "weight" },
-  { label: "Age", key: "age" },
+  { label: "Age", key: "age", readOnly: true },
   { label: "Phone", key: "phone" },
-  { label: "Email", key: "email" },
+  { label: "Email", key: "email", readOnly: true },
   { label: "Address", key: "address" },
-  { label: "Doctor", key: "doctor" },
-  { label: "Symptoms", key: "symptoms" },
-   { label: "Allergies", key: "allergies" },
+  { label: "Allergies", key: "allergies" },
   { label: "Chronic diseases", key: "chronicDiseases" },
   { label: "Emergency contact", key: "emergencyContact" },
   { label: "Insurance", key: "insurance" },
@@ -93,6 +85,7 @@ const normalisePatient = (patient) => ({
   bloodGroup: patient?.bloodGroup || "",
   height: patient?.height || "",
   weight: patient?.weight || "",
+  age: patient?.age ?? "",
   phone: patient?.phone || "",
   email: patient?.email || "",
   address: patient?.address || "",
@@ -142,6 +135,14 @@ function PatientProfile({
       : normalisePatient(patient),
   );
 
+  useEffect(() => {
+    setDraft(
+      isCustomProfile
+        ? normaliseCustomProfile(patient, formFields)
+        : normalisePatient(patient)
+    );
+  }, [patient]);
+
   const saveChanges = () => {
     if (!isEditable) return;
 
@@ -179,14 +180,14 @@ function PatientProfile({
       : isEditable
         ? formFields.map((field) => ({
             ...field,
-            value: draft[field.key] || "Not provided",
+            value: draft[field.key] || "",
           }))
         : defaultProfileDetails;
   const displayName = isCustomProfile
     ? draft.name || patient?.name || "Administrator"
     : isEditable
-      ? `${draft.firstName} ${draft.lastName}`.trim()
-      : "Atharva Srivastava";
+      ? `${draft.firstName || ""} ${draft.lastName || ""}`.trim() || patient?.name || "Patient"
+      : "Patient";
   const profileClassName = isReceptionPanel ? "rc-patient-profile" : "";
   const headerClassName = isReceptionPanel ? "rc-patient-profile-header" : "";
   const actionsClassName = isReceptionPanel
@@ -247,7 +248,7 @@ function PatientProfile({
           <h3>{displayName}</h3>
           <p>
             {profileDescription ||
-              (isEditable ? `Patient ID: #${patient.id}` : "Platinum member")}
+              (isEditable ? `Patient ID: #${patient?.id || patient?.patientId || "N/A"}` : "Platinum member")}
           </p>
         </div>
         <dl className="pd-profile-details">
@@ -256,18 +257,137 @@ function PatientProfile({
               <dt>{detail.label}</dt>
               <dd>
                 {isEditing ? (
-                  <Input
-                    aria-label={detail.label}
-                    className="pd-profile-field"
-                    name={detail.key}
-                    value={draft[detail.key]}
-                    onChange={(event) =>
-                      setDraft((current) => ({
-                        ...current,
-                        [event.target.name]: event.target.value,
-                      }))
-                    }
-                  />
+                  detail.key === "gender" ? (
+                    <select
+                      aria-label="Gender"
+                      className="pd-profile-field"
+                      name="gender"
+                      value={draft.gender || ""}
+                      onChange={(event) =>
+                        setDraft((current) => ({
+                          ...current,
+                          gender: event.target.value,
+                        }))
+                      }
+                    >
+                      <option value="">Select gender</option>
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  ) : detail.key === "bloodGroup" ? (
+                    <select
+                      aria-label="Blood Group"
+                      className="pd-profile-field"
+                      name="bloodGroup"
+                      value={draft.bloodGroup || ""}
+                      onChange={(event) =>
+                        setDraft((current) => ({
+                          ...current,
+                          bloodGroup: event.target.value,
+                        }))
+                      }
+                    >
+                      <option value="">Select blood group</option>
+                      {bloodGroupOptions.map((bg) => (
+                        <option key={bg} value={bg}>
+                          {bg}
+                        </option>
+                      ))}
+                    </select>
+                  ) : detail.key === "age" ? (
+                    <Input
+                      aria-label="Age"
+                      className="pd-profile-field"
+                      name="age"
+                      type="text"
+                      value={draft.age !== null && draft.age !== undefined && draft.age !== "" ? `${draft.age} years` : "Not specified"}
+                      disabled
+                      readOnly
+                    />
+                  ) : detail.key === "emergencyContact" ? (
+                    <div style={{ display: "flex", flexDirection: "column", gap: "6px", width: "100%" }}>
+                      <Input
+                        aria-label="Emergency Contact Name"
+                        className="pd-profile-field"
+                        placeholder="Contact Name"
+                        name="emergencyContactName"
+                        value={
+                          typeof draft.emergencyContact === "object" && draft.emergencyContact !== null
+                            ? draft.emergencyContact.name || ""
+                            : typeof draft.emergencyContact === "string"
+                            ? draft.emergencyContact
+                            : ""
+                        }
+                        onChange={(event) =>
+                          setDraft((current) => {
+                            const prevObj = typeof current.emergencyContact === "object" && current.emergencyContact !== null ? current.emergencyContact : {};
+                            return {
+                              ...current,
+                              emergencyContact: { ...prevObj, name: event.target.value },
+                            };
+                          })
+                        }
+                      />
+                      <Input
+                        aria-label="Emergency Contact Relation"
+                        className="pd-profile-field"
+                        placeholder="Relation (e.g. Spouse, Parent)"
+                        name="emergencyContactRelation"
+                        value={
+                          typeof draft.emergencyContact === "object" && draft.emergencyContact !== null
+                            ? draft.emergencyContact.relation || ""
+                            : ""
+                        }
+                        onChange={(event) =>
+                          setDraft((current) => {
+                            const prevObj = typeof current.emergencyContact === "object" && current.emergencyContact !== null ? current.emergencyContact : {};
+                            return {
+                              ...current,
+                              emergencyContact: { ...prevObj, relation: event.target.value },
+                            };
+                          })
+                        }
+                      />
+                      <Input
+                        aria-label="Emergency Contact Phone"
+                        className="pd-profile-field"
+                        placeholder="Phone (10 digits)"
+                        name="emergencyContactPhone"
+                        inputMode="numeric"
+                        maxLength="10"
+                        value={
+                          typeof draft.emergencyContact === "object" && draft.emergencyContact !== null
+                            ? draft.emergencyContact.phone || ""
+                            : ""
+                        }
+                        onChange={(event) =>
+                          setDraft((current) => {
+                            const prevObj = typeof current.emergencyContact === "object" && current.emergencyContact !== null ? current.emergencyContact : {};
+                            return {
+                              ...current,
+                              emergencyContact: { ...prevObj, phone: event.target.value.replace(/\D/g, "") },
+                            };
+                          })
+                        }
+                      />
+                    </div>
+                  ) : (
+                    <Input
+                      aria-label={detail.label}
+                      className="pd-profile-field"
+                      name={detail.key}
+                      value={draft[detail.key] || ""}
+                      disabled={detail.readOnly || detail.key === "email" || detail.key === "id"}
+                      readOnly={detail.readOnly || detail.key === "email" || detail.key === "id"}
+                      onChange={(event) =>
+                        setDraft((current) => ({
+                          ...current,
+                          [event.target.name]: event.target.value,
+                        }))
+                      }
+                    />
+                  )
                 ) : (
                   detail.value
                 )}

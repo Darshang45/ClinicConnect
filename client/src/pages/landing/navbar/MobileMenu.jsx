@@ -49,7 +49,7 @@ function MobileMenu({ isOpen, onClose }) {
           <a href="#book" className="btn btn-primary mobile-drawer-btn" onClick={(e) => handleLinkClick(e, "#book")}>
             Book Appointment
           </a>
-          <Link to="/patient/login" className="btn btn-outline mobile-drawer-btn" onClick={onClose}>
+          <Link to="/login" className="btn btn-outline mobile-drawer-btn" onClick={onClose}>
             Login
           </Link>
         </div>

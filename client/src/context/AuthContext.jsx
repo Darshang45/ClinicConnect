@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import AuthContext from "./authStore";
 
 import {
@@ -96,23 +96,23 @@ export function AuthProvider({ children }) {
   // ==========================================
 
   const patientLogin = async (email, otp) => {
+  try {
     const response = await verifyPatientOtp(email, otp);
-
     localStorage.setItem(TOKEN_KEY, response.token);
-
     setToken(response.token);
-
-    // Patient Login doesn't return User
-    // Fetch authenticated user
 
     const currentUser = await getCurrentUser();
 
     localStorage.setItem(USER_KEY, JSON.stringify(currentUser.user));
-
     setUser(currentUser.user);
 
     return currentUser.user;
-  };
+  } catch (error) {
+    console.log("Status:", error.response?.status);
+    console.log("Response:", error.response?.data);
+    throw error;
+  }
+};
 
   // ==========================================
   // Save Registration Session
@@ -138,31 +138,19 @@ export function AuthProvider({ children }) {
   // ==========================================
 
   const completePatientRegistration = async (profileData) => {
-    const { registrationToken } = getRegistrationSession();
+  const { registrationToken } = getRegistrationSession();
 
-    if (!registrationToken) {
-      throw new Error("Registration session expired.");
-    }
+  if (!registrationToken) {
+    throw new Error("Registration session expired.");
+  }
 
-    const response = await completePatientProfile(
-      profileData,
-      registrationToken,
-    );
+  const response = await completePatientProfile(
+    profileData,
+    registrationToken
+  );
 
-    localStorage.setItem(TOKEN_KEY, response.token);
-
-    setToken(response.token);
-
-    const currentUser = await getCurrentUser();
-
-    localStorage.setItem(USER_KEY, JSON.stringify(currentUser.user));
-
-    setUser(currentUser.user);
-
-    clearRegistrationSession();
-
-    return currentUser.user;
-  };
+  return response;
+};
 
   // ==========================================
   // Context Value
@@ -184,45 +172,11 @@ export function AuthProvider({ children }) {
     logout,
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+  <AuthContext.Provider value={value}>
+    {children}
+  </AuthContext.Provider>
+);
 }
 
-// import { useMemo, useState } from "react";
-// import AuthContext from "./authStore";
-// import { createPatientSession, createStaffSession } from "../services/authService";
-
-// const AUTH_STORAGE_KEY = "clinicconnect-auth";
-// const getStoredSession = () => {
-//   try {
-//     return JSON.parse(window.localStorage.getItem(AUTH_STORAGE_KEY)) || null;
-//   } catch {
-//     return null;
-//   }
-// };
-
-// export function AuthProvider({ children }) {
-//   const [session, setSession] = useState(getStoredSession);
-
-//   const value = useMemo(() => ({
-//     email: session?.user.email || "",
-//     isAuthenticated: Boolean(session?.token),
-//     role: session?.user.role || "",
-//     token: session?.token || "",
-//     user: session?.user || null,
-//     login: ({ email, mobile, role }) => {
-//       const nextSession = role === "Patient"
-//         ? createPatientSession({ mobile })
-//         : createStaffSession({ email, role });
-
-//       window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(nextSession));
-//       setSession(nextSession);
-//       return nextSession;
-//     },
-//     logout: () => {
-//       window.localStorage.removeItem(AUTH_STORAGE_KEY);
-//       setSession(null);
-//     },
-//   }), [session]);
-
-//   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-// }
+export const useAuth = () => useContext(AuthContext);

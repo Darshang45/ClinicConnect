@@ -1,4 +1,5 @@
 import express from "express";
+import { authenticate } from "../middleware/auth.middleware.js";
 
 import {
   createMedicalReport,
@@ -16,6 +17,7 @@ const router = express.Router();
 
 router.post(
   "/",
+  authenticate,
   uploadReport.single("reportFile"),
   createMedicalReport
 );
@@ -29,6 +31,7 @@ router.get(
 
 router.get(
   "/appointment/:appointmentId",
+  authenticate,
   getReportByAppointment
 );
 

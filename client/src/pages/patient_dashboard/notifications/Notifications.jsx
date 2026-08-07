@@ -10,11 +10,7 @@ function Notifications() {
         <h2>Notifications</h2>
         <a href="#notifications">Mark all as read</a>
       </div>
-<<<<<<< HEAD
       <NotificationList items={notifications} />
-=======
-      <Notification items={notifications} />
->>>>>>> ea5d54ac4efa2196a5a78fec8d1d52983f2401b5
     </Card>
   );
 }

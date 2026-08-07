@@ -29,28 +29,58 @@ export const bookAppointment = async (req, res) => {
     } = req.body;
 
     // ==============================
-    // Step 2: Validate Request
+    // Step 2: Resolve Patient
     // ==============================
 
-    const validation = validateAppointment(req.body);
+    let patient;
+
+    if (req.user.role === "patient") {
+      patient = await Patient.findOne({
+        user: req.user._id,
+      });
+
+      if (!patient) {
+        return res.status(404).json({
+          success: false,
+          message: "Patient not found",
+        });
+      }
+    } else if (req.user.role === "receptionist") {
+      if (!patientId) {
+        return res.status(400).json({
+          success: false,
+          message: "Patient ID is required.",
+        });
+      }
+
+      patient = await Patient.findById(patientId);
+
+      if (!patient) {
+        return res.status(404).json({
+          success: false,
+          message: "Patient not found",
+        });
+      }
+    } else {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied.",
+      });
+    }
+
+    // ==============================
+    // Step 3: Validate Request
+    // ==============================
+
+    const validation = validateAppointment({
+      ...req.body,
+      patientId: patient._id,
+    });
 
     if (!validation.valid) {
       return res.status(400).json({
         success: false,
         message: validation.message,
-      });
-    }
-
-    // ==============================
-    // Step 3: Check Patient
-    // ==============================
-
-    const patient = await Patient.findById(patientId);
-
-    if (!patient) {
-      return res.status(404).json({
-        success: false,
-        message: "Patient not found",
       });
     }
 
@@ -121,15 +151,30 @@ export const bookAppointment = async (req, res) => {
     // Step 8: Get Doctor Availability
     // ==============================
 
-    const availability = await DoctorAvailability.findOne({
+    let availability = await DoctorAvailability.findOne({
       doctor: doctorId,
     });
 
     if (!availability) {
-      return res.status(404).json({
-        success: false,
-        message: "Doctor availability not found.",
-      });
+      availability = {
+        consultationDuration: 15,
+        schedule: [
+          "Monday",
+          "Tuesday",
+          "Wednesday",
+          "Thursday",
+          "Friday",
+          "Saturday",
+          "Sunday",
+        ].map((d) => ({
+          day: d,
+          isAvailable: d !== "Sunday",
+          startTime: "09:00",
+          endTime: "17:00",
+          breakStart: "13:00",
+          breakEnd: "14:00",
+        })),
+      };
     }
 
     // ==============================
@@ -163,11 +208,9 @@ export const bookAppointment = async (req, res) => {
     // Step 11: Get Booked Slots
     // ==============================
 
-    const startOfDay = new Date(appointmentDate);
-    startOfDay.setHours(0, 0, 0, 0);
-
-    const endOfDay = new Date(appointmentDate);
-    endOfDay.setHours(23, 59, 59, 999);
+    // Use IST midnight boundaries to match how appointmentStart is stored
+    const startOfDay = new Date(`${appointmentDate}T00:00:00+05:30`);
+    const endOfDay = new Date(`${appointmentDate}T23:59:59.999+05:30`);
 
     const bookedAppointments = await Appointment.find({
       doctor: doctorId,
@@ -222,7 +265,7 @@ export const bookAppointment = async (req, res) => {
 
     const tokenNumber = lastAppointment ? lastAppointment.tokenNumber + 1 : 1;
     const appointment = await Appointment.create({
-      patient: patientId,
+      patient: patient._id,
 
       doctor: doctorId,
 
@@ -300,12 +343,12 @@ export const bookAppointment = async (req, res) => {
       appointment: populatedAppointment,
     });
   } catch (error) {
-    console.error(error);
+    console.error("bookAppointment error:", error);
 
     return res.status(500).json({
       success: false,
 
-      message: error.message,
+      message: "Something went wrong while booking. Please try again.",
     });
   }
 };

@@ -24,6 +24,8 @@ import dashboardRoutes from "./src/routes/dashboard.routes.js";
 import activityLogRoutes from "./src/routes/activityLog.routes.js";
 import notificationRoutes from "./src/routes/notification.routes.js";
 import announcementRoutes from "./src/routes/announcement.routes.js";
+import chatRoutes from "./src/routes/chat.routes.js";
+import publicRoutes from "./src/routes/public.routes.js";
 
 
 const app = express();
@@ -50,6 +52,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/appointments", appointmentRoutes);
 app.use("/api/departments", departmentRoutes);
 app.use("/api/doctors", doctorRoutes);
+app.use("/api/v1/patients", patientRoutes);
 app.use("/api/patients", patientRoutes);
 app.use("/api/prescriptions", prescriptionRoutes);
 app.use("/api/medicines", medicineRoutes);
@@ -66,5 +69,7 @@ app.use("/api/pharmacy", pharmacyRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/announcements", announcementRoutes);
+app.use("/api/chat", chatRoutes);
+app.use("/api/public", publicRoutes);
 
 export default app;

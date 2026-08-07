@@ -14,7 +14,7 @@ const router = express.Router();
 router.post(
   "/",
   authenticate,
-  authorize("patient", "receptionist", "admin"),
+  authorize("patient", "receptionist"),
   bookAppointment,
 );
 

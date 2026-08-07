@@ -18,18 +18,51 @@ import {
   updateMyProfile,
   getUpcomingAppointments,
   getMyPrescriptions,
+  downloadPrescriptionPDF,
   getAvailableDoctors,
   getAvailableDepartments,
+<<<<<<< HEAD
   getPatientByPatientId,
+=======
+  getAppointmentDetails,
+  rescheduleAppointment,
+  getPatientTimeline,
+  getPatientHealthMetrics,
+  createPatientHealthMetric,
+  updatePatientHealthMetric,
+  deletePatientHealthMetric,
+>>>>>>> 0e10cca088f8a8097fd8dbbf950e2ba2650b1532
 } from "../controllers/patient.controller.js";
+
+import {
+  createMedicalReport,
+  getReportsByPatient,
+  deleteMedicalReport,
+} from "../controllers/medicalReport.controller.js";
+import uploadReport from "../uploads/uploadReport.js";
 
 const router = express.Router();
 
-router.post("/", createPatient);
+router.post(
+  "/",
+  authenticate,
+  authorize("receptionist", "admin", "doctor"),
+  createPatient
+);
 
-router.get("/", getPatients);
+router.get(
+  "/",
+  authenticate,
+  authorize("receptionist", "doctor", "admin"),
+  getPatients
+);
 
-router.get("/search", searchPatients);
+router.get(
+  "/search",
+  authenticate,
+  authorize("receptionist", "doctor", "admin"),
+  searchPatients
+);
 
 router.get(
   "/dashboard",
@@ -38,9 +71,73 @@ router.get(
   getPatientDashboard,
 );
 
+router.get(
+  "/timeline",
+  authenticate,
+  authorize("patient"),
+  getPatientTimeline,
+);
+
+router.get(
+  "/health-metrics",
+  authenticate,
+  authorize("patient"),
+  getPatientHealthMetrics,
+);
+
+router.post(
+  "/health-metrics",
+  authenticate,
+  authorize("patient"),
+  createPatientHealthMetric,
+);
+
+router.put(
+  "/health-metrics/:metricId",
+  authenticate,
+  authorize("patient"),
+  updatePatientHealthMetric,
+);
+
+router.delete(
+  "/health-metrics/:metricId",
+  authenticate,
+  authorize("patient"),
+  deletePatientHealthMetric,
+);
+
+router.get(
+  "/medical-reports",
+  authenticate,
+  authorize("patient"),
+  getReportsByPatient,
+);
+
+router.post(
+  "/medical-reports",
+  authenticate,
+  authorize("patient"),
+  uploadReport.single("reportFile"),
+  createMedicalReport,
+);
+
+router.delete(
+  "/medical-reports/:id",
+  authenticate,
+  authorize("patient"),
+  deleteMedicalReport,
+);
+
 router.get("/profile", authenticate, authorize("patient"), getMyProfile);
 
 router.put("/profile", authenticate, authorize("patient"), updateMyProfile);
+
+router.get(
+  "/appointments",
+  authenticate,
+  authorize("patient"),
+  getUpcomingAppointments,
+);
 
 router.get(
   "/appointments/upcoming",
@@ -54,6 +151,13 @@ router.get(
   authenticate,
   authorize("patient"),
   getMyPrescriptions,
+);
+
+router.get(
+  "/prescriptions/:prescriptionId/pdf",
+  authenticate,
+  authorize("patient"),
+  downloadPrescriptionPDF,
 );
 
 router.post(
@@ -73,20 +177,58 @@ router.get(
 router.get("/doctors", authenticate, authorize("patient"), getAvailableDoctors);
 
 router.put(
-  "/appointments/:id/cancel",
+  "/appointments/:appointmentId/cancel",
   authenticate,
   authorize("patient"),
   cancelAppointment,
 );
 
-router.get("/phone/:phone", getPatientByPhone);
+router.get(
+  "/appointments/:appointmentId/details",
+  authenticate,
+  authorize("patient"),
+  getAppointmentDetails,
+);
 
+<<<<<<< HEAD
 router.get("/patient-id/:patientId", getPatientByPatientId);
 
 router.get("/:id", getPatientById);
+=======
+router.patch(
+  "/appointments/:appointmentId/reschedule",
+  authenticate,
+  authorize("patient"),
+  rescheduleAppointment,
+);
+>>>>>>> 0e10cca088f8a8097fd8dbbf950e2ba2650b1532
 
-router.put("/:id", updatePatient);
+router.get(
+  "/phone/:phone",
+  authenticate,
+  authorize("receptionist", "doctor", "admin"),
+  getPatientByPhone
+);
 
-router.delete("/:id", deletePatient);
+router.get(
+  "/:id",
+  authenticate,
+  authorize("receptionist", "doctor", "admin"),
+  getPatientById
+);
+
+router.put(
+  "/:id",
+  authenticate,
+  authorize("receptionist", "admin"),
+  updatePatient
+);
+
+router.delete(
+  "/:id",
+  authenticate,
+  authorize("admin", "receptionist"),
+  deletePatient
+);
 
 export default router;

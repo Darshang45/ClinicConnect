@@ -21,6 +21,8 @@ export const createMedicalReport = async (req, res) => {
 
     const {
       appointment,
+      patient: targetPatientId,
+      doctor: targetDoctorId,
       reportType,
       title,
       findings,
@@ -28,39 +30,60 @@ export const createMedicalReport = async (req, res) => {
       status,
     } = req.body;
 
-    if (!mongoose.Types.ObjectId.isValid(appointment)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid appointment id.",
-      });
+    let patientId = targetPatientId || null;
+    let doctorId = targetDoctorId || null;
+
+    if (appointment) {
+      if (!mongoose.Types.ObjectId.isValid(appointment)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid appointment id.",
+        });
+      }
+
+      const appointmentExists = await Appointment.findById(appointment);
+      if (!appointmentExists) {
+        return res.status(404).json({
+          success: false,
+          message: "Appointment not found.",
+        });
+      }
+
+      if (appointmentExists.status !== "Completed") {
+        return res.status(400).json({
+          success: false,
+          message: "Medical report can only be created after completed appointment.",
+        });
+      }
+
+      patientId = appointmentExists.patient;
+      doctorId = appointmentExists.doctor;
+    } else {
+      if (req.user) {
+        const patientRecord = await Patient.findOne({ user: req.user._id });
+        if (patientRecord) {
+          patientId = patientRecord._id;
+        }
+      }
     }
 
-    const appointmentExists = await Appointment.findById(appointment);
-
-    if (!appointmentExists) {
-      return res.status(404).json({
-        success: false,
-        message: "Appointment not found.",
-      });
-    }
-
-    if (appointmentExists.status !== "Completed") {
+    if (!patientId) {
       return res.status(400).json({
         success: false,
-        message: "Medical report can only be created after completed appointment.",
+        message: "Patient identification is required to create a medical report.",
       });
     }
 
     const report = await MedicalReport.create({
-      appointment,
-      patient: appointmentExists.patient,
-      doctor: appointmentExists.doctor,
+      appointment: appointment || null,
+      patient: patientId,
+      doctor: doctorId && mongoose.Types.ObjectId.isValid(doctorId) ? doctorId : null,
       reportType,
       title,
-      findings,
-      remarks,
+      findings: findings || "",
+      remarks: remarks || "",
       reportFile: req.file ? req.file.path : "",
-      status,
+      status: status || "Completed",
     });
 
     return res.status(201).json({
@@ -70,12 +93,10 @@ export const createMedicalReport = async (req, res) => {
     });
 
   } catch (error) {
-
     return res.status(500).json({
       success: false,
       message: error.message,
     });
-
   }
 };
 
@@ -147,14 +168,23 @@ export const getMedicalReportById = async (req, res) => {
 
 export const getReportsByPatient = async (req, res) => {
   try {
-    if (!mongoose.Types.ObjectId.isValid(req.params.patientId)) {
+    let targetPatientId = req.params.patientId;
+
+    if (!targetPatientId && req.user) {
+      const patientRecord = await Patient.findOne({ user: req.user._id });
+      if (patientRecord) {
+        targetPatientId = patientRecord._id.toString();
+      }
+    }
+
+    if (!targetPatientId || !mongoose.Types.ObjectId.isValid(targetPatientId)) {
       return res.status(400).json({
         success: false,
-        message: "Invalid patient id.",
+        message: "Invalid or missing patient id.",
       });
     }
 
-    const patientExists = await Patient.findById(req.params.patientId);
+    const patientExists = await Patient.findById(targetPatientId);
 
     if (!patientExists) {
       return res.status(404).json({
@@ -163,7 +193,7 @@ export const getReportsByPatient = async (req, res) => {
       });
     }
 
-    const filter = { patient: req.params.patientId };
+    const filter = { patient: targetPatientId };
     const response = await paginateQuery({
       model: MedicalReport,
       filter,
@@ -302,6 +332,13 @@ export const deleteMedicalReport = async (req, res) => {
       });
     }
 
+    // Verify ownership: only the patient who owns the report can delete
+    if (req.user) {
+      const patientRecord = await Patient.findOne({ user: req.user._id });
+      if (!patientRecord || report.patient.toString() !== patientRecord._id.toString()) {
+        return res.status(403).json({ success: false, message: "Not authorized to delete this report." });
+      }
+    }
     await MedicalReport.findByIdAndDelete(req.params.id);
 
     return res.status(200).json({

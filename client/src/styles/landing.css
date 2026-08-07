@@ -452,6 +452,10 @@
   color: var(--on-background);
 }
 
+.hero-title-accent {
+  color: var(--primary);
+}
+
 @media (min-width: 768px) {
   .hero-title {
     font-size: 48px;
