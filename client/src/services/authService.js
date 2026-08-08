@@ -86,6 +86,46 @@ export const completePatientProfile = async (
 };
 
 // ============================================
+// 8. Staff Forgot Password - Send OTP
+// POST /api/auth/staff/forgot-password
+// ============================================
+export const requestStaffForgotPassword = async (email) => {
+  const response = await api.post("/auth/staff/forgot-password", { email });
+  return response.data;
+};
+
+// ============================================
+// 9. Staff Verify Forgot Password OTP
+// POST /api/auth/staff/verify-forgot-password-otp
+// ============================================
+export const verifyStaffForgotPasswordOtp = async (email, otp) => {
+  const response = await api.post("/auth/staff/verify-forgot-password-otp", {
+    email,
+    otp,
+  });
+  return response.data;
+};
+
+// ============================================
+// 10. Staff Reset Password
+// POST /api/auth/staff/reset-password
+// ============================================
+export const resetStaffPassword = async (
+  email,
+  otp,
+  newPassword,
+  confirmPassword,
+) => {
+  const response = await api.post("/auth/staff/reset-password", {
+    email,
+    otp,
+    newPassword,
+    confirmPassword,
+  });
+  return response.data;
+};
+
+// ============================================
 // Logout (Frontend Utility)
 // ============================================
 export const logoutUser = () => {

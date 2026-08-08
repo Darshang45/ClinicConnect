@@ -10,7 +10,10 @@ import {
   sendPatientOtp,
   verifyPatientOtp,
   resendPatientOtp,
-  completePatientProfile
+  completePatientProfile,
+  staffForgotPassword,
+  verifyStaffForgotPasswordOtp,
+  resetStaffPassword,
 } from "../controllers/auth.controller.js";
 
 const router = express.Router();
@@ -33,5 +36,9 @@ router.post("/patient/verify-otp", verifyPatientOtp);
 
 router.post("/patient/resend-otp", resendPatientOtp);
 
+// Staff Forgot Password Routes
+router.post("/staff/forgot-password", staffForgotPassword);
+router.post("/staff/verify-forgot-password-otp", verifyStaffForgotPasswordOtp);
+router.post("/staff/reset-password", resetStaffPassword);
 
 export default router;
