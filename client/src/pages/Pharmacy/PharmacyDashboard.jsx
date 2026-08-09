@@ -23,135 +23,10 @@ import PharmacyInventory from "./Inventory";
 import PharmacyPrescription from "./Prescription";
 import Navbar from "../../components/common/Navbar";
 import "../../styles/pharmacy_dashboard.css";
+import { getPharmacyPrescriptions } from "../../services/pharmacyService";
+import useAuth from "../../hooks/useAuth";
 
-const initialPrescriptions = [
-  {
-    id: "RX-88421",
-    patient: "Johnathan Wick",
-    patientId: "P-00421-B",
-    physician: "Dr. Eleanor Rigby",
-    department: "Cardiology",
-    priority: "Urgent",
-    createdAt: "Today, 10:45 AM",
-    date: "2026-07-16",
-    status: "Preparing",
-    allergies: "No known allergies",
-    notes: "Monitor blood pressure before release.",
-    items: [
-      {
-        name: "Amoxicillin 500mg (Cap)",
-        dosage: "1 cap every 8 hours",
-        quantity: 30,
-        price: 0.5,
-      },
-    ],
-  },
-  {
-    id: "RX-88419",
-    patient: "Sarah Connor",
-    patientId: "P-99211-S",
-    physician: "Dr. Victor Fries",
-    department: "Endocrinology",
-    priority: "Normal",
-    createdAt: "Today, 09:30 AM",
-    date: "2026-07-16",
-    status: "Pending",
-    allergies: "Penicillin",
-    notes: "Call patient if an alternative is required.",
-    items: [
-      {
-        name: "Insulin Glargine",
-        dosage: "10 units nightly",
-        quantity: 2,
-        price: 16,
-      },
-    ],
-  },
-  {
-    id: "RX-88416",
-    patient: "Bruce Wayne",
-    patientId: "P-78112-W",
-    physician: "Dr. Stephen Strange",
-    department: "General Medicine",
-    priority: "Normal",
-    createdAt: "Yesterday, 04:15 PM",
-    date: "2026-07-15",
-    status: "Verified",
-    allergies: "No known allergies",
-    notes: "Patient requested portal copy.",
-    items: [
-      {
-        name: "Lipitor 20mg",
-        dosage: "1 tablet nightly",
-        quantity: 30,
-        price: 0.66,
-      },
-    ],
-  },
-  {
-    id: "RX-88412",
-    patient: "Diana Prince",
-    patientId: "P-10983-P",
-    physician: "Dr. Eleanor Rigby",
-    department: "Cardiology",
-    priority: "Urgent",
-    createdAt: "Yesterday, 01:40 PM",
-    date: "2026-07-15",
-    status: "On Hold",
-    allergies: "Latex",
-    notes: "Awaiting prescriber clarification.",
-    items: [
-      {
-        name: "Saline Solution 1L",
-        dosage: "As directed",
-        quantity: 4,
-        price: 4.25,
-      },
-    ],
-  },
-  {
-    id: "RX-88404",
-    patient: "Clark Kent",
-    patientId: "P-22019-K",
-    physician: "Dr. Victor Fries",
-    department: "Endocrinology",
-    priority: "Normal",
-    createdAt: "Jul 14, 11:20 AM",
-    date: "2026-07-14",
-    status: "Dispensed",
-    allergies: "No known allergies",
-    notes: "Completed without substitutions.",
-    items: [
-      {
-        name: "Metformin 500mg",
-        dosage: "1 tablet twice daily",
-        quantity: 60,
-        price: 0.32,
-      },
-    ],
-  },
-  {
-    id: "RX-88398",
-    patient: "Peter Parker",
-    patientId: "P-51840-P",
-    physician: "Dr. Stephen Strange",
-    department: "General Medicine",
-    priority: "Normal",
-    createdAt: "Jul 14, 09:10 AM",
-    date: "2026-07-14",
-    status: "Pending",
-    allergies: "Sulfa drugs",
-    notes: "Verify insurance before dispensing.",
-    items: [
-      {
-        name: "Cetirizine 10mg",
-        dosage: "1 tablet daily",
-        quantity: 14,
-        price: 0.29,
-      },
-    ],
-  },
-];
+
 
 const initialInventory = [
   {
@@ -301,7 +176,10 @@ function downloadFile(filename, blob) {
 
 function PharmacyDashboard() {
   const navigate = useNavigate();
-  const [prescriptions, setPrescriptions] = useState(initialPrescriptions);
+  const { user, logout } = useAuth();
+  const [prescriptions, setPrescriptions] = useState([]);
+const [prescriptionLoading, setPrescriptionLoading] = useState(true);
+const [prescriptionError, setPrescriptionError] = useState("");
   const [inventory, setInventory] = useState(initialInventory);
   const [notifications, setNotifications] = useState(initialNotifications);
   const [globalSearch, setGlobalSearch] = useState("");
@@ -320,8 +198,8 @@ function PharmacyDashboard() {
   const [emergencyOpen, setEmergencyOpen] = useState(false);
   const [emergencyDetails, setEmergencyDetails] = useState("");
   const [profileForm, setProfileForm] = useState({
-    name: "Dr. Sarah Vance",
-    email: "sarah.vance@clinicconnect.com",
+    name: "",
+    email: "",
   });
   const [passwordForm, setPasswordForm] = useState({
     current: "",
@@ -329,19 +207,200 @@ function PharmacyDashboard() {
     confirm: "",
   });
 
-  useEffect(() => {
-    const timer = window.setTimeout(
-      () => setDebouncedGlobalSearch(globalSearch.trim().toLowerCase()),
-      300,
+
+  const loadPrescriptions = async () => {
+  try {
+    setPrescriptionLoading(true);
+    setPrescriptionError("");
+
+    const response = await getPharmacyPrescriptions();
+
+    const formattedPrescriptions = (
+  response.prescriptions || []
+).map((prescription) => ({
+  id: prescription._id,
+
+  patient: prescription.patient?.fullName || "Unknown Patient",
+
+  patientId:
+    prescription.patient?.patientId || "-",
+
+  patientEmail:
+    prescription.patient?.email || "-",
+
+  patientPhone:
+    prescription.patient?.phone || "-",
+
+  gender:
+    prescription.patient?.gender || "-",
+
+  dateOfBirth:
+    prescription.patient?.dateOfBirth || null,
+
+  bloodGroup:
+    prescription.patient?.bloodGroup || "-",
+
+  address:
+    prescription.patient?.address || "-",
+
+  allergies:
+    prescription.patient?.allergies || [],
+
+  chronicDiseases:
+    prescription.patient?.chronicDiseases || [],
+
+  emergencyContact:
+    prescription.patient?.emergencyContact || null,
+
+  physician:
+    prescription.doctor?.user?.fullName ||
+    "Unknown Doctor",
+
+  doctorEmail:
+    prescription.doctor?.user?.email || "-",
+
+  doctorPhone:
+    prescription.doctor?.user?.phone || "-",
+
+  specialization:
+    prescription.doctor?.specialization || "-",
+
+  qualification:
+    prescription.doctor?.qualification || "-",
+
+  experience:
+    prescription.doctor?.experience ?? "-",
+
+  department:
+    prescription.doctor?.department?.name ||
+    "-",
+
+  diagnosis:
+    prescription.diagnosis || "-",
+
+  notes:
+    prescription.notes || "",
+
+  followUpDate:
+    prescription.followUpDate || null,
+
+  status:
+    prescription.status || "Issued",
+
+  createdAt:
+    prescription.createdAt,
+
+  updatedAt:
+    prescription.updatedAt,
+
+  appointment:
+    prescription.appointment || null,
+
+  priority: "Normal",
+
+  items: (
+    prescription.medicines || []
+  ).map((item) => ({
+    id: item._id,
+
+    medicineId:
+      item.medicine?._id ||
+      item.medicine ||
+      null,
+
+    name:
+      item.medicine?.name ||
+      "Unknown Medicine",
+
+    genericName:
+      item.medicine?.genericName || "",
+
+    brand:
+      item.medicine?.brand || "",
+
+    category:
+      item.medicine?.category || "",
+
+    strength:
+      item.medicine?.strength || "",
+
+    manufacturer:
+      item.medicine?.manufacturer || "",
+
+    unit:
+      item.medicine?.unit || "",
+
+    price:
+      item.medicine?.price || 0,
+
+    dosage:
+      item.dosage || "",
+
+    frequency:
+      item.frequency || "",
+
+    duration:
+      item.duration || "",
+
+    quantity:
+      item.quantity || 0,
+
+    instructions:
+      item.instructions || "",
+  })),
+
+  previousPrescriptions:
+    prescription.previousPrescriptions || [],
+}));
+
+    setPrescriptions(formattedPrescriptions);
+  } catch (error) {
+    console.error(
+      "Failed to load pharmacy prescriptions:",
+      error
     );
-    return () => window.clearTimeout(timer);
-  }, [globalSearch]);
+
+    setPrescriptionError(
+      error.response?.data?.message ||
+        "Unable to load prescriptions."
+    );
+  } finally {
+    setPrescriptionLoading(false);
+  }
+};
 
   useEffect(() => {
-    if (!toast) return undefined;
-    const timer = window.setTimeout(() => setToast(null), 3500);
-    return () => window.clearTimeout(timer);
-  }, [toast]);
+  const timer = window.setTimeout(
+    () => setDebouncedGlobalSearch(globalSearch.trim().toLowerCase()),
+    300,
+  );
+
+  return () => window.clearTimeout(timer);
+}, [globalSearch]);
+
+
+useEffect(() => {
+  if (!toast) return undefined;
+
+  const timer = window.setTimeout(() => setToast(null), 3500);
+
+  return () => window.clearTimeout(timer);
+}, [toast]);
+
+
+// Load prescriptions from backend
+useEffect(() => {
+  loadPrescriptions();
+}, []);
+
+useEffect(() => {
+  if (!user) return;
+
+  setProfileForm({
+    name: user.fullName || user.name || "",
+    email: user.email || "",
+  });
+}, [user]);
 
   const showToast = (message, type = "success") => setToast({ message, type });
 
@@ -557,6 +616,26 @@ function PharmacyDashboard() {
     showToast("Emergency requisition dispatched.");
   };
 
+
+  const filteredPrescriptions = prescriptions.filter((item) => {
+  const query = globalSearch.trim().toLowerCase();
+
+  if (!query) return true;
+
+  return (
+    item.id?.toLowerCase().includes(query) ||
+    item.patient?.toLowerCase().includes(query) ||
+    item.patientId?.toLowerCase().includes(query) ||
+    item.physician?.toLowerCase().includes(query) ||
+    item.department?.toLowerCase().includes(query) ||
+    item.diagnosis?.toLowerCase().includes(query) ||
+    item.items?.some((medicine) =>
+      medicine.name?.toLowerCase().includes(query)
+    )
+  );
+});
+  
+
   return (
     <div className="pharmacy-dashboard">
       <Navbar as="nav" className="ph-topnav">
@@ -657,53 +736,79 @@ function PharmacyDashboard() {
               </div>
             )}
           </div>
-          <div className="ph-nav-popover">
-            <button
-              className="ph-user-trigger"
-              type="button"
-              onClick={() => {
-                setProfileOpen((open) => !open);
-                setNotificationsOpen(false);
-              }}
-            >
-              <span className="ph-user-avatar">
-                <FiUser />
-              </span>
-              <span>
-                <strong>{profileForm.name}</strong>
-                <small>Chief Pharmacist</small>
-              </span>
-              <FiChevronDown />
-            </button>
-            {profileOpen && (
-              <div className="ph-profile-menu">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setProfileModal("profile");
-                    setProfileOpen(false);
-                  }}
-                >
-                  <FiEdit3 />
-                  Edit Profile
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setProfileModal("password");
-                    setProfileOpen(false);
-                  }}
-                >
-                  <FiSettings />
-                  Change Password
-                </button>
-                <button type="button" onClick={() => navigate("/portal/login")}>
-                  <FiLogOut />
-                  Logout
-                </button>
-              </div>
-            )}
-          </div>
+        <div className="ph-nav-popover">
+  <button
+    className="ph-user-trigger"
+    type="button"
+    onClick={() => {
+      setProfileOpen((open) => !open);
+      setNotificationsOpen(false);
+    }}
+  >
+    <span className="ph-user-avatar">
+      <FiUser />
+    </span>
+
+    <span>
+      <strong>
+        {user?.fullName ||
+          user?.name ||
+          profileForm.name ||
+          "Pharmacist"}
+      </strong>
+
+      <small>
+        {user?.role === "pharmacist"
+          ? "Pharmacist"
+          : user?.role || "Staff"}
+      </small>
+    </span>
+
+    <FiChevronDown />
+  </button>
+
+  {profileOpen && (
+    <div className="ph-profile-menu">
+      <button
+        type="button"
+        onClick={() => {
+          setProfileModal("profile");
+          setProfileOpen(false);
+        }}
+      >
+        <FiEdit3 />
+        Edit Profile
+      </button>
+
+      <button
+        type="button"
+        onClick={() => {
+          setProfileModal("password");
+          setProfileOpen(false);
+        }}
+      >
+        <FiSettings />
+        Change Password
+      </button>
+
+      <button
+        type="button"
+        onClick={async () => {
+          try {
+            await logout();
+          } finally {
+            navigate("/login/staff", {
+              replace: true,
+            });
+          }
+        }}
+      >
+        <FiLogOut />
+        Logout
+      </button>
+    </div>
+  )}
+</div>
         </div>
       </Navbar>
       <main className="ph-main">

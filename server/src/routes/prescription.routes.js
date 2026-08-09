@@ -11,9 +11,9 @@ import {
 
 const router = express.Router();
 
-router.post("/", authenticate, authorize("doctor"), createPrescription);
+router.post("/", authenticate, authorize("doctor","pharmacist"), createPrescription);
 
-router.get("/", authenticate, authorize("doctor"), getAllPrescriptions);
+router.get("/", authenticate, authorize("doctor","pharmacist"), getAllPrescriptions);
 
 router.get(
   "/appointment/:appointmentId",
