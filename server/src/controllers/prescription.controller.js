@@ -342,7 +342,13 @@ export const updatePrescription = async (req, res) => {
       });
     }
 
-    const { diagnosis, notes, followUpDate, status } = req.body;
+    const {
+      diagnosis,
+      notes,
+      followUpDate,
+      status,
+      medicines,
+    } = req.body;
 
     if (diagnosis) prescription.diagnosis = diagnosis;
 
@@ -352,9 +358,36 @@ export const updatePrescription = async (req, res) => {
 
     if (status) prescription.status = status;
 
+    // ==========================================
+    // Update Prescription Items
+    // ==========================================
+
+    if (Array.isArray(medicines)) {
+      await PrescriptionItem.deleteMany({
+        prescription: prescription._id,
+      });
+
+      for (const item of medicines) {
+        await PrescriptionItem.create({
+          prescription: prescription._id,
+          medicine: item.medicine,
+          dosage: item.dosage,
+          frequency: item.frequency,
+          duration: item.duration,
+          quantity: item.quantity,
+          instructions: item.instructions || "",
+        });
+      }
+    }
+
+    // Update modified date
+    prescription.updatedAt = new Date();
+
     await prescription.save();
 
-    const appointment = await Appointment.findById(prescription.appointment);
+    const appointment = await Appointment.findById(
+      prescription.appointment
+    );
 
     if (appointment && appointment.status !== "Completed") {
       appointment.status = "Completed";
@@ -366,10 +399,19 @@ export const updatePrescription = async (req, res) => {
       await appointment.save();
     }
 
+    // Get updated prescription items
+    const updatedMedicines = await PrescriptionItem.find({
+      prescription: prescription._id,
+    }).populate(
+      "medicine",
+      "name genericName strength category manufacturer"
+    );
+
     return res.status(200).json({
       success: true,
       message: "Prescription updated successfully.",
       prescription,
+      medicines: updatedMedicines,
     });
   } catch (error) {
     return res.status(500).json({

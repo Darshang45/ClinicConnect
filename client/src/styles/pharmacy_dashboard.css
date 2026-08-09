@@ -1784,3 +1784,43 @@
     bottom: 76px;
   }
 }
+
+.ph-pharmacy-order-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 14px 16px;
+  border: 1px solid #bbf7d0;
+  border-radius: 12px;
+  background: #f0fdf4;
+}
+
+.ph-pharmacy-order-status > div:first-child {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ph-pharmacy-order-status strong {
+  color: #166534;
+  font-size: 14px;
+}
+
+.ph-pharmacy-order-status span {
+  color: #64748b;
+  font-size: 12px;
+}
+
+.ph-order-status-row {
+  display: flex;
+  gap: 10px;
+}
+
+.ph-order-status-row span {
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: #dcfce7;
+  color: #166534;
+  font-weight: 600;
+}

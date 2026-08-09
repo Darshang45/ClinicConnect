@@ -12,6 +12,8 @@ import {
   getPendingOrders,
   getDispensedOrders,
   getRecentOrders,
+  getPharmacyPrescriptions,
+  getPharmacyOrderByPrescription,
 } from "../controllers/pharmacy.controller.js";
 
 // import { protect } from "../middleware/auth.middleware.js";
@@ -65,6 +67,20 @@ router.get(
   authenticate,
   authorize("pharmacist", "admin"),
   getOrdersByPatient,
+);
+
+router.get(
+  "/prescriptions",
+  authenticate,
+  authorize("pharmacist"),
+  getPharmacyPrescriptions
+);
+
+router.get(
+  "/prescription/:prescriptionId",
+  authenticate,
+  authorize("pharmacist", "admin"),
+  getPharmacyOrderByPrescription
 );
 
 // Get Pharmacy Order By ID
