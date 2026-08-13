@@ -107,11 +107,24 @@ export const getPatientReports = async (params = { page: 1, limit: 10 }) => {
 };
 
 export const uploadPatientReport = async (reportData) => {
-  const response = await api.post('/v1/patients/medical-reports', reportData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  });
+  const response = await api.post(
+    "/medical-reports",
+    reportData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    }
+  );
+
   return response.data;
 };
+// export const uploadPatientReport = async (reportData) => {
+//   const response = await api.post('/v1/patients/medical-reports', reportData, {
+//     headers: { 'Content-Type': 'multipart/form-data' },
+//   });
+//   return response.data;
+// };
 
 export const deletePatientReport = async (reportId) => {
   const response = await api.delete(`/v1/patients/medical-reports/${reportId}`);

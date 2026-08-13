@@ -35,8 +35,8 @@ function ReceptionBilling({ appointment = appointments[0], selectedPatient = pat
 
           <div className="rc-history">
             <span>Medicine Charges</span>
-            {prescriptions.map((prescription) => (
-              <div className="rc-report-item" key={prescription.id}>
+            {prescriptions.map((prescription, index) => (
+              <div className="rc-report-item" key={prescription._id || prescription.id || index}>
                 <FiFileText />
                 <div><strong>{prescription.name}</strong><small>{prescription.dosage} {"\u00b7"} {prescription.duration}</small></div>
                 <strong>Pharmacy invoice</strong>

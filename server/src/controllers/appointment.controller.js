@@ -309,16 +309,29 @@ export const bookAppointment = async (req, res) => {
     //      Create Notifications
     // ==============================
 
+    const appDateObj = new Date(populatedAppointment.appointmentDate || populatedAppointment.appointmentStart);
+    const dayStr = String(appDateObj.getDate()).padStart(2, "0");
+    const monthStr = String(appDateObj.getMonth() + 1).padStart(2, "0");
+    const yearStr = appDateObj.getFullYear();
+    const formattedAppDate = `${dayStr}/${monthStr}/${yearStr}`;
+
     await createNotification({
       title: "Appointment Booked",
-      message: `Your appointment has been booked successfully with Dr. ${populatedAppointment.doctor.user.fullName}.`,
+      message: `Your appointment has been booked successfully with Dr. ${populatedAppointment.doctor.user.fullName} (Date:- ${formattedAppDate}).`,
       sender: populatedAppointment.doctor.user._id,
       receiver: populatedAppointment.patient.user._id,
     });
 
     await createNotification({
       title: "Appointment Booked",
-      message: `A new appointment has been booked by ${populatedAppointment.patient.user.fullName}.`,
+      message: `A new appointment has been booked by ${populatedAppointment.patient.user.fullName} (Date:- ${formattedAppDate}).`,
+      sender: populatedAppointment.patient.user._id,
+      receiver: populatedAppointment.doctor.user._id,
+    });
+
+    await createNotification({
+      title: "Appointment Booked",
+      message: `A new appointment has been booked by ${populatedAppointment.patient.user.fullName} (Date:- ${formattedAppDate}).`,
       receiverRole: "receptionist",
     });
 

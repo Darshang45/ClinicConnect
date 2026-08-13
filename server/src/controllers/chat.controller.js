@@ -1,964 +1,270 @@
-import mongoose from "mongoose";
-
 import Chat from "../models/Chat.js";
 import Message from "../models/Message.js";
-import User from "../models/User.js";
-import Doctor from "../models/Doctor.js";
-import Patient from "../models/Patient.js";
-import Appointment from "../models/Appointment.js";
+import { createNotification } from "./notification.controller.js";
+import { getIO } from "../socket/socket.js";
+import {
+  authorizeChatForUser,
+  canUsersChat,
+  getAllowedChatTargets,
+  isValidChatObjectId,
+} from "../services/chatAuthorization.service.js";
 
-/* ===========================================================
-   Helper Functions
-=========================================================== */
+const currentUserId = (req) => req.user._id.toString();
 
-const isValidObjectId = (id) =>
-  mongoose.Types.ObjectId.isValid(id);
+const chatAccessError = (res, result) =>
+  res.status(result.status || 403).json({ success: false, message: result.message || "Access denied." });
 
-/* ===========================================================
-   Permission Validation
-=========================================================== */
-
-const validateChatPermission = async (
-  currentUserId,
-  participantId
-) => {
-  const currentUser = await User.findById(currentUserId);
-
-  const participant = await User.findById(participantId);
-
-  if (!currentUser || !participant) {
-    return {
-      success: false,
-      status: 404,
-      message: "User not found.",
-    };
+const loadChatForUser = async (chatId, user) => {
+  if (!isValidChatObjectId(chatId)) {
+    return { allowed: false, status: 400, message: "Invalid chat id." };
   }
 
-  /* ===========================================
-     Patient
-  =========================================== */
+  const chat = await Chat.findById(chatId);
+  if (!chat) return { allowed: false, status: 404, message: "Conversation not found." };
 
-  if (currentUser.role === "patient") {
-
-    if (participant.role !== "doctor") {
-      return {
-        success: false,
-        status: 403,
-        message:
-          "Patients can only chat with doctors.",
-      };
-    }
-
-    const patient = await Patient.findOne({
-      user: currentUserId,
-    });
-
-    const doctor = await Doctor.findOne({
-      user: participantId,
-    });
-
-    if (!patient || !doctor) {
-      return {
-        success: false,
-        status: 404,
-        message: "Doctor or Patient not found.",
-      };
-    }
-
-    const appointment = await Appointment.findOne({
-      patient: patient._id,
-      doctor: doctor._id,
-    });
-
-    if (!appointment) {
-      return {
-        success: false,
-        status: 403,
-        message:
-          "You can only chat with doctors you have consulted.",
-      };
-    }
-
-  }
-
-  /* ===========================================
-     Receptionist
-  =========================================== */
-
-  if (
-    currentUser.role === "receptionist" &&
-    participant.role === "patient"
-  ) {
-    return {
-      success: false,
-      status: 403,
-      message:
-        "Receptionists cannot chat with patients.",
-    };
-  }
-
-  /* ===========================================
-     Pharmacist
-  =========================================== */
-
-  if (
-    currentUser.role === "pharmacist" &&
-    participant.role === "patient"
-  ) {
-    return {
-      success: false,
-      status: 403,
-      message:
-        "Pharmacists cannot chat with patients.",
-    };
-  }
-
-  return {
-    success: true,
-    currentUser,
-    participant,
-  };
+  const access = await authorizeChatForUser(chat, user);
+  return access.allowed ? { ...access, chat } : access;
 };
 
-/* ===========================================================
-   Create Chat
-=========================================================== */
+const getAuthorizedChatsForUser = async (user) => {
+  const chats = await Chat.find({ participants: user._id, type: "Direct" })
+    .populate("participants", "fullName email role")
+    .populate({ path: "lastMessage", populate: { path: "sender", select: "fullName role" } })
+    .sort({ lastMessageAt: -1, updatedAt: -1 });
+
+  return (await Promise.all(
+    chats.map(async (chat) => {
+      const access = await authorizeChatForUser(chat, user);
+      if (!access.allowed) return null;
+      const unreadCount = await Message.countDocuments({
+        chat: chat._id,
+        receiver: user._id,
+        status: { $ne: "seen" },
+        deletedFor: { $ne: user._id },
+      });
+      return { ...chat.toObject(), unreadCount };
+    }),
+  )).filter(Boolean);
+};
 
 export const createChat = async (req, res) => {
   try {
-
     const { participantId } = req.body;
-
-    const currentUserId = req.user.id;
-
-    if (!isValidObjectId(participantId)) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid participant id.",
-      });
+    if (!isValidChatObjectId(participantId)) {
+      return res.status(400).json({ success: false, message: "Invalid participant id." });
     }
 
-    if (participantId === currentUserId) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "You cannot create a chat with yourself.",
-      });
-    }
-
-    const permission =
-      await validateChatPermission(
-        currentUserId,
-        participantId
-      );
-
-    if (!permission.success) {
-      return res.status(permission.status).json({
-        success: false,
-        message: permission.message,
-      });
-    }
+    const permission = await canUsersChat(req.user, participantId);
+    if (!permission.allowed) return chatAccessError(res, permission);
 
     let chat = await Chat.findOne({
       type: "Direct",
-      participants: {
-        $all: [currentUserId, participantId],
-      },
+      participants: { $all: [req.user._id, participantId], $size: 2 },
     })
-      .populate(
-        "participants",
-        "-password"
-      )
-      .populate(
-        "lastMessage"
-      );
+      .populate("participants", "fullName email role")
+      .populate("lastMessage");
 
-    if (chat) {
-      return res.status(200).json({
-        success: true,
-        message:
-          "Conversation already exists.",
-        chat,
+    const created = !chat;
+    if (created) {
+      chat = await Chat.create({
+        participants: [req.user._id, participantId],
+        createdBy: req.user._id,
+        type: "Direct",
       });
+      chat = await Chat.findById(chat._id)
+        .populate("participants", "fullName email role")
+        .populate("lastMessage");
     }
 
-    chat = await Chat.create({
-      participants: [
-        currentUserId,
-        participantId,
-      ],
-      createdBy: currentUserId,
-      type: "Direct",
-    });
-
-    chat = await Chat.findById(chat._id)
-      .populate(
-        "participants",
-        "-password"
-      )
-      .populate(
-        "lastMessage"
-      );
-
-    return res.status(201).json({
+    return res.status(created ? 201 : 200).json({
       success: true,
-      message:
-        "Conversation created successfully.",
+      message: created ? "Conversation created successfully." : "Conversation already exists.",
       chat,
     });
-
   } catch (error) {
-
-    console.error(error);
-
-    return res.status(500).json({
-      success: false,
-      message:
-        "Unable to create conversation.",
-    });
-
+    console.error("createChat error:", error);
+    return res.status(500).json({ success: false, message: "Unable to create conversation." });
   }
 };
 
-/* ===========================================================
-   Get Available Users
-=========================================================== */
-
-export const getAvailableUsers = async (
-  req,
-  res
-) => {
+export const getAvailableUsers = async (req, res) => {
   try {
-
-    const currentUser =
-      await User.findById(req.user.id);
-
-    if (!currentUser) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found.",
-      });
-    }
-
-    let users = [];
-
-    /* =======================================
-       Patient
-    ======================================= */
-
-    if (currentUser.role === "patient") {
-
-      const patient = await Patient.findOne({
-        user: currentUser._id,
-      });
-
-      const appointments =
-        await Appointment.find({
-          patient: patient._id,
-        }).populate({
-          path: "doctor",
-          populate: {
-            path: "user",
-            model: "User",
-          },
-        });
-
-      const doctorIds = [
-        ...new Set(
-          appointments.map((appointment) =>
-            appointment.doctor.user._id.toString()
-          )
-        ),
-      ];
-
-      users = await User.find({
-        _id: {
-          $in: doctorIds,
-        },
-      }).select(
-        "fullName email role"
-      );
-
-    }
-
-    /* =======================================
-       Doctor
-    ======================================= */
-
-    else if (currentUser.role === "doctor") {
-
-      users = await User.find({
-        _id: {
-          $ne: currentUser._id,
-        },
-      }).select(
-        "fullName email role"
-      );
-
-    }
-
-    /* =======================================
-       Receptionist
-    ======================================= */
-
-    else if (
-      currentUser.role ===
-      "receptionist"
-    ) {
-
-      users = await User.find({
-        _id: {
-          $ne: currentUser._id,
-        },
-        role: {
-          $ne: "patient",
-        },
-      }).select(
-        "fullName email role"
-      );
-
-    }
-
-    /* =======================================
-       Pharmacist
-    ======================================= */
-
-    else if (
-      currentUser.role ===
-      "pharmacist"
-    ) {
-
-      users = await User.find({
-        _id: {
-          $ne: currentUser._id,
-        },
-        role: {
-          $ne: "patient",
-        },
-      }).select(
-        "fullName email role"
-      );
-
-    }
-
-    /* =======================================
-       Admin
-    ======================================= */
-
-    else {
-
-      users = await User.find({
-        _id: {
-          $ne: currentUser._id,
-        },
-      }).select(
-        "fullName email role"
-      );
-
-    }
-
-    return res.status(200).json({
-      success: true,
-      users,
-    });
-
+    const users = await getAllowedChatTargets(req.user);
+    return res.status(200).json({ success: true, users });
   } catch (error) {
-
-    console.error(error);
-
-    return res.status(500).json({
-      success: false,
-      message:
-        "Unable to fetch users.",
-    });
-
+    console.error("getAvailableUsers error:", error);
+    return res.status(500).json({ success: false, message: "Unable to fetch users." });
   }
 };
-
-/* ===========================================================
-   Get User Chats
-=========================================================== */
 
 export const getChats = async (req, res) => {
   try {
+    const authorizedChats = await getAuthorizedChatsForUser(req.user);
 
-    const currentUserId = req.user.id;
-
-    const chats = await Chat.find({
-      participants: currentUserId,
-      deletedFor: {
-        $ne: currentUserId,
-      },
-    })
-      .populate(
-        "participants",
-        "fullName email role"
-      )
-      .populate({
-        path: "lastMessage",
-        populate: {
-          path: "sender",
-          select: "fullName role",
-        },
-      })
-      .sort({
-        lastMessageAt: -1,
-        updatedAt: -1,
-      });
-
-    const chatList = await Promise.all(
-      chats.map(async (chat) => {
-
-        const unreadCount =
-          await Message.countDocuments({
-            chat: chat._id,
-            receiver: currentUserId,
-            status: {
-              $ne: "seen",
-            },
-            deletedFor: {
-              $ne: currentUserId,
-            },
-          });
-
-        return {
-          ...chat.toObject(),
-          unreadCount,
-        };
-
-      })
-    );
-
-    return res.status(200).json({
-      success: true,
-      chats: chatList,
-    });
-
+    return res.status(200).json({ success: true, chats: authorizedChats });
   } catch (error) {
-
-    console.error(error);
-
-    return res.status(500).json({
-      success: false,
-      message:
-        "Unable to fetch conversations.",
-    });
-
+    console.error("getChats error:", error);
+    return res.status(500).json({ success: false, message: "Unable to fetch conversations." });
   }
 };
-
-/* ===========================================================
-   Search Chats
-=========================================================== */
 
 export const searchChats = async (req, res) => {
-
   try {
-
-    const keyword =
-      req.query.search?.trim() || "";
-
-    const chats = await Chat.find({
-      participants: req.user.id,
-    }).populate(
-      "participants",
-      "fullName email role"
-    );
-
-    const filteredChats = chats.filter(
-      (chat) =>
-
-        chat.participants.some(
-          (participant) =>
-            participant._id.toString() !==
-              req.user.id &&
-            (
-              participant.fullName
-                .toLowerCase()
-                .includes(
-                  keyword.toLowerCase()
-                ) ||
-
-              participant.role
-                .toLowerCase()
-                .includes(
-                  keyword.toLowerCase()
-                ) ||
-
-              participant.email
-                .toLowerCase()
-                .includes(
-                  keyword.toLowerCase()
-                )
-            )
-        )
-    );
-
-    return res.status(200).json({
-      success: true,
-      chats: filteredChats,
-    });
-
-  } catch (error) {
-
-    console.error(error);
-
-    return res.status(500).json({
-      success: false,
-      message:
-        "Unable to search conversations.",
-    });
-
-  }
-
-};
-
-/* ===========================================================
-   Get Messages
-=========================================================== */
-
-export const getMessages = async (
-  req,
-  res
-) => {
-
-  try {
-
-    const { chatId } = req.params;
-
-    if (!isValidObjectId(chatId)) {
-
-      return res.status(400).json({
-        success: false,
-        message: "Invalid chat id.",
-      });
-
-    }
-
-    const page =
-      Number(req.query.page) || 1;
-
-    const limit =
-      Number(req.query.limit) || 50;
-
-    const skip =
-      (page - 1) * limit;
-
-    const chat =
-      await Chat.findById(chatId);
-
-    if (!chat) {
-
-      return res.status(404).json({
-        success: false,
-        message: "Conversation not found.",
-      });
-
-    }
-
-    if (
-      !chat.participants.some(
-        (participant) =>
-          participant.toString() ===
-          req.user.id
-      )
-    ) {
-
-      return res.status(403).json({
-        success: false,
-        message: "Access denied.",
-      });
-
-    }
-
-    const totalMessages =
-      await Message.countDocuments({
-        chat: chatId,
-        deletedFor: {
-          $ne: req.user.id,
-        },
-      });
-
-    const messages =
-      await Message.find({
-        chat: chatId,
-        deletedFor: {
-          $ne: req.user.id,
-        },
-      })
-        .populate(
-          "sender",
-          "fullName role"
-        )
-        .populate(
-          "receiver",
-          "fullName role"
-        )
-        .sort({
-          createdAt: -1,
-        })
-        .skip(skip)
-        .limit(limit);
-
-    return res.status(200).json({
-
-      success: true,
-
-      totalMessages,
-
-      currentPage: page,
-
-      totalPages: Math.ceil(
-        totalMessages / limit
+    const keyword = (req.query.search || "").trim().toLowerCase();
+    const chats = (await getAuthorizedChatsForUser(req.user)).filter((chat) =>
+      chat.participants.some((participant) =>
+        participant._id.toString() !== currentUserId(req) &&
+        [participant.fullName, participant.email, participant.role]
+          .filter(Boolean)
+          .some((value) => value.toLowerCase().includes(keyword)),
       ),
-
-      messages: messages.reverse(),
-
-    });
-
+    );
+    return res.status(200).json({ success: true, chats });
   } catch (error) {
-
-    console.error(error);
-
-    return res.status(500).json({
-
-      success: false,
-
-      message:
-        "Unable to fetch messages.",
-
-    });
-
+    console.error("searchChats error:", error);
+    return res.status(500).json({ success: false, message: "Unable to search conversations." });
   }
-
 };
-/* ===========================================================
-   Send Message
-=========================================================== */
+
+export const getMessages = async (req, res) => {
+  try {
+    const access = await loadChatForUser(req.params.chatId, req.user);
+    if (!access.allowed) return chatAccessError(res, access);
+
+    const page = Math.max(1, Number(req.query.page) || 1);
+    const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 50));
+    const filter = { chat: access.chat._id, deletedFor: { $ne: req.user._id } };
+    const [totalMessages, messages] = await Promise.all([
+      Message.countDocuments(filter),
+      Message.find(filter)
+        .populate("sender", "fullName role")
+        .populate("receiver", "fullName role")
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit),
+    ]);
+
+    return res.status(200).json({
+      success: true,
+      totalMessages,
+      currentPage: page,
+      totalPages: Math.ceil(totalMessages / limit),
+      messages: messages.reverse(),
+    });
+  } catch (error) {
+    console.error("getMessages error:", error);
+    return res.status(500).json({ success: false, message: "Unable to fetch messages." });
+  }
+};
 
 export const sendMessage = async (req, res) => {
   try {
+    const access = await loadChatForUser(req.params.chatId, req.user);
+    if (!access.allowed) return chatAccessError(res, access);
 
-    const { chatId } = req.params;
-
-    const {
-      message = "",
-      messageType = "text",
-    } = req.body;
-
-    const chat = await Chat.findById(chatId);
-
-    if (!chat) {
-      return res.status(404).json({
-        success: false,
-        message: "Conversation not found.",
-      });
-    }
-
-    if (
-      !chat.participants.some(
-        (participant) =>
-          participant.toString() === req.user.id
-      )
-    ) {
-      return res.status(403).json({
-        success: false,
-        message: "Access denied.",
-      });
-    }
-
-    const receiver = chat.participants.find(
-      (participant) =>
-        participant.toString() !== req.user.id
-    );
-
+    const message = typeof req.body.message === "string" ? req.body.message.trim() : "";
+    const messageType = req.body.messageType || "text";
     const attachment = req.file
-      ? {
-          url: req.file.path,
-          fileName: req.file.originalname,
-          mimeType: req.file.mimetype,
-          fileSize: req.file.size,
-        }
-      : {
-          url: "",
-          fileName: "",
-          mimeType: "",
-          fileSize: 0,
-        };
-
-    if (
-      !message.trim() &&
-      !attachment.url
-    ) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "Message or attachment is required.",
-      });
+      ? { url: req.file.path, fileName: req.file.originalname, mimeType: req.file.mimetype, fileSize: req.file.size }
+      : { url: "", fileName: "", mimeType: "", fileSize: 0 };
+    if (!message && !attachment.url) {
+      return res.status(400).json({ success: false, message: "Message or attachment is required." });
     }
 
     const newMessage = await Message.create({
-      chat: chatId,
-      sender: req.user.id,
-      receiver,
+      chat: access.chat._id,
+      sender: req.user._id,
+      receiver: access.otherParticipant,
       message,
       messageType,
       attachment,
       status: "sent",
     });
+    access.chat.lastMessage = newMessage._id;
+    access.chat.lastMessageAt = new Date();
+    await access.chat.save();
 
-    chat.lastMessage = newMessage._id;
-    chat.lastMessageSender = req.user.id;
-    chat.lastMessageAt = new Date();
-
-    await chat.save();
-
-    const populatedMessage =
-      await Message.findById(newMessage._id)
-        .populate("sender", "fullName role")
-        .populate("receiver", "fullName role");
-
-    /*
-      Socket.IO
-
-      io.to(chatId).emit(
-        "receive-message",
-        populatedMessage
-      );
-
-      io.to(receiver.toString()).emit(
-        "new-notification",
-        ...
-      );
-    */
-
-    return res.status(201).json({
-      success: true,
-      message: "Message sent successfully.",
-      data: populatedMessage,
+    const populatedMessage = await Message.findById(newMessage._id)
+      .populate("sender", "fullName role")
+      .populate("receiver", "fullName role");
+    const notification = await createNotification({
+      title: "New message",
+      message: `${req.user.fullName} sent you a message.`,
+      sender: req.user._id,
+      receiver: access.otherParticipant,
     });
-
-  } catch (error) {
-
-    console.error(error);
-
-    return res.status(500).json({
-      success: false,
-      message: "Unable to send message.",
-    });
-
-  }
-};
-
-/* ===========================================================
-   Edit Message
-=========================================================== */
-
-export const editMessage = async (
-  req,
-  res
-) => {
-
-  try {
-
-    const { messageId } = req.params;
-
-    const { message } = req.body;
-
-    const existingMessage =
-      await Message.findById(messageId);
-
-    if (!existingMessage) {
-
-      return res.status(404).json({
-        success: false,
-        message: "Message not found.",
-      });
-
-    }
-
-    if (
-      existingMessage.sender.toString() !==
-      req.user.id
-    ) {
-
-      return res.status(403).json({
-        success: false,
-        message: "Access denied.",
-      });
-
-    }
-
-    existingMessage.message = message;
-
-    existingMessage.isEdited = true;
-
-    existingMessage.editedAt =
-      new Date();
-
-    await existingMessage.save();
-
-    return res.status(200).json({
-
-      success: true,
-
-      message:
-        "Message updated successfully.",
-
-      data: existingMessage,
-
-    });
-
-  } catch (error) {
-
-    console.error(error);
-
-    return res.status(500).json({
-
-      success: false,
-
-      message:
-        "Unable to update message.",
-
-    });
-
-  }
-
-};
-
-/* ===========================================================
-   Delete Message
-=========================================================== */
-
-export const deleteMessage = async (
-  req,
-  res
-) => {
-
-  try {
-
-    const { messageId } = req.params;
-
-    const message =
-      await Message.findById(messageId);
-
-    if (!message) {
-
-      return res.status(404).json({
-        success: false,
-        message: "Message not found.",
-      });
-
-    }
-
-    if (
-      message.sender.toString() !==
-      req.user.id
-    ) {
-
-      return res.status(403).json({
-        success: false,
-        message: "Access denied.",
-      });
-
-    }
-
-    if (
-      !message.deletedFor.includes(
-        req.user.id
-      )
-    ) {
-
-      message.deletedFor.push(
-        req.user.id
-      );
-
-      await message.save();
-
-    }
-
-    return res.status(200).json({
-
-      success: true,
-
-      message:
-        "Message deleted successfully.",
-
-    });
-
-  } catch (error) {
-
-    console.error(error);
-
-    return res.status(500).json({
-
-      success: false,
-
-      message:
-        "Unable to delete message.",
-
-    });
-
-  }
-
-};
-
-/* ===========================================================
-   Mark Messages Seen
-=========================================================== */
-
-export const markMessagesSeen = async (
-  req,
-  res
-) => {
-
-  try {
-
-    const { chatId } = req.params;
-
-    await Message.updateMany(
-      {
-        chat: chatId,
-        receiver: req.user.id,
-        status: {
-          $ne: "seen",
-        },
-      },
-      {
-        status: "seen",
-        seenAt: new Date(),
+    const io = getIO();
+    if (io) {
+      io.to(access.chat._id.toString()).emit("receive-message", populatedMessage);
+      for (const participant of access.chat.participants) {
+        io.to(participant.toString()).emit("refresh-chats");
       }
-    );
+    }
 
-    /*
-      Socket.IO
-
-      io.to(chatId).emit(
-        "messages-seen",
-        {
-          chatId,
-          userId: req.user.id,
-        }
-      );
-    */
-
-    return res.status(200).json({
-
-      success: true,
-
-      message:
-        "Messages marked as seen.",
-
-    });
-
+    return res.status(201).json({ success: true, message: "Message sent successfully.", data: populatedMessage, notification });
   } catch (error) {
-  console.error("SEND MESSAGE ERROR");
-  console.error(error);
+    console.error("sendMessage error:", error);
+    return res.status(500).json({ success: false, message: "Unable to send message." });
+  }
+};
 
-  return res.status(500).json({
-    success: false,
-    message: error.message,
-  });
-}
+export const editMessage = async (req, res) => {
+  try {
+    const existingMessage = await Message.findById(req.params.messageId);
+    if (!existingMessage) return res.status(404).json({ success: false, message: "Message not found." });
+    const access = await loadChatForUser(existingMessage.chat, req.user);
+    if (!access.allowed || existingMessage.sender.toString() !== currentUserId(req)) {
+      return chatAccessError(res, access.allowed ? { status: 403, message: "Access denied." } : access);
+    }
+    if (typeof req.body.message !== "string" || !req.body.message.trim()) {
+      return res.status(400).json({ success: false, message: "Message is required." });
+    }
+    existingMessage.message = req.body.message.trim();
+    existingMessage.isEdited = true;
+    existingMessage.editedAt = new Date();
+    await existingMessage.save();
+    getIO()?.to(access.chat._id.toString()).emit("message-edited", existingMessage);
+    return res.status(200).json({ success: true, message: "Message updated successfully.", data: existingMessage });
+  } catch (error) {
+    console.error("editMessage error:", error);
+    return res.status(500).json({ success: false, message: "Unable to update message." });
+  }
+};
 
+export const deleteMessage = async (req, res) => {
+  try {
+    const message = await Message.findById(req.params.messageId);
+    if (!message) return res.status(404).json({ success: false, message: "Message not found." });
+    const access = await loadChatForUser(message.chat, req.user);
+    if (!access.allowed || message.sender.toString() !== currentUserId(req)) {
+      return chatAccessError(res, access.allowed ? { status: 403, message: "Access denied." } : access);
+    }
+    if (!message.deletedFor.some((id) => id.toString() === currentUserId(req))) {
+      message.deletedFor.push(req.user._id);
+      await message.save();
+    }
+    return res.status(200).json({ success: true, message: "Message deleted successfully." });
+  } catch (error) {
+    console.error("deleteMessage error:", error);
+    return res.status(500).json({ success: false, message: "Unable to delete message." });
+  }
+};
+
+export const markMessagesSeen = async (req, res) => {
+  try {
+    const access = await loadChatForUser(req.params.chatId, req.user);
+    if (!access.allowed) return chatAccessError(res, access);
+    await Message.updateMany(
+      { chat: access.chat._id, receiver: req.user._id, status: { $ne: "seen" } },
+      { status: "seen", seenAt: new Date() },
+    );
+    getIO()?.to(access.chat._id.toString()).emit("messages-seen", {
+      chatId: access.chat._id.toString(),
+      userId: currentUserId(req),
+    });
+    return res.status(200).json({ success: true, message: "Messages marked as seen." });
+  } catch (error) {
+    console.error("markMessagesSeen error:", error);
+    return res.status(500).json({ success: false, message: "Unable to mark messages as seen." });
+  }
 };

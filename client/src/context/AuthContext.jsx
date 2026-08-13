@@ -8,17 +8,40 @@ import {
   getCurrentUser,
   logoutUser,
 } from "../services/authService";
+import socketService from "../services/socketService";
 
 const TOKEN_KEY = "token";
 const USER_KEY = "user";
 const REGISTRATION_EMAIL = "registrationEmail";
 const REGISTRATION_TOKEN = "registrationToken";
 
+const restoreTabSession = () => {
+  const token = sessionStorage.getItem(TOKEN_KEY);
+  const user = sessionStorage.getItem(USER_KEY);
+
+  if (token) return { token, user };
+
+  // One-time migration for an existing login. New logins are tab-scoped and
+  // never read browser-wide localStorage.
+  const legacyToken = localStorage.getItem(TOKEN_KEY);
+  const legacyUser = localStorage.getItem(USER_KEY);
+  if (legacyToken) {
+    sessionStorage.setItem(TOKEN_KEY, legacyToken);
+    if (legacyUser) sessionStorage.setItem(USER_KEY, legacyUser);
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
+  }
+
+  return { token: legacyToken || "", user: legacyUser };
+};
+
+const tabSession = restoreTabSession();
+
 export function AuthProvider({ children }) {
-  const [token, setToken] = useState(localStorage.getItem(TOKEN_KEY) || "");
+  const [token, setToken] = useState(tabSession.token);
 
   const [user, setUser] = useState(() => {
-    const storedUser = localStorage.getItem(USER_KEY);
+    const storedUser = tabSession.user;
 
     return storedUser ? JSON.parse(storedUser) : null;
   });
@@ -31,10 +54,11 @@ export function AuthProvider({ children }) {
   };
 
   const logout = () => {
+    socketService.disconnect();
     logoutUser();
     clearRegistrationSession();
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(USER_KEY);
+    sessionStorage.removeItem(TOKEN_KEY);
+    sessionStorage.removeItem(USER_KEY);
     setToken("");
     setUser(null);
   };
@@ -53,7 +77,7 @@ export function AuthProvider({ children }) {
       try {
         const response = await getCurrentUser();
 
-        localStorage.setItem(USER_KEY, JSON.stringify(response.user));
+        sessionStorage.setItem(USER_KEY, JSON.stringify(response.user));
 
         setUser(response.user);
       } catch (error) {
@@ -80,11 +104,11 @@ export function AuthProvider({ children }) {
       password,
     });
 
-    localStorage.setItem(TOKEN_KEY, response.token);
+    sessionStorage.setItem(TOKEN_KEY, response.token);
 
     setToken(response.token);
 
-    localStorage.setItem(USER_KEY, JSON.stringify(response.user));
+    sessionStorage.setItem(USER_KEY, JSON.stringify(response.user));
 
     setUser(response.user);
 
@@ -98,12 +122,12 @@ export function AuthProvider({ children }) {
   const patientLogin = async (email, otp) => {
   try {
     const response = await verifyPatientOtp(email, otp);
-    localStorage.setItem(TOKEN_KEY, response.token);
+    sessionStorage.setItem(TOKEN_KEY, response.token);
     setToken(response.token);
 
     const currentUser = await getCurrentUser();
 
-    localStorage.setItem(USER_KEY, JSON.stringify(currentUser.user));
+    sessionStorage.setItem(USER_KEY, JSON.stringify(currentUser.user));
     setUser(currentUser.user);
 
     return currentUser.user;

@@ -1,5 +1,6 @@
 import Notification from "../models/Notification.js";
 import { paginateQuery } from "../utils/paginate.js";
+import { getIO } from "../socket/socket.js";
 
 // ======================================================
 // Internal Helper Function
@@ -13,13 +14,27 @@ export const createNotification = async ({
   receiverRole = null,
 }) => {
   try {
-    return await Notification.create({
+    const notification = await Notification.create({
       title,
       message,
       sender,
       receiver,
       receiverRole,
     });
+
+    const io = getIO();
+
+    if (io) {
+      if (receiver) {
+        io.to(receiver.toString()).emit("new-notification", notification);
+      } else if (receiverRole === "all") {
+        io.to("notification:all").emit("new-notification", notification);
+      } else if (receiverRole) {
+        io.to(`notification:role:${receiverRole}`).emit("new-notification", notification);
+      }
+    }
+
+    return notification;
   } catch (error) {
     console.error("Notification Error:", error.message);
   }

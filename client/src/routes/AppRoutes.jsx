@@ -20,8 +20,7 @@ import ReceptionDashboard from "../pages/reception_dashboard/ReceptionDashboard"
 import PharmacyDashboard from "../pages/Pharmacy/PharmacyDashboard";
 import AdminDashboard from "../pages/Admin/Dashboard";
 import AdminProfile from "../pages/Admin/Profile";
-import DoctorRegistration from "../pages/Admin/doctors/pages/AddDoctor";
-import DoctorChatPanel from "../pages/doctor_dashboard/chat/DoctorChatPanel";
+import DoctorInbox from "../pages/doctor_dashboard/DoctorInbox";
 import ProtectedRoute from "./ProtectedRoute";
 import DoctorsPage from "../pages/Admin/doctors/DoctorsPage";
 import ReceptionistsPage from "../pages/Admin/receptionists/ReceptionistsPage";
@@ -57,7 +56,7 @@ function AppRoutes() {
 
         <Route element={<ProtectedRoute allowedRoles={["doctor"]} />}>
           <Route path="/doctor/dashboard" element={<DoctorDashboard />} />
-          <Route path="/doctor/inbox" element={<DoctorChatPanel/>} />
+          <Route path="/doctor/inbox" element={<DoctorInbox />} />
         </Route>
 
         <Route element={<ProtectedRoute allowedRoles={["receptionist"]} />}>
@@ -72,7 +71,6 @@ function AppRoutes() {
 
         <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
-          <Route path="/admin/chat" element={<AdminDashboard />} />
           <Route path="/admin/profile" element={<AdminProfile />} />
           <Route path="/admin/doctors" element={<DoctorsPage />}/>
           <Route path="/admin/receptionists" element={<ReceptionistsPage />}/>

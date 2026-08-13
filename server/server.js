@@ -8,6 +8,8 @@ import { Server } from "socket.io";
 import app from "./app.js";
 import connectDB from "./src/config/db.js";
 
+import initializeSocket from "./src/socket/socket.js";
+
 const PORT = process.env.PORT || 5000;
 
 /* ===========================================================
@@ -28,16 +30,10 @@ export const io = new Server(server, {
 });
 
 /* ===========================================================
-   Socket Events
+   Socket Events Initialization
 =========================================================== */
 
-io.on("connection", (socket) => {
-  console.log(`🟢 Socket Connected : ${socket.id}`);
-
-  socket.on("disconnect", () => {
-    console.log(`🔴 Socket Disconnected : ${socket.id}`);
-  });
-});
+initializeSocket(io);
 
 /* ===========================================================
    Start Server

@@ -10,15 +10,13 @@ import Notification from "../../../components/common/Notification/Notification";
 import SignOut from "../../../components/common/SignOut";
 
 import useAuth from "../../../hooks/useAuth";
+import { useSocket } from "../../../context/SocketContext";
+import { formatTime } from "../../../utils/formatTime";
 
 import socketService from "../../../services/socketService";
 import {
   getChats,
 } from "../../../services/chatService";
-
-import {
-  doctorNotifications,
-} from "../data/communications";
 
 import "../../../styles/doctor_dashboard.css";
 
@@ -51,6 +49,16 @@ function DashboardHeader({
   const { user } =
     useAuth();
 
+  const { notifications, unreadCount, markAllAsRead, markNotificationAsRead } = useSocket();
+
+  const formattedNotifications = notifications.map((n) => ({
+    id: n._id || n.id || Math.random().toString(),
+    title: n.title,
+    description: n.message || n.description,
+    isRead: n.isRead || n.read,
+    time: formatTime(n.createdAt),
+  }));
+
   const profile =
     user || {
 
@@ -74,13 +82,6 @@ function DashboardHeader({
     setUnreadChats,
   ] = useState(0);
 
-  const [
-    unreadNotifications,
-    setUnreadNotifications,
-  ] = useState(
-    doctorNotifications.length
-  );
-
   /* ==========================================================
      Load Chat Count
   ========================================================== */
@@ -96,52 +97,21 @@ function DashboardHeader({
   ========================================================== */
 
   useEffect(() => {
-
-    socketService.connect();
-
-    socketService.onRefreshChats(
-      () => {
-
-        loadChatCount();
-
-      }
-    );
-
-    socketService.onReceiveMessage(
-      () => {
-
-        loadChatCount();
-
-      }
-    );
-
-    socketService.onNotification(
-      () => {
-
-        setUnreadNotifications(
-          previous =>
-            previous + 1
-        );
-
-      }
-    );
-
-    return () => {
-
-      socketService.off(
-        "refresh-chats"
-      );
-
-      socketService.off(
-        "receive-message"
-      );
-
-      socketService.off(
-        "new-notification"
-      );
-
+    const handleRefreshChats = () => {
+      loadChatCount();
     };
 
+    const handleReceiveMessage = () => {
+      loadChatCount();
+    };
+
+    socketService.onRefreshChats(handleRefreshChats);
+    socketService.onReceiveMessage(handleReceiveMessage);
+
+    return () => {
+      socketService.off("refresh-chats", handleRefreshChats);
+      socketService.off("receive-message", handleReceiveMessage);
+    };
   }, []);
 
   /* ==========================================================
@@ -370,18 +340,10 @@ function DashboardHeader({
                 notifications
               </span>
 
-              {unreadNotifications >
-                0 && (
-
+              {unreadCount > 0 && (
                 <span className="doc-notification-count">
-
-                  {unreadNotifications >
-                  99
-                    ? "99+"
-                    : unreadNotifications}
-
+                  {unreadCount > 99 ? "99+" : unreadCount}
                 </span>
-
               )}
 
             </button>
@@ -406,11 +368,7 @@ function DashboardHeader({
                   <button
                     type="button"
                     className="doc-clear-notifications"
-                    onClick={() =>
-                      setUnreadNotifications(
-                        0
-                      )
-                    }
+                    onClick={markAllAsRead}
                   >
 
                     Mark all read
@@ -419,11 +377,16 @@ function DashboardHeader({
 
                 </div>
 
-                <Notification
-                  items={
-                    doctorNotifications
-                  }
-                />
+                {formattedNotifications.length === 0 ? (
+                  <div style={{ padding: "1.5rem", textAlign: "center", color: "#64748b", fontSize: "0.875rem" }}>
+                    No unread notifications
+                  </div>
+                ) : (
+                  <Notification
+                    items={formattedNotifications}
+                    onItemClick={(id) => markNotificationAsRead(id)}
+                  />
+                )}
 
               </section>
 

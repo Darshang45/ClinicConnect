@@ -1,6 +1,5 @@
-import ConversationWorkspace from "../../../components/common/Inbox/Inbox";
+import ChatWorkspace from "../../../components/common/chat/ChatWorkspace";
 import DashboardHeader from "../dashboard_header/DashboardHeader";
-import { messages } from "../data/messages";
 import "../../../styles/patient_dashboard.css";
 
 function Inbox() {
@@ -15,13 +14,7 @@ function Inbox() {
             <p>Stay connected with your care team in one dedicated place.</p>
           </div>
         </div>
-        <ConversationWorkspace
-          threads={messages}
-          conversationLabel="Conversations"
-          subtitle="Senior Cardiologist · Online"
-          receivedMessage="Your latest blood pressure readings look stable. Please continue your current medication plan."
-          sentMessage="Thank you, Doctor. I will keep tracking my readings."
-        />
+        <ChatWorkspace role="patient" />
       </main>
     </div>
   );

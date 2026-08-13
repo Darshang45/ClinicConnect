@@ -107,9 +107,19 @@ router.get("/appointment/:appointmentId", getAppointmentDetails);
 
 router.get("/patient-history/:patientId", getPatientHistory);
 
-router.put("/start-consultation/:appointmentId", startConsultation);
+router.put(
+  "/start-consultation/:appointmentId",
+  authenticate,
+  authorize("doctor"),
+  startConsultation
+);
 
-router.put("/complete-consultation/:appointmentId", completeConsultation);
+router.put(
+  "/complete-consultation/:appointmentId",
+  authenticate,
+  authorize("doctor"),
+  completeConsultation
+);
 
 router.put(
   "/consultation/:appointmentId",

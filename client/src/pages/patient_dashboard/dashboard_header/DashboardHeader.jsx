@@ -17,7 +17,10 @@ import patientPhoto from "../../../assets/images/hero/patient1.jpg";
 import Notification from "../../../components/common/Notification/Notification";
 import SignOut from "../../../components/common/SignOut";
 import useAuth from "../../../hooks/useAuth";
-import { notifications } from "../data/notifications";
+import { useSocket } from "../../../context/SocketContext";
+import { formatTime } from "../../../utils/formatTime";
+import socketService from "../../../services/socketService";
+import { getChats } from "../../../services/chatService";
 import "../../../styles/patient_dashboard.css";
 
 const mainNavigation = [
@@ -34,8 +37,10 @@ function DashboardHeader() {
   const [openPanel, setOpenPanel] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [showScrollButton, setShowScrollButton] = useState(false);
+  const [unreadChats, setUnreadChats] = useState(0);
   const location = useLocation();
   const { user } = useAuth();
+  const { notifications, unreadCount, markAllAsRead, markNotificationAsRead } = useSocket();
   const profile = {
     name: user?.fullName || user?.name || "Patient",
     roleTitle: user?.roleTitle || "Patient Portal",
@@ -44,6 +49,51 @@ function DashboardHeader() {
   };
   const isInboxOpen = location.pathname === "/patient/inbox";
   const activeSection = mainNavigation.find((item) => item.to === location.pathname)?.label || "Dashboard";
+
+  const formattedNotifications = notifications.map((n) => ({
+    _id: n._id || n.id,
+    id: n._id || n.id || `${n.title || "notification"}-${n.createdAt || n.time || "unknown"}`,
+    title: n.title,
+    description: n.message || n.description,
+    isRead: n.isRead || n.read,
+    time: n.createdAt ? formatTime(n.createdAt) : "Just now",
+  }));
+
+  const loadChatCount = async () => {
+    try {
+      const response = await getChats();
+      const chats = response.chats || [];
+      const total = chats.reduce(
+        (count, chat) => count + (chat.unreadCount || 0),
+        0,
+      );
+      setUnreadChats(total);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  useEffect(() => {
+    loadChatCount();
+  }, []);
+
+  useEffect(() => {
+    const handleRefreshChats = () => {
+      loadChatCount();
+    };
+
+    const handleReceiveMessage = () => {
+      loadChatCount();
+    };
+
+    socketService.onRefreshChats(handleRefreshChats);
+    socketService.onReceiveMessage(handleReceiveMessage);
+
+    return () => {
+      socketService.off("refresh-chats", handleRefreshChats);
+      socketService.off("receive-message", handleReceiveMessage);
+    };
+  }, []);
 
   useEffect(() => {
     const updateScrollButton = () => setShowScrollButton(window.scrollY > 320);
@@ -142,11 +192,16 @@ function DashboardHeader() {
         </label>
         <div className="pd-header-actions">
           <Link
-            className={`pd-icon-button ${isInboxOpen ? "is-open" : ""}`}
+            className={`pd-icon-button pd-chat-button ${isInboxOpen ? "is-open" : ""}`}
             to={isInboxOpen ? "/patient/dashboard" : "/patient/inbox"}
             aria-label={isInboxOpen ? "Close inbox" : "Open inbox"}
           >
             <FiMessageSquare />
+            {unreadChats > 0 && (
+              <span className="pd-chat-badge">
+                {unreadChats > 99 ? "99+" : unreadChats}
+              </span>
+            )}
           </Link>
           <div className="pd-navbar-menu">
             <button
@@ -155,8 +210,32 @@ function DashboardHeader() {
               aria-label="Open notifications"
               aria-expanded={openPanel === "notifications"}
               onClick={() => togglePanel("notifications")}
+              style={{ position: "relative" }}
             >
               <FiBell />
+              {unreadCount > 0 && (
+                <span
+                  style={{
+                    position: "absolute",
+                    top: "-2px",
+                    right: "-2px",
+                    background: "#ef4444",
+                    color: "#ffffff",
+                    borderRadius: "50%",
+                    fontSize: "10px",
+                    fontWeight: 700,
+                    minWidth: "16px",
+                    height: "16px",
+                    padding: "0 4px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    boxShadow: "0 0 0 2px #ffffff",
+                  }}
+                >
+                  {unreadCount > 99 ? "99+" : unreadCount}
+                </span>
+              )}
             </button>
             {openPanel === "notifications" && (
               <div
@@ -166,9 +245,24 @@ function DashboardHeader() {
               >
                 <div className="pd-popover-heading">
                   <h2>Notifications</h2>
-                  <span>Mark all read</span>
+                  <button
+                    type="button"
+                    style={{ background: "none", border: "none", color: "var(--color-primary, #0284c7)", cursor: "pointer", fontSize: "12px", fontWeight: 600 }}
+                    onClick={markAllAsRead}
+                  >
+                    Mark all read
+                  </button>
                 </div>
-                <Notification items={notifications} />
+                {formattedNotifications.length === 0 ? (
+                  <div style={{ padding: "1rem", textAlign: "center", color: "#64748b", fontSize: "0.875rem" }}>
+                    No unread notifications
+                  </div>
+                ) : (
+                  <Notification
+                    items={formattedNotifications}
+                    onItemClick={(id) => markNotificationAsRead(id)}
+                  />
+                )}
               </div>
             )}
           </div>

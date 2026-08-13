@@ -1,4 +1,5 @@
 import React from "react";
+import { formatTime } from "../../utils/formatTime";
 
 export function AppointmentForm({
   mode = "book",
@@ -7,6 +8,7 @@ export function AppointmentForm({
   departments = [],
   doctors = [],
   slots = [],
+  isClosed = false,
   loadingDepartments = false,
   loadingDoctors = false,
   loadingSlots = false,
@@ -141,15 +143,21 @@ export function AppointmentForm({
           name="appointmentTime"
           value={formData.appointmentTime || ""}
           onChange={handleChange}
-          disabled={loadingSlots || (!isReschedule && (!formData.doctorId || !formData.appointmentDate))}
+          disabled={loadingSlots || slots.length === 0 || (!isReschedule && (!formData.doctorId || !formData.appointmentDate))}
           required
         >
           <option value="">
-            {loadingSlots ? "Loading slots..." : "Select Time"}
+            {loadingSlots
+              ? "Loading slots..."
+              : isClosed
+              ? "Hospital closed! Please check tomorrow onwards slots."
+              : slots.length === 0 && formData.appointmentDate
+              ? "No available slots for this date."
+              : "Select Time"}
           </option>
           {slots.map((slot) => (
             <option key={slot.start} value={slot.start}>
-              {slot.start} - {slot.end}
+              {formatTime(slot.start)} - {formatTime(slot.end)}
             </option>
           ))}
         </select>

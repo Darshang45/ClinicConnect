@@ -191,6 +191,15 @@ npm install
 npm run dev
 ```
 
+### Testing multiple accounts locally
+
+The frontend stores the active JWT in browser `localStorage`. All regular tabs
+within the same browser profile therefore share one active ClinicConnect
+account. To test a Patient, Doctor, and Receptionist at the same time, use
+separate browser profiles, an incognito window, or separate browsers. This is
+session behavior only; the API and Socket.IO server still independently enforce
+the authenticated user's chat and notification permissions.
+
 ---
 
 ## 🌐 Environment Variables

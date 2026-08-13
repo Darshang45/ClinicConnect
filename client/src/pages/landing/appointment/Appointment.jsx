@@ -51,6 +51,7 @@ function Appointment() {
   const [departments, setDepartments] = useState([]);
   const [doctors, setDoctors] = useState([]);
   const [slots, setSlots] = useState([]);
+  const [isClosed, setIsClosed] = useState(false);
 
   const [loadingDepartments, setLoadingDepartments] = useState(false);
   const [loadingDoctors, setLoadingDoctors] = useState(false);
@@ -158,6 +159,7 @@ function Appointment() {
         );
         
         setSlots(response.slots || []);
+        setIsClosed(!!response.isClosed);
       } catch (error) {
         console.error(error);
       } finally {
@@ -278,6 +280,7 @@ function Appointment() {
             departments={departments}
             doctors={doctors}
             slots={slots}
+            isClosed={isClosed}
             loadingDepartments={loadingDepartments}
             loadingDoctors={loadingDoctors}
             loadingSlots={loadingSlots}
