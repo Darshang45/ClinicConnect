@@ -806,6 +806,19 @@ export const completeConsultation = async (req, res) => {
       });
     }
 
+    if (appointment.status === "Completed") {
+      return res.status(200).json({
+        success: true,
+        message: "Consultation has already been completed.",
+        appointment: {
+          appointmentId: appointment._id,
+          status: appointment.status,
+          consultationStartTime: appointment.consultationStartTime,
+          consultationEndTime: appointment.consultationEndTime,
+        },
+      });
+    }
+
     if (appointment.status !== "In Consultation") {
       return res.status(400).json({
         success: false,

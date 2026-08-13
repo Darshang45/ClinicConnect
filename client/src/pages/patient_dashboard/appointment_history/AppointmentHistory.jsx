@@ -110,7 +110,7 @@ function AppointmentHistory() {
                 return (
                   <article
                     className={`pd-timeline-item ${index === 0 ? "is-featured" : ""}`}
-                    key={item.id}
+                    key={item._id || item.id || index}
                   >
                     <span className="pd-timeline-icon">
                       <Icon />

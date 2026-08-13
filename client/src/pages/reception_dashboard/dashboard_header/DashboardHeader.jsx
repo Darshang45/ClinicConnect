@@ -1,9 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { MdChatBubbleOutline, MdNotificationsNone, MdSearch } from "react-icons/md";
+import { MdChatBubbleOutline, MdNotificationsNone } from "react-icons/md";
 import Navbar from "../../../components/common/Navbar";
 import SignOut from "../../../components/common/SignOut";
 import useAuth from "../../../hooks/useAuth";
+import { useSocket } from "../../../context/SocketContext";
+import socketService from "../../../services/socketService";
+import { getChats } from "../../../services/chatService";
 import "../../../styles/reception_dashboard.css";
 import receptionistImage from "../../../assets/patients/elena-rodriguez.jpg";
 import logo from "../../../assets/logo/clinicconnect-logo.svg";
@@ -20,7 +23,9 @@ const navigation = [
 
 function DashboardHeader({ openPanel, onTogglePanel, notificationButtonRef, notificationPanelRef }) {
   const [activeLink, setActiveLink] = useState("#welcome");
+  const [unreadChats, setUnreadChats] = useState(0);
   const { user } = useAuth();
+  const { unreadCount } = useSocket();
   const profile = user || {
     name: "Elena Rodriguez",
     roleTitle: "Lead Receptionist",
@@ -29,6 +34,42 @@ function DashboardHeader({ openPanel, onTogglePanel, notificationButtonRef, noti
   const location = useLocation();
   const isChatOpen = location.pathname === "/reception/inbox";
   const isNotificationOpen = openPanel === "notifications";
+
+  const loadChatCount = async () => {
+    try {
+      const response = await getChats();
+      const chats = response.chats || [];
+      const total = chats.reduce(
+        (count, chat) => count + (chat.unreadCount || 0),
+        0,
+      );
+      setUnreadChats(total);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  useEffect(() => {
+    loadChatCount();
+  }, []);
+
+  useEffect(() => {
+    const handleRefreshChats = () => {
+      loadChatCount();
+    };
+
+    const handleReceiveMessage = () => {
+      loadChatCount();
+    };
+
+    socketService.onRefreshChats(handleRefreshChats);
+    socketService.onReceiveMessage(handleReceiveMessage);
+
+    return () => {
+      socketService.off("refresh-chats", handleRefreshChats);
+      socketService.off("receive-message", handleReceiveMessage);
+    };
+  }, []);
 
   return (
     <Navbar
@@ -68,8 +109,32 @@ function DashboardHeader({ openPanel, onTogglePanel, notificationButtonRef, noti
               aria-expanded={isNotificationOpen}
               onClick={() => onTogglePanel("notifications")}
               ref={notificationButtonRef}
+              style={{ position: "relative" }}
             >
               <MdNotificationsNone />
+              {unreadCount > 0 && (
+                <span
+                  style={{
+                    position: "absolute",
+                    top: "-2px",
+                    right: "-2px",
+                    background: "#ef4444",
+                    color: "#ffffff",
+                    borderRadius: "50%",
+                    fontSize: "10px",
+                    fontWeight: 700,
+                    minWidth: "16px",
+                    height: "16px",
+                    padding: "0 4px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    boxShadow: "0 0 0 2px #ffffff",
+                  }}
+                >
+                  {unreadCount > 99 ? "99+" : unreadCount}
+                </span>
+              )}
             </button>
             {isNotificationOpen && <ReceptionNotificationPanel panelRef={notificationPanelRef} />}
           </div>
@@ -79,6 +144,11 @@ function DashboardHeader({ openPanel, onTogglePanel, notificationButtonRef, noti
             aria-label={isChatOpen ? "Close inbox" : "Open inbox"}
           >
             <MdChatBubbleOutline />
+            {unreadChats > 0 && (
+              <span className="rc-chat-badge">
+                {unreadChats > 99 ? "99+" : unreadChats}
+              </span>
+            )}
           </Link>
         </div>
         <SignOut triggerClassName="rc-profile" user={profile}>

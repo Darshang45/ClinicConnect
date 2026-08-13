@@ -7,7 +7,7 @@ import PatientSearch from "./patient_search/PatientSearch";
 import PatientWorkspace from "./patient_workspace/PatientWorkspace";
 import ActionFooter from "./action_footer/ActionFooter";
 import NextPatient from "./next_patient/NextPatient";
-import DoctorChatPanel from "./chat/DoctorChatPanel";
+import ChatWorkspace from "../../components/common/chat/ChatWorkspace";
 
 import {
   getDoctorDashboard,
@@ -288,7 +288,9 @@ const handlePatientSearch = async (patient) => {
           />
         </main>
 
-        {openPanel === "chat" && <DoctorChatPanel panelRef={chatPanelRef} />}
+        {openPanel === "chat" && (
+          <ChatWorkspace role="doctor" panelRef={chatPanelRef} />
+        )}
       </div>
     </div>
   );

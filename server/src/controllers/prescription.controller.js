@@ -303,8 +303,9 @@ export const getPrescriptionByAppointment = async (req, res) => {
       .populate("doctor");
 
     if (!prescription) {
-      return res.status(404).json({
-        success: false,
+      return res.status(200).json({
+        success: true,
+        prescription: null,
         message: "Prescription not found.",
       });
     }

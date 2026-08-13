@@ -235,8 +235,9 @@ export const getReportByAppointment = async (req, res) => {
       .populate("doctor");
 
     if (!report) {
-      return res.status(404).json({
-        success: false,
+      return res.status(200).json({
+        success: true,
+        report: null,
         message: "Medical report not found.",
       });
     }

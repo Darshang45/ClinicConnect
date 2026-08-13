@@ -89,21 +89,31 @@ function PrescriptionSection({
 
       const prescription = response.prescription;
 
+      // No prescription yet — response.success is true but prescription is null
+      if (!prescription) {
+        setExistingPrescription(null);
+        setMedicineList([]);
+        setDiagnosis("");
+        setNotes("");
+        setFollowUpDate("");
+        return;
+      }
+
       const medicines = prescription.medicines || [];
 
       setExistingPrescription(prescription);
 
       const formattedMedicines = medicines.map((item) => ({
-  medicine: item.medicine,
-  medicineName: item.medicine?.name || "",
-  genericName: item.medicine?.genericName || "",
-  strength: item.medicine?.strength || "",
-  dosage: item.dosage,
-  frequency: item.frequency,
-  duration: item.duration,
-  quantity: item.quantity,
-  instructions: item.instructions,
-}));
+        medicine: item.medicine,
+        medicineName: item.medicine?.name || "",
+        genericName: item.medicine?.genericName || "",
+        strength: item.medicine?.strength || "",
+        dosage: item.dosage,
+        frequency: item.frequency,
+        duration: item.duration,
+        quantity: item.quantity,
+        instructions: item.instructions,
+      }));
 
       setMedicineList(formattedMedicines);
 
@@ -119,26 +129,18 @@ function PrescriptionSection({
 
       onPrescriptionChange?.({
         diagnosis: prescription.diagnosis,
-
         notes: prescription.notes,
-
         followUpDate: prescription.followUpDate,
-
         medicines: formattedMedicines,
       });
     } catch (error) {
       // No prescription yet
       if (error.response?.status === 404) {
         setExistingPrescription(null);
-
         setMedicineList([]);
-
         setDiagnosis("");
-
         setNotes("");
-
         setFollowUpDate("");
-
         return;
       }
 

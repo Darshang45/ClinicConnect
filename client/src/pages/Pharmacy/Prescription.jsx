@@ -894,7 +894,7 @@ const loadPharmacyOrder = async (prescriptionId) => {
           </thead>
           <tbody>
             {pageRows.map((item) => (
-              <tr key={item.id}>
+              <tr key={item._id || item.id}>
                 <td>
                   <input
                     type="checkbox"

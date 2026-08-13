@@ -14,6 +14,20 @@ import { calculateAppointmentTime } from "../services/appointment.service.js";
 import { logActivity } from "../utils/activityLogger.js";
 import { generatePrescriptionPDF } from "../utils/pdfGenerator.js";
 
+// Helper to resolve Patient document by authenticated User ID or fallback email
+export const findPatientByAuth = async (req) => {
+  if (!req.user) return null;
+  let patient = await Patient.findOne({ user: req.user._id, isActive: true });
+  if (!patient && req.user.email) {
+    patient = await Patient.findOne({ email: req.user.email.toLowerCase(), isActive: true });
+    if (patient && !patient.user) {
+      patient.user = req.user._id;
+      await patient.save();
+    }
+  }
+  return patient;
+};
+
 // Calculate age from dateOfBirth; fall back to stored age if DOB is unavailable
 const calculateAge = (dateOfBirth, storedAge) => {
   if (dateOfBirth) {
@@ -620,10 +634,7 @@ export const searchPatients = async (req, res) => {
 
 export const getPatientDashboard = async (req, res) => {
   try {
-    const patientDoc = await Patient.findOne({
-      user: req.user._id,
-      isActive: true,
-    });
+    const patientDoc = await findPatientByAuth(req);
 
     if (!patientDoc) {
       return res.status(404).json({

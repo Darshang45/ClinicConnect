@@ -1,393 +1,142 @@
 import jwt from "jsonwebtoken";
 
+import Chat from "../models/Chat.js";
 import User from "../models/User.js";
+import { authorizeChatForUser, isValidChatObjectId } from "../services/chatAuthorization.service.js";
 
-/* ===========================================================
-   Online Users
-=========================================================== */
-
+let ioInstance = null;
 const onlineUsers = new Map();
 
-/* ===========================================================
-   Get User From Token
-=========================================================== */
-
-const getUserFromToken = async (
-  token
-) => {
-
+const getUserFromToken = async (token) => {
+  if (!token) return null;
   try {
-
-    if (!token) return null;
-
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET
-    );
-
-    return await User.findById(
-      decoded.id
-    );
-
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    return await User.findById(decoded.id).select("-password");
   } catch {
-
     return null;
+  }
+};
 
+const publishOnlineUsers = (io) => io.emit("online-users", Array.from(onlineUsers.keys()));
+
+const registerSocket = (userId, socketId) => {
+  const sockets = onlineUsers.get(userId) || new Set();
+  sockets.add(socketId);
+  onlineUsers.set(userId, sockets);
+};
+
+const unregisterSocket = (userId, socketId) => {
+  const sockets = onlineUsers.get(userId);
+  if (!sockets) return;
+  sockets.delete(socketId);
+  if (sockets.size === 0) onlineUsers.delete(userId);
+};
+
+const emitChatError = (socket, chatId, message) =>
+  socket.emit("chat-error", { chatId: chatId ? String(chatId) : undefined, message });
+
+const withAuthorizedChat = async (socket, chatId, callback) => {
+  if (!isValidChatObjectId(chatId)) {
+    emitChatError(socket, chatId, "Invalid chat id.");
+    return;
   }
 
+  const chat = await Chat.findById(chatId);
+  if (!chat) {
+    emitChatError(socket, chatId, "Conversation not found.");
+    return;
+  }
+
+  const access = await authorizeChatForUser(chat, socket.user);
+  if (!access.allowed) {
+    emitChatError(socket, chatId, access.message || "Access denied.");
+    return;
+  }
+
+  await callback(chat);
 };
 
-/* ===========================================================
-   Socket Initialization
-=========================================================== */
+const initializeSocket = (io) => {
+  ioInstance = io;
 
-const initializeSocket = (
-  io
-) => {
+  io.use(async (socket, next) => {
+    const user = await getUserFromToken(socket.handshake.auth?.token);
+    if (!user || !user.isActive) return next(new Error("Unauthorized"));
+    socket.user = user;
+    return next();
+  });
 
-  io.use(
-    async (
-      socket,
-      next
-    ) => {
+  io.on("connection", (socket) => {
+    const userId = socket.user._id.toString();
+    registerSocket(userId, socket.id);
+    socket.join(userId);
 
+    // These rooms support server-generated role/broadcast notifications only.
+    // They are never used for chat membership or client-controlled delivery.
+    if (socket.user.role) socket.join(`notification:role:${socket.user.role}`);
+    socket.join("notification:all");
+    publishOnlineUsers(io);
+
+    socket.on("join-chat", async (chatId) => {
       try {
-
-        const token =
-          socket.handshake.auth
-            ?.token;
-
-        const user =
-          await getUserFromToken(
-            token
-          );
-
-        if (!user) {
-          return next(
-            new Error(
-              "Unauthorized"
-            )
-          );
-        }
-
-        socket.user = user;
-
-        next();
-
+        await withAuthorizedChat(socket, chatId, async (chat) => {
+          socket.join(chat._id.toString());
+          socket.emit("chat-joined", { chatId: chat._id.toString() });
+        });
       } catch (error) {
-
-        next(error);
-
+        console.error("join-chat error:", error.message);
+        emitChatError(socket, chatId, "Unable to join conversation.");
       }
+    });
 
-    }
-  );
+    socket.on("leave-chat", (chatId) => {
+      if (isValidChatObjectId(chatId)) socket.leave(String(chatId));
+    });
 
-  io.on(
-    "connection",
-    (socket) => {
+    socket.on("typing", async ({ chatId } = {}) => {
+      try {
+        await withAuthorizedChat(socket, chatId, async (chat) => {
+          socket.to(chat._id.toString()).emit("typing", {
+            chatId: chat._id.toString(),
+            userId,
+            userName: socket.user.fullName,
+          });
+        });
+      } catch (error) {
+        console.error("typing error:", error.message);
+      }
+    });
 
-      console.log(
-        `🟢 ${socket.user.fullName} connected`
-      );
+    socket.on("stop-typing", async ({ chatId } = {}) => {
+      try {
+        await withAuthorizedChat(socket, chatId, async (chat) => {
+          socket.to(chat._id.toString()).emit("stop-typing", {
+            chatId: chat._id.toString(),
+            userId,
+          });
+        });
+      } catch (error) {
+        console.error("stop-typing error:", error.message);
+      }
+    });
 
-      /* =======================================
-         Save Online User
-      ======================================= */
+    // Messages, notifications, read receipts, and list refreshes are generated
+    // only by authenticated HTTP controllers.  Client payloads must never choose
+    // a sender, recipient, room, or notification target.
+    socket.on("send-message", () => emitChatError(socket, null, "Messages must be sent through the authenticated API."));
+    socket.on("send-notification", () => emitChatError(socket, null, "Notifications are server generated."));
+    socket.on("refresh-chats", () => emitChatError(socket, null, "Conversation refreshes are server generated."));
 
-      onlineUsers.set(
-        socket.user._id.toString(),
-        socket.id
-      );
-
-      io.emit(
-        "online-users",
-        Array.from(
-          onlineUsers.keys()
-        )
-      );
-
-      /* =======================================
-         Join Personal Room
-      ======================================= */
-
-      socket.join(
-        socket.user._id.toString()
-      );
-
-      /* =======================================
-         Join Chat
-      ======================================= */
-
-      socket.on(
-        "join-chat",
-        (
-          chatId
-        ) => {
-
-          socket.join(
-            chatId
-          );
-
-        }
-      );
-
-      /* =======================================
-         Leave Chat
-      ======================================= */
-
-      socket.on(
-        "leave-chat",
-        (
-          chatId
-        ) => {
-
-          socket.leave(
-            chatId
-          );
-
-        }
-      );
-            /* =======================================
-         Typing Indicator
-      ======================================= */
-
-      socket.on(
-        "typing",
-        ({ chatId }) => {
-
-          socket.to(chatId).emit(
-            "typing",
-            {
-              chatId,
-              userId:
-                socket.user._id.toString(),
-              userName:
-                socket.user.fullName,
-            }
-          );
-
-        }
-      );
-
-      /* =======================================
-         Stop Typing
-      ======================================= */
-
-      socket.on(
-        "stop-typing",
-        ({ chatId }) => {
-
-          socket.to(chatId).emit(
-            "stop-typing",
-            {
-              chatId,
-              userId:
-                socket.user._id.toString(),
-            }
-          );
-
-        }
-      );
-
-      /* =======================================
-         Live Message
-      ======================================= */
-
-      socket.on(
-        "send-message",
-        (message) => {
-
-          socket
-            .to(message.chat)
-            .emit(
-              "receive-message",
-              message
-            );
-
-        }
-      );
-
-      /* =======================================
-         Delivered Status
-      ======================================= */
-
-      socket.on(
-        "message-delivered",
-        ({
-          chatId,
-          messageId,
-        }) => {
-
-          socket
-            .to(chatId)
-            .emit(
-              "message-delivered",
-              {
-                chatId,
-                messageId,
-              }
-            );
-
-        }
-      );
-
-      /* =======================================
-         Read Receipts
-      ======================================= */
-
-      socket.on(
-        "messages-seen",
-        ({
-          chatId,
-          userId,
-        }) => {
-
-          socket
-            .to(chatId)
-            .emit(
-              "messages-seen",
-              {
-                chatId,
-                userId,
-              }
-            );
-
-        }
-      );
-
-      /* =======================================
-         Notifications
-      ======================================= */
-
-      socket.on(
-        "send-notification",
-        ({
-          receiverId,
-          notification,
-        }) => {
-
-          const receiverSocket =
-            onlineUsers.get(
-              receiverId
-            );
-
-          if (
-            receiverSocket
-          ) {
-
-            io.to(
-              receiverSocket
-            ).emit(
-              "new-notification",
-              notification
-            );
-
-          }
-
-        }
-      );
-
-      /* =======================================
-         Conversation Updated
-      ======================================= */
-
-      socket.on(
-        "refresh-chats",
-        ({
-          participants,
-        }) => {
-
-          participants.forEach(
-            (
-              participantId
-            ) => {
-
-              const socketId =
-                onlineUsers.get(
-                  participantId
-                );
-
-              if (
-                socketId
-              ) {
-
-                io.to(
-                  socketId
-                ).emit(
-                  "refresh-chats"
-                );
-
-              }
-
-            }
-          );
-
-        }
-      );
-            /* =======================================
-         User Disconnect
-      ======================================= */
-
-      socket.on(
-        "disconnect",
-        () => {
-
-          console.log(
-            `🔴 ${socket.user.fullName} disconnected`
-          );
-
-          onlineUsers.delete(
-            socket.user._id.toString()
-          );
-
-          io.emit(
-            "online-users",
-            Array.from(
-              onlineUsers.keys()
-            )
-          );
-
-        }
-      );
-
-    }
-  );
-
+    socket.on("disconnect", () => {
+      unregisterSocket(userId, socket.id);
+      publishOnlineUsers(io);
+    });
+  });
 };
 
-/* ===========================================================
-   Helper Functions
-=========================================================== */
-
-export const getOnlineUsers = () => {
-
-  return Array.from(
-    onlineUsers.keys()
-  );
-
-};
-
-export const getSocketId = (
-  userId
-) => {
-
-  return (
-    onlineUsers.get(
-      userId.toString()
-    ) || null
-  );
-
-};
-
-export const isUserOnline = (
-  userId
-) => {
-
-  return onlineUsers.has(
-    userId.toString()
-  );
-
-};
+export const getOnlineUsers = () => Array.from(onlineUsers.keys());
+export const getSocketId = (userId) => Array.from(onlineUsers.get(userId.toString()) || [])[0] || null;
+export const isUserOnline = (userId) => onlineUsers.has(userId.toString());
+export const getIO = () => ioInstance;
 
 export default initializeSocket;

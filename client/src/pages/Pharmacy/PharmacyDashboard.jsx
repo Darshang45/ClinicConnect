@@ -24,7 +24,10 @@ import PharmacyPrescription from "./Prescription";
 import Navbar from "../../components/common/Navbar";
 import "../../styles/pharmacy_dashboard.css";
 import { getPharmacyPrescriptions } from "../../services/pharmacyService";
+import socketService from "../../services/socketService";
 import useAuth from "../../hooks/useAuth";
+import { useSocket } from "../../context/SocketContext";
+import { formatTime } from "../../utils/formatTime";
 
 
 
@@ -177,11 +180,11 @@ function downloadFile(filename, blob) {
 function PharmacyDashboard() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const { notifications, unreadCount, markAllAsRead, markNotificationAsRead } = useSocket();
   const [prescriptions, setPrescriptions] = useState([]);
-const [prescriptionLoading, setPrescriptionLoading] = useState(true);
-const [prescriptionError, setPrescriptionError] = useState("");
+  const [prescriptionLoading, setPrescriptionLoading] = useState(true);
+  const [prescriptionError, setPrescriptionError] = useState("");
   const [inventory, setInventory] = useState(initialInventory);
-  const [notifications, setNotifications] = useState(initialNotifications);
   const [globalSearch, setGlobalSearch] = useState("");
   const [debouncedGlobalSearch, setDebouncedGlobalSearch] = useState("");
   const [activeSection, setActiveSection] = useState("Dashboard");
@@ -391,6 +394,20 @@ useEffect(() => {
 // Load prescriptions from backend
 useEffect(() => {
   loadPrescriptions();
+
+  const handleNotification = (notif) => {
+    loadPrescriptions();
+    setToast({
+      message: notif?.title || "New Prescription Notification Received",
+      type: "info",
+    });
+  };
+
+  socketService.onNotification(handleNotification);
+
+  return () => {
+    socketService.off("new-notification", handleNotification);
+  };
 }, []);
 
 useEffect(() => {
@@ -571,11 +588,7 @@ useEffect(() => {
     );
     showToast("Inventory export downloaded.");
   };
-  const markNotificationRead = (id) =>
-    setNotifications((current) =>
-      current.map((item) => (item.id === id ? { ...item, read: true } : item)),
-    );
-  const unreadCount = notifications.filter((item) => !item.read).length;
+
   const chartValues =
     chartRange === "Weekly"
       ? [38, 58, 31, 83, 53, 43, 92]
@@ -690,48 +703,40 @@ useEffect(() => {
                   <h2>Notifications</h2>
                   <button
                     type="button"
-                    onClick={() =>
-                      setNotifications((current) =>
-                        current.map((item) => ({ ...item, read: true })),
-                      )
-                    }
+                    onClick={markAllAsRead}
                   >
                     Mark all read
                   </button>
                 </header>
-                {notifications.map((item) => (
-                  <article
-                    className={item.read ? "" : "is-unread"}
-                    key={item.id}
-                  >
-                    <button
-                      type="button"
-                      onClick={() => markNotificationRead(item.id)}
+                {notifications.length === 0 ? (
+                  <p style={{ padding: "16px", textAlign: "center", color: "#64748b" }}>
+                    No notifications remaining.
+                  </p>
+                ) : (
+                  notifications.map((item) => (
+                    <article
+                      className="is-unread"
+                      key={item._id || item.id}
+                      onClick={() => markNotificationAsRead(item._id || item.id)}
+                      style={{ cursor: "pointer", display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px", borderBottom: "1px solid #e2e8f0" }}
                     >
-                      <FiCheckCircle />
-                    </button>
-                    <div>
-                      <strong>{item.title}</strong>
-                      <p>{item.message}</p>
-                      <small>{item.time}</small>
-                    </div>
-                    <button
-                      type="button"
-                      aria-label={`Delete ${item.title}`}
-                      onClick={() =>
-                        setNotifications((current) =>
-                          current.filter(
-                            (notification) => notification.id !== item.id,
-                          ),
-                        )
-                      }
-                    >
-                      <FiX />
-                    </button>
-                  </article>
-                ))}
-                {!notifications.length && (
-                  <p className="ph-mini-empty">No notifications remaining.</p>
+                      <div>
+                        <strong style={{ display: "block" }}>{item.title}</strong>
+                        <p style={{ margin: "4px 0", fontSize: "13px", color: "#475569" }}>{item.message || item.description}</p>
+                        <small style={{ color: "#94a3b8" }}>{formatTime(item.createdAt)}</small>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          markNotificationAsRead(item._id || item.id);
+                        }}
+                        style={{ background: "none", border: "none", color: "#16a34a", cursor: "pointer" }}
+                      >
+                        <FiCheckCircle />
+                      </button>
+                    </article>
+                  ))
                 )}
               </div>
             )}

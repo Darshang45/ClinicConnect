@@ -297,9 +297,37 @@ export const getAvailableSlots = async (req, res) => {
     });
 
     // Remove booked slots
-    const availableSlots = allSlots.filter(
+    let availableSlots = allSlots.filter(
       (slot) => !bookedSlots.includes(slot.start),
     );
+
+    // Check same-day past slots & schedule end time
+    const now = new Date();
+    const isToday = new Date(date).toDateString() === now.toDateString();
+
+    if (isToday) {
+      const currentHH = String(now.getHours()).padStart(2, "0");
+      const currentMM = String(now.getMinutes()).padStart(2, "0");
+      const currentTimeStr = `${currentHH}:${currentMM}`;
+
+      // Hospital closed = today AND current time is at or after schedule.endTime
+      if (schedule.endTime && currentTimeStr >= schedule.endTime) {
+        return res.status(200).json({
+          success: true,
+          date,
+          day,
+          isClosed: true,
+          message: "Hospital closed! Please check tomorrow slots.",
+          totalSlots: 0,
+          slots: [],
+        });
+      }
+
+      // Filter out slots that have already passed earlier today
+      availableSlots = availableSlots.filter(
+        (slot) => slot.start > currentTimeStr
+      );
+    }
 
     return res.status(200).json({
       success: true,
@@ -307,6 +335,8 @@ export const getAvailableSlots = async (req, res) => {
       date,
 
       day,
+
+      isClosed: false,
 
       totalSlots: availableSlots.length,
 

@@ -129,8 +129,8 @@ export const resetStaffPassword = async (
 // Logout (Frontend Utility)
 // ============================================
 export const logoutUser = () => {
-  localStorage.removeItem("token");
-  localStorage.removeItem("user");
+  sessionStorage.removeItem("token");
+  sessionStorage.removeItem("user");
 };
 
 // const roleProfiles = {

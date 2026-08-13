@@ -82,6 +82,18 @@ function PatientWorkspace({
     try {
       setLoading(true);
 
+      // Auto-start the consultation if not already in progress
+      const currentStatus = appointment.status;
+      if (currentStatus !== "In Consultation") {
+        try {
+          await startConsultation(appointment.appointmentId);
+        } catch (startError) {
+          // Ignore if already started or already completed
+          const status = startError.response?.status;
+          if (status !== 400 && status !== 409) throw startError;
+        }
+      }
+
       await updateConsultation(appointment.appointmentId, {
         symptoms: consultation.symptoms
           .split(",")
@@ -102,7 +114,8 @@ function PatientWorkspace({
     } catch (error) {
       console.error(error);
 
-      alert("Unable to complete consultation.");
+      const serverMessage = error.response?.data?.message;
+      alert(serverMessage || "Unable to complete consultation.");
     } finally {
       setLoading(false);
     }
