@@ -1,11 +1,7 @@
 node_modules/
-
 .env
-
-logs
-
+uploads/
+logs/
 *.log
-
-coverage
-
-dist
+coverage/
+dist/
