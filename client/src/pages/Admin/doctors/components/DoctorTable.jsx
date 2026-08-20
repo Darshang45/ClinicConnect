@@ -1,4 +1,6 @@
 import React from "react";
+import doctorFallback from "../../../../assets/images/doctors/doctor-1.jpg";
+import getAssetUrl from "../../../../utils/getAssetUrl";
 import {
   PageHeader,
   Card,
@@ -127,10 +129,14 @@ function DoctorTable({
                     <div className="d-flex align-items-center gap-3">
                       {doctor.profilePhoto ? (
                         <img
-                          src={doctor.profilePhoto}
+                          src={getAssetUrl(doctor.profilePhoto)}
                           alt={doctor.fullName}
                           className="rounded-circle object-fit-cover"
                           style={{ width: "40px", height: "40px" }}
+                          onError={(event) => {
+                            event.currentTarget.onerror = null;
+                            event.currentTarget.src = doctorFallback;
+                          }}
                         />
                       ) : (
                         <div className="user-avatar-circle">{initials}</div>

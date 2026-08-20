@@ -4,6 +4,7 @@ import Button from "../../../components/common/Button";
 import Card from "../../../components/common/Card";
 import Input from "../../../components/common/Input";
 import patientPhoto from "../../../assets/images/hero/patient1.jpg";
+import ProfilePhotoUpload from "../../../components/common/ProfilePhotoUpload";
 import "../../../styles/patient_dashboard.css";
 
 const defaultProfileDetails = [
@@ -119,6 +120,8 @@ function PatientProfile({
   onToggleEdit,
   onUpdate,
   patient,
+  onPhotoChange,
+  photoResetKey,
   profileDescription,
   saveLabel = "Save profile",
   title = "Patient Profile",
@@ -134,6 +137,7 @@ function PatientProfile({
       ? normaliseCustomProfile(patient, formFields)
       : normalisePatient(patient),
   );
+  const [selectedPhotoPreview, setSelectedPhotoPreview] = useState("");
 
   useEffect(() => {
     setDraft(
@@ -141,7 +145,21 @@ function PatientProfile({
         ? normaliseCustomProfile(patient, formFields)
         : normalisePatient(patient)
     );
+    setSelectedPhotoPreview("");
   }, [patient]);
+
+  useEffect(() => {
+    setSelectedPhotoPreview("");
+  }, [photoResetKey]);
+
+  useEffect(
+    () => () => {
+      if (selectedPhotoPreview?.startsWith("blob:")) {
+        URL.revokeObjectURL(selectedPhotoPreview);
+      }
+    },
+    [selectedPhotoPreview],
+  );
 
   const saveChanges = () => {
     if (!isEditable) return;
@@ -242,8 +260,12 @@ function PatientProfile({
       <div className="pd-profile-content">
         <div className="pd-profile-intro">
           <img
-            src={patient?.image || patient?.avatar || patientPhoto}
+            src={selectedPhotoPreview || patient?.profilePhoto || patient?.image || patient?.avatar || patientPhoto}
             alt={displayName}
+            onError={(event) => {
+              event.currentTarget.onerror = null;
+              event.currentTarget.src = patientPhoto;
+            }}
           />
           <h3>{displayName}</h3>
           <p>
@@ -394,6 +416,21 @@ function PatientProfile({
               </dd>
             </div>
           ))}
+          {onPhotoChange && isEditing && (
+            <div className="pd-profile-photo-field">
+              <dt>Profile Photo</dt>
+              <dd>
+                <ProfilePhotoUpload
+                  currentPhoto={patient?.profilePhoto || patient?.image || patient?.avatar}
+                  fallbackImage={patientPhoto}
+                  onFileChange={onPhotoChange}
+                  onPreviewChange={setSelectedPhotoPreview}
+                  resetKey={photoResetKey}
+                  showPreview={false}
+                />
+              </dd>
+            </div>
+          )}
         </dl>
       </div>
     </Card>

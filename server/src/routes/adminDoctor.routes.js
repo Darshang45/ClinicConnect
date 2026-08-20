@@ -11,16 +11,29 @@ import {
   updateDoctorByAdmin,
   deleteDoctorByAdmin,
 } from "../controllers/adminDoctor.controller.js";
+import uploadProfilePhoto from "../uploads/uploadProfilePhoto.js";
 
 const router = express.Router();
 
-router.post("/", authenticate, authorize("admin"), createDoctorByAdmin);
+router.post(
+  "/",
+  authenticate,
+  authorize("admin"),
+  uploadProfilePhoto,
+  createDoctorByAdmin,
+);
 
 router.get("/", authenticate, authorize("admin"), getDoctorsByAdmin);
 
 router.get("/:id", authenticate, authorize("admin"), getDoctorByIdByAdmin);
 
-router.put("/:id", authenticate, authorize("admin"), updateDoctorByAdmin);
+router.put(
+  "/:id",
+  authenticate,
+  authorize("admin"),
+  uploadProfilePhoto,
+  updateDoctorByAdmin,
+);
 
 router.delete("/:id", authenticate, authorize("admin"), deleteDoctorByAdmin);
 

@@ -4,6 +4,7 @@ import { Link, useLocation } from "react-router-dom";
 import { FiMessageSquare } from "react-icons/fi";
 
 import doctorImage from "../../../assets/images/doctors/doctor-6.jpg";
+import getAssetUrl from "../../../utils/getAssetUrl";
 
 import Navbar from "../../../components/common/Navbar";
 import Notification from "../../../components/common/Notification/Notification";
@@ -423,13 +424,17 @@ function DashboardHeader({
 
             <img
               src={
-                profile.avatar ||
+                getAssetUrl(profile.profilePhoto || profile.avatar) ||
                 doctorImage
               }
               alt={
                 profile.fullName ||
                 profile.name
               }
+              onError={(event) => {
+                event.currentTarget.onerror = null;
+                event.currentTarget.src = doctorImage;
+              }}
             />
 
           </SignOut>

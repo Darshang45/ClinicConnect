@@ -4,8 +4,16 @@ import Department from "../models/Department.js";
 import { logActivity } from "../utils/activityLogger.js";
 import { paginateQuery } from "../utils/paginate.js";
 import { createCaseInsensitiveSearchRegex } from "../utils/search.js";
+import {
+  deleteCloudinaryProfilePhoto,
+  uploadProfilePhoto,
+} from "../services/profilePhoto.service.js";
 
 export const createDoctorByAdmin = async (req, res) => {
+  let createdUser;
+  let createdDoctor;
+  let uploadedPhoto;
+
   try {
     const {
       fullName,
@@ -19,13 +27,9 @@ export const createDoctorByAdmin = async (req, res) => {
       consultationFee,
       licenseNumber,
       bio,
-      profilePhoto,
     } = req.body;
 
-    // Check email
-
     const existingEmail = await User.findOne({ email });
-
     if (existingEmail) {
       return res.status(400).json({
         success: false,
@@ -33,10 +37,7 @@ export const createDoctorByAdmin = async (req, res) => {
       });
     }
 
-    // Check phone
-
     const existingPhone = await User.findOne({ phone });
-
     if (existingPhone) {
       return res.status(400).json({
         success: false,
@@ -44,10 +45,7 @@ export const createDoctorByAdmin = async (req, res) => {
       });
     }
 
-    // Check department
-
     const departmentExists = await Department.findById(department);
-
     if (!departmentExists) {
       return res.status(404).json({
         success: false,
@@ -55,12 +53,7 @@ export const createDoctorByAdmin = async (req, res) => {
       });
     }
 
-    // Check license
-
-    const existingDoctor = await Doctor.findOne({
-      licenseNumber,
-    });
-
+    const existingDoctor = await Doctor.findOne({ licenseNumber });
     if (existingDoctor) {
       return res.status(400).json({
         success: false,
@@ -68,9 +61,7 @@ export const createDoctorByAdmin = async (req, res) => {
       });
     }
 
-    // Create user
-
-    const user = await User.create({
+    createdUser = await User.create({
       fullName,
       email,
       phone,
@@ -78,10 +69,17 @@ export const createDoctorByAdmin = async (req, res) => {
       role: "doctor",
     });
 
-    // Create doctor
+    if (req.file) {
+      uploadedPhoto = await uploadProfilePhoto(req.file, {
+        folder: "Hospital/doctors",
+        publicId: `doctor-${createdUser._id}-${Date.now()}`,
+      });
+      createdUser.profilePhoto = uploadedPhoto.secure_url;
+      await createdUser.save();
+    }
 
-    const doctor = await Doctor.create({
-      user: user._id,
+    createdDoctor = await Doctor.create({
+      user: createdUser._id,
       department,
       specialization,
       qualification,
@@ -89,7 +87,7 @@ export const createDoctorByAdmin = async (req, res) => {
       consultationFee,
       licenseNumber,
       bio,
-      profilePhoto,
+      profilePhoto: uploadedPhoto?.secure_url || "",
     });
 
     await logActivity({
@@ -97,17 +95,21 @@ export const createDoctorByAdmin = async (req, res) => {
       role: req.user.role,
       action: "ADD_DOCTOR",
       module: "Doctor",
-      description: `Added Doctor ${user.fullName}`,
+      description: `Added Doctor ${createdUser.fullName}`,
       ipAddress: req.ip,
     });
 
     return res.status(201).json({
       success: true,
       message: "Doctor created successfully.",
-      doctorId: doctor._id,
-      userId: user._id,
+      doctorId: createdDoctor._id,
+      userId: createdUser._id,
     });
   } catch (error) {
+    if (!createdDoctor && uploadedPhoto?.secure_url) {
+      await deleteCloudinaryProfilePhoto(uploadedPhoto.secure_url);
+    }
+    if (!createdDoctor && createdUser?._id) await User.findByIdAndDelete(createdUser._id);
     return res.status(500).json({
       success: false,
       message: error.message,
@@ -218,6 +220,9 @@ export const getDoctorByIdByAdmin = async (req, res) => {
 };
 
 export const updateDoctorByAdmin = async (req, res) => {
+  let uploadedPhoto;
+  let photoSaved = false;
+
   try {
     const doctor = await Doctor.findById(req.params.id);
 
@@ -241,7 +246,6 @@ export const updateDoctorByAdmin = async (req, res) => {
       consultationFee,
       licenseNumber,
       bio,
-      profilePhoto,
       isAvailable,
     } = req.body;
 
@@ -271,7 +275,15 @@ export const updateDoctorByAdmin = async (req, res) => {
       user.phone = phone;
     }
 
+    if (req.file) {
+      uploadedPhoto = await uploadProfilePhoto(req.file, {
+        folder: "Hospital/doctors",
+        publicId: `doctor-${doctor._id}-${Date.now()}`,
+      });
+    }
+
     if (fullName) user.fullName = fullName;
+    if (uploadedPhoto?.secure_url) user.profilePhoto = uploadedPhoto.secure_url;
 
     await user.save();
 
@@ -282,10 +294,19 @@ export const updateDoctorByAdmin = async (req, res) => {
     if (consultationFee !== undefined) doctor.consultationFee = consultationFee;
     if (licenseNumber) doctor.licenseNumber = licenseNumber;
     if (bio !== undefined) doctor.bio = bio;
-    if (profilePhoto !== undefined) doctor.profilePhoto = profilePhoto;
+    const previousProfilePhoto = doctor.profilePhoto;
+    if (uploadedPhoto?.secure_url) doctor.profilePhoto = uploadedPhoto.secure_url;
     if (isAvailable !== undefined) doctor.isAvailable = isAvailable;
 
     await doctor.save();
+    photoSaved = Boolean(uploadedPhoto?.secure_url);
+    if (uploadedPhoto?.secure_url) {
+      try {
+        await deleteCloudinaryProfilePhoto(previousProfilePhoto);
+      } catch (error) {
+        console.error("Failed to remove replaced Cloudinary doctor photo:", error);
+      }
+    }
     await logActivity({
       user: req.user._id,
       role: req.user.role,
@@ -300,6 +321,9 @@ export const updateDoctorByAdmin = async (req, res) => {
       message: "Doctor updated successfully.",
     });
   } catch (error) {
+    if (uploadedPhoto?.secure_url && !photoSaved) {
+      await deleteCloudinaryProfilePhoto(uploadedPhoto.secure_url);
+    }
     return res.status(500).json({
       success: false,
       message: error.message,

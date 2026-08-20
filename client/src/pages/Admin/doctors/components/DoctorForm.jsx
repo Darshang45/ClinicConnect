@@ -17,6 +17,8 @@ import {
   Alert,
 } from "../../components/ui";
 import { getApiErrorMessage } from "../../../../services/api";
+import ProfilePhotoUpload from "../../../../components/common/ProfilePhotoUpload";
+import doctorFallback from "../../../../assets/images/doctors/doctor-1.jpg";
 
 function DoctorForm({ mode = "add", onCancel, onSuccess, doctor }) {
   const [departments, setDepartments] = useState([]);
@@ -35,8 +37,8 @@ function DoctorForm({ mode = "add", onCancel, onSuccess, doctor }) {
     consultationFee: "",
     licenseNumber: "",
     bio: "",
-    profilePhoto: "",
   });
+  const [selectedPhoto, setSelectedPhoto] = useState(null);
 
   useEffect(() => {
     fetchDepartments();
@@ -56,8 +58,8 @@ function DoctorForm({ mode = "add", onCancel, onSuccess, doctor }) {
         consultationFee: doctor.consultationFee || "",
         licenseNumber: doctor.licenseNumber || "",
         bio: doctor.bio || "",
-        profilePhoto: doctor.profilePhoto || "",
       });
+      setSelectedPhoto(null);
     }
   }, [doctor, mode]);
 
@@ -84,13 +86,19 @@ function DoctorForm({ mode = "add", onCancel, onSuccess, doctor }) {
 
     try {
       setLoading(true);
+      const payload = new FormData();
+      Object.entries(formData).forEach(([key, value]) => {
+        payload.append(key, value ?? "");
+      });
+      if (selectedPhoto) payload.append("profilePhoto", selectedPhoto);
+
       let response;
 
       if (mode === "add") {
-        response = await createDoctor(formData);
+        response = await createDoctor(payload);
       } else {
         const docId = doctor.doctorId || doctor._id;
-        response = await updateDoctor(docId, formData);
+        response = await updateDoctor(docId, payload);
       }
       if (onSuccess) onSuccess(response?.message);
     } catch (error) {
@@ -180,12 +188,12 @@ function DoctorForm({ mode = "add", onCancel, onSuccess, doctor }) {
               )}
 
               <FormGroup>
-                <FormLabel>Profile Photo URL</FormLabel>
-                <Input
-                  name="profilePhoto"
-                  placeholder="https://..."
-                  value={formData.profilePhoto}
-                  onChange={handleChange}
+                <ProfilePhotoUpload
+                  currentPhoto={doctor?.profilePhoto}
+                  fallbackImage={doctorFallback}
+                  onFileChange={setSelectedPhoto}
+                  disabled={loading}
+                  resetKey={`${mode}-${doctor?.doctorId || "new"}`}
                 />
               </FormGroup>
             </div>

@@ -31,7 +31,6 @@ function PrescriptionPreview({
     year: "numeric",
   });
 
- console.log("Prescription Preview:", prescription);
 
   return (
   <section className="doc-prescription-preview-section">

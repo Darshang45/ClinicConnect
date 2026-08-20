@@ -36,7 +36,7 @@ export const getPublicDoctorsByDepartment = async (req, res) => {
       isActive: true,
       isAvailable: true,
     })
-      .select("_id specialization consultationFee user department")
+      .select("_id specialization consultationFee profilePhoto user department")
       .populate("user", "fullName")
       .populate("department", "name");
 
@@ -46,10 +46,12 @@ export const getPublicDoctorsByDepartment = async (req, res) => {
         _id: doctor._id,
         specialization: doctor.specialization,
         consultationFee: doctor.consultationFee,
+        profilePhoto: doctor.profilePhoto,
         user: {
           fullName: doctor.user?.fullName,
         },
         department: {
+          _id: doctor.department?._id,
           name: doctor.department?.name,
         },
       })),

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { getPublicDepartments, getPublicDoctorsByDepartment } from "../../../services/appointmentService";
 import { useAppointmentBooking } from "../../../context/AppointmentBookingContext";
+import getAssetUrl from "../../../utils/getAssetUrl";
 
 // Fallback local doctor images (cycled if DB has no profilePhoto)
 import doctor1 from "../../../assets/images/doctors/doctor-1.jpg";
@@ -119,7 +120,14 @@ function FeaturedDoctors() {
             return (
               <div className="featured-doctor-card" key={doctor._id}>
                 <div className="featured-doctor-image">
-                  <img src={photo} alt={doctor.user?.fullName || "Doctor"} />
+                  <img
+                    src={getAssetUrl(photo)}
+                    alt={doctor.user?.fullName || "Doctor"}
+                    onError={(event) => {
+                      event.currentTarget.onerror = null;
+                      event.currentTarget.src = FALLBACK_IMAGES[idx % FALLBACK_IMAGES.length];
+                    }}
+                  />
                 </div>
                 <div className="featured-doctor-content">
                   <div>

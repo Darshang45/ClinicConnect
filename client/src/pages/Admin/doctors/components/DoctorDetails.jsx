@@ -1,4 +1,6 @@
 import React from "react";
+import doctorFallback from "../../../../assets/images/doctors/doctor-1.jpg";
+import getAssetUrl from "../../../../utils/getAssetUrl";
 import {
   PageHeader,
   Card,
@@ -56,10 +58,14 @@ function DoctorDetails({ doctor, onBack, onEdit, onDelete }) {
             <CardBody className="d-flex flex-column align-items-center justify-content-center py-5">
               {doctor.profilePhoto ? (
                 <img
-                  src={doctor.profilePhoto}
+                  src={getAssetUrl(doctor.profilePhoto)}
                   alt={doctor.fullName}
                   className="rounded-circle object-fit-cover shadow mb-3"
                   style={{ width: "110px", height: "110px" }}
+                  onError={(event) => {
+                    event.currentTarget.onerror = null;
+                    event.currentTarget.src = doctorFallback;
+                  }}
                 />
               ) : (
                 <div

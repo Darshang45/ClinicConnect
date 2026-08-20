@@ -68,6 +68,7 @@ export const login = async (req, res) => {
         fullName: user.fullName,
         email: user.email,
         phone: user.phone,
+        profilePhoto: user.profilePhoto || "",
         role: user.role,
       },
     });
@@ -88,6 +89,7 @@ export const getCurrentUser = async (req, res) => {
         fullName: req.user.fullName,
         email: req.user.email,
         phone: req.user.phone,
+        profilePhoto: req.user.profilePhoto || "",
         role: req.user.role,
         isActive: req.user.isActive,
       },

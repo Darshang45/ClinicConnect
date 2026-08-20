@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import PatientDashboardPage from "../PatientDashboardPage";
 import PatientProfile from "./PatientProfile";
-import { getPatientProfile, updatePatientProfile } from "../../../services/patientService";
+import { getPatientProfile, updateMyPatientProfile } from "../../../services/patientService";
+import useAuth from "../../../hooks/useAuth";
 
 const formatPatientFromBackend = (data) => {
   if (!data) return null;
@@ -58,16 +59,20 @@ const formatPatientFromBackend = (data) => {
     address: data.address || "",
     emergencyContact: typeof data.emergencyContact === "object" && data.emergencyContact !== null ? data.emergencyContact : emergencyContact || "Not provided",
     insurance: insurance || "Not provided",
+    profilePhoto: data.profilePhoto || "",
     allergies: allergies || "None",
     chronicDiseases: chronicDiseases || "None",
   };
 };
 
 function PatientProfilePage() {
+  const { updateUser } = useAuth();
   const [patient, setPatient] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isProfileEditing, setIsProfileEditing] = useState(false);
   const [statusMessage, setStatusMessage] = useState(null);
+  const [selectedProfilePhoto, setSelectedProfilePhoto] = useState(null);
+  const [photoResetKey, setPhotoResetKey] = useState(0);
 
   const fetchProfile = async () => {
     try {
@@ -92,7 +97,13 @@ function PatientProfilePage() {
   }, []);
 
   const toggleProfileEditing = () => {
-    setIsProfileEditing((isOpen) => !isOpen);
+    setIsProfileEditing((isOpen) => {
+      if (isOpen) {
+        setSelectedProfilePhoto(null);
+        setPhotoResetKey((key) => key + 1);
+      }
+      return !isOpen;
+    });
   };
 
   const handleUpdateProfile = async (updatedDraft) => {
@@ -100,7 +111,7 @@ function PatientProfilePage() {
       setStatusMessage(null);
       const fullName = `${updatedDraft.firstName || ""} ${updatedDraft.lastName || ""}`.trim() || updatedDraft.name || updatedDraft.fullName;
 
-      const payload = {
+      const profileData = {
         fullName,
         phone: updatedDraft.phone,
         gender: updatedDraft.gender,
@@ -120,13 +131,32 @@ function PatientProfilePage() {
           : updatedDraft.insurance,
       };
 
-      const res = await updatePatientProfile(payload);
+      const payload = new FormData();
+      Object.entries(profileData).forEach(([key, value]) => {
+        payload.append(
+          key,
+          Array.isArray(value) || (value && typeof value === "object")
+            ? JSON.stringify(value)
+            : value ?? "",
+        );
+      });
+      if (selectedProfilePhoto) payload.append("profilePhoto", selectedProfilePhoto);
+
+      const res = await updateMyPatientProfile(payload);
       if (res.success) {
+        if (updateUser) {
+          updateUser({
+            profilePhoto: res.patient?.profilePhoto || patient?.profilePhoto || "",
+            fullName: profileData.fullName,
+          });
+        }
         if (res.patient) {
           setPatient(formatPatientFromBackend(res.patient));
         } else {
           await fetchProfile();
         }
+        setSelectedProfilePhoto(null);
+        setPhotoResetKey((key) => key + 1);
         setIsProfileEditing(false);
         setStatusMessage({
           type: "success",
@@ -189,6 +219,8 @@ function PatientProfilePage() {
           onToggleEdit={toggleProfileEditing}
           onUpdate={handleUpdateProfile}
           patient={patient}
+          onPhotoChange={setSelectedProfilePhoto}
+          photoResetKey={photoResetKey}
         />
       )}
     </PatientDashboardPage>

@@ -13,6 +13,10 @@ import { paginateQuery } from "../utils/paginate.js";
 import { calculateAppointmentTime } from "../services/appointment.service.js";
 import { logActivity } from "../utils/activityLogger.js";
 import { generatePrescriptionPDF } from "../utils/pdfGenerator.js";
+import {
+  deleteCloudinaryProfilePhoto,
+  uploadProfilePhoto,
+} from "../services/profilePhoto.service.js";
 
 // Helper to resolve Patient document by authenticated User ID or fallback email
 export const findPatientByAuth = async (req) => {
@@ -43,6 +47,16 @@ const calculateAge = (dateOfBirth, storedAge) => {
     }
   }
   return storedAge !== undefined && storedAge !== null ? storedAge : null;
+};
+
+const parseMultipartJson = (value) => {
+  if (typeof value !== "string") return value;
+
+  try {
+    return JSON.parse(value);
+  } catch {
+    return value;
+  }
 };
 
 //Patient ID generator
@@ -727,7 +741,7 @@ export const getMyProfile = async (req, res) => {
     const patient = await Patient.findOne({
       user: req.user._id,
       isActive: true,
-    });
+    }).populate("user", "profilePhoto");
 
     if (!patient) {
       return res.status(404).json({
@@ -752,6 +766,7 @@ export const getMyProfile = async (req, res) => {
         chronicDiseases: patient.chronicDiseases,
         emergencyContact: patient.emergencyContact,
         insurance: patient.insurance,
+        profilePhoto: patient.user?.profilePhoto || "",
       },
     });
   } catch (error) {
@@ -763,6 +778,10 @@ export const getMyProfile = async (req, res) => {
 };
 
 export const updateMyProfile = async (req, res) => {
+  let uploadedPhoto;
+  let photoSaved = false;
+  let previousProfilePhoto = "";
+
   try {
     const patient = await Patient.findOne({
       user: req.user._id,
@@ -788,6 +807,11 @@ export const updateMyProfile = async (req, res) => {
       emergencyContact,
       insurance,
     } = req.body;
+
+    const parsedAllergies = parseMultipartJson(allergies);
+    const parsedChronicDiseases = parseMultipartJson(chronicDiseases);
+    const parsedEmergencyContact = parseMultipartJson(emergencyContact);
+    const parsedInsurance = parseMultipartJson(insurance);
 
     if (fullName !== undefined && fullName.trim()) {
       patient.fullName = fullName.trim();
@@ -824,17 +848,52 @@ export const updateMyProfile = async (req, res) => {
 
     if (address !== undefined) patient.address = address;
 
-    if (allergies !== undefined) patient.allergies = allergies;
+    if (allergies !== undefined) patient.allergies = parsedAllergies;
 
     if (chronicDiseases !== undefined)
-      patient.chronicDiseases = chronicDiseases;
+      patient.chronicDiseases = parsedChronicDiseases;
 
     if (emergencyContact !== undefined)
-      patient.emergencyContact = emergencyContact;
+      patient.emergencyContact = parsedEmergencyContact;
 
-    if (insurance !== undefined) patient.insurance = insurance;
+    if (insurance !== undefined) patient.insurance = parsedInsurance;
+
+    if (req.file) {
+      if (patient.user) {
+        const linkedUser = await User.findById(patient.user).select("profilePhoto");
+        previousProfilePhoto = linkedUser?.profilePhoto || "";
+      }
+      uploadedPhoto = await uploadProfilePhoto(req.file, {
+        folder: "Hospital/patients",
+        publicId: `patient-${patient._id}-${Date.now()}`,
+      });
+    }
 
     await patient.save();
+
+    let savedProfilePhoto = "";
+    if (patient.user) {
+      if (uploadedPhoto?.secure_url) {
+        const updatedUser = await User.findByIdAndUpdate(
+          patient.user,
+          { profilePhoto: uploadedPhoto.secure_url },
+          { new: true },
+        ).select("profilePhoto");
+        savedProfilePhoto = updatedUser?.profilePhoto || "";
+      } else {
+        const linkedUser = await User.findById(patient.user).select("profilePhoto");
+        savedProfilePhoto = linkedUser?.profilePhoto || "";
+      }
+    }
+    photoSaved = Boolean(uploadedPhoto?.secure_url);
+
+    if (uploadedPhoto?.secure_url) {
+      try {
+        await deleteCloudinaryProfilePhoto(previousProfilePhoto);
+      } catch (error) {
+        console.error("Failed to remove replaced Cloudinary patient photo:", error);
+      }
+    }
 
     await logActivity({
       user: req.user._id,
@@ -862,10 +921,14 @@ export const updateMyProfile = async (req, res) => {
         chronicDiseases: patient.chronicDiseases,
         emergencyContact: patient.emergencyContact,
         insurance: patient.insurance,
+        profilePhoto: savedProfilePhoto,
         createdAt: patient.createdAt,
       },
     });
   } catch (error) {
+    if (uploadedPhoto?.secure_url && !photoSaved) {
+      await deleteCloudinaryProfilePhoto(uploadedPhoto.secure_url);
+    }
     return res.status(500).json({
       success: false,
       message: error.message || "Unable to update profile. Please try again.",

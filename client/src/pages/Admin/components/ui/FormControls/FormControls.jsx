@@ -22,6 +22,7 @@ export function Input({
   placeholder = "",
   required = false,
   disabled = false,
+  accept,
   error = "",
   className = "",
   id,
@@ -37,6 +38,7 @@ export function Input({
         placeholder={placeholder}
         required={required}
         disabled={disabled}
+        accept={accept}
         className={`form-control staff-form-control ${error ? "is-invalid" : ""} ${className}`.trim()}
       />
       {error && <div className="invalid-feedback">{error}</div>}
