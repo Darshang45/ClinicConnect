@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import Container from "../../components/common/Container";
 import "../../styles/patient_dashboard.css";
 import usePatientDashboard from "../../hooks/usePatientDashboard";
@@ -16,15 +17,35 @@ import WelcomeBanner from "./welcome_banner/WelcomeBanner";
 import UploadReportModal from "../doctor_dashboard/diagnostic_reports/UploadReportModal";
 
 function PatientDashboard() {
+  const location = useLocation();
+  const navigate = useNavigate();
   const { dashboardData, loading, refetch } = usePatientDashboard();
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [highlightAppointmentId] = useState(
+    () => location.state?.highlightAppointmentId || "",
+  );
+
+  useEffect(() => {
+    if (!location.state?.highlightAppointmentId) return;
+
+    const { highlightAppointmentId: _highlightAppointmentId, ...remainingState } = location.state;
+    navigate(location.pathname, {
+      replace: true,
+      state: Object.keys(remainingState).length ? remainingState : null,
+    });
+  }, [location.pathname, location.state, navigate]);
 
   return (
     <Container className="patient-dashboard">
       <DashboardHeader />
       <WelcomeBanner patientName={dashboardData?.patientName} />
       <HealthSummary stats={dashboardData?.stats} bloodGroup={dashboardData?.bloodGroup} />
-      <UpcomingAppointments nextAppointment={dashboardData?.nextAppointment} loading={loading} onRefresh={refetch} />
+      <UpcomingAppointments
+        nextAppointment={dashboardData?.nextAppointment}
+        loading={loading}
+        onRefresh={refetch}
+        highlightAppointmentId={highlightAppointmentId}
+      />
       <AppointmentHistory />
       <MedicalRecords />
       <Prescriptions />

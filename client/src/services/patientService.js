@@ -1,5 +1,14 @@
 import api from "./api";
 
+const multipartConfig = {
+  transformRequest: [
+    (data, headers) => {
+      headers?.setContentType?.(undefined);
+      return data;
+    },
+  ],
+};
+
 // Search patients
 export const searchPatients = async (keyword) => {
   const response = await api.get("/patients/search", {
@@ -57,10 +66,14 @@ export const getPatientProfile = async () => {
   return response.data;
 };
 
-// export const updatePatientProfile = async (profileData) => {
-//   const response = await api.put("/v1/patients/profile", profileData);
-//   return response.data;
-// };
+export const updateMyPatientProfile = async (profileData) => {
+  const response = await api.put(
+    "/v1/patients/profile",
+    profileData,
+    multipartConfig,
+  );
+  return response.data;
+};
 
 export const getPatientPrescriptions = async (params = {}) => {
   const response = await api.get("/v1/patients/prescriptions", { params });

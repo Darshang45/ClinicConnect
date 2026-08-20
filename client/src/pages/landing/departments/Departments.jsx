@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { getPublicDepartments } from "../../../services/appointmentService";
+import { useAppointmentBooking } from "../../../context/AppointmentBookingContext";
 
 // Icon mapping for department names to Material Symbols icons
 const DEPARTMENT_ICONS = {
@@ -35,6 +36,7 @@ function getDeptIcon(name = "") {
 }
 
 function Departments() {
+  const { updateAppointment } = useAppointmentBooking();
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -52,6 +54,13 @@ function Departments() {
 
     loadDepartments();
   }, []);
+
+  const handleBookClick = (event, department) => {
+    event.preventDefault();
+    updateAppointment({ departmentId: department._id, doctorId: "" });
+    const target = document.querySelector("#book");
+    if (target) window.scrollTo({ top: target.offsetTop - 80, behavior: "smooth" });
+  };
 
   return (
     <section className="departments" id="departments">
@@ -82,7 +91,11 @@ function Departments() {
                   {dept.description ||
                     `Comprehensive care with a consultation duration of ${dept.consultationDuration} min. Fee: ₹${dept.consultationFee}.`}
                 </p>
-                <a href="#book" className="department-link">
+                <a
+                  href="#book"
+                  className="department-link"
+                  onClick={(event) => handleBookClick(event, dept)}
+                >
                   Book Appointment <span className="material-symbols-outlined">arrow_forward</span>
                 </a>
               </div>

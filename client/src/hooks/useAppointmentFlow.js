@@ -48,7 +48,7 @@ const useAppointmentFlow = () => {
           ? "Offline"
           : activeAppointment.consultationType || "Offline";
 
-      await createAppointment({
+      const bookingResponse = await createAppointment({
         doctorId: activeAppointment.doctorId,
         departmentId: activeAppointment.departmentId,
         appointmentDate: activeAppointment.appointmentDate,
@@ -65,9 +65,15 @@ const useAppointmentFlow = () => {
         : "Appointment booked successfully.";
 
       navigate("/patient/dashboard", {
-        state: { successMessage },
+        state: {
+          successMessage,
+          highlightAppointmentId:
+            bookingResponse?.appointment?._id || bookingResponse?.appointment?.id || "",
+        },
         replace: true,
       });
+
+      return bookingResponse;
     } catch (error) {
       console.error(error);
 
@@ -75,6 +81,7 @@ const useAppointmentFlow = () => {
         error.response?.data?.message ||
           "Failed to book appointment. Please try again.",
       );
+      throw error;
     } finally {
       setBookingLoading(false);
     }

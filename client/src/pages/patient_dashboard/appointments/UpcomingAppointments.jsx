@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { FiCalendar, FiClock, FiSearch } from "react-icons/fi";
 import { Link, useNavigate } from "react-router-dom";
 import Button from "../../../components/common/Button";
@@ -19,13 +19,15 @@ function formatTime(dateStr) {
   return d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
 }
 
-function UpcomingAppointments({ nextAppointment, loading: initialLoading, onRefresh, isDedicatedPage = false }) {
+function UpcomingAppointments({ nextAppointment, loading: initialLoading, onRefresh, isDedicatedPage = false, highlightAppointmentId = "" }) {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState(isDedicatedPage ? "" : "Upcoming");
   const [searchQuery, setSearchQuery] = useState("");
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [cancellingId, setCancellingId] = useState(null);
+  const [activeHighlightId, setActiveHighlightId] = useState("");
+  const appointmentRows = useRef(new Map());
 
   const fetchAppointments = useCallback(async () => {
     try {
@@ -50,6 +52,24 @@ function UpcomingAppointments({ nextAppointment, loading: initialLoading, onRefr
   useEffect(() => {
     fetchAppointments();
   }, [fetchAppointments]);
+
+  useEffect(() => {
+    setActiveHighlightId(highlightAppointmentId || "");
+  }, [highlightAppointmentId]);
+
+  useEffect(() => {
+    if (!activeHighlightId) return undefined;
+
+    const row = appointmentRows.current.get(String(activeHighlightId));
+    if (!row) return undefined;
+
+    row.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
+    const timeoutId = window.setTimeout(() => {
+      setActiveHighlightId("");
+    }, 10000);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [activeHighlightId, appointments]);
 
   const handleCancel = async (appointmentId) => {
     if (!window.confirm("Are you sure you want to cancel this appointment?")) return;
@@ -146,7 +166,19 @@ function UpcomingAppointments({ nextAppointment, loading: initialLoading, onRefr
               </tr>
             ) : appointments.length > 0 ? (
               appointments.map((app) => (
-                <tr key={app.appointmentId}>
+                <tr
+                  key={app.appointmentId}
+                  ref={(element) => {
+                    const appointmentId = String(app.appointmentId);
+                    if (element) appointmentRows.current.set(appointmentId, element);
+                    else appointmentRows.current.delete(appointmentId);
+                  }}
+                  className={
+                    String(app.appointmentId) === String(activeHighlightId)
+                      ? "pd-appointment-highlight"
+                      : ""
+                  }
+                >
                   <td>
                     <div className="pd-doctor-cell">
                       <img src={doctorDefault} alt={app.doctor} />

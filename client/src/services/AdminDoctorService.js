@@ -1,5 +1,14 @@
 import api from "./api";
 
+const multipartConfig = {
+  transformRequest: [
+    (data, headers) => {
+      headers?.setContentType?.(undefined);
+      return data;
+    },
+  ],
+};
+
 export const getDoctors = async ({
   page = 1,
   limit = 10,
@@ -34,7 +43,8 @@ export const getDoctorById = async (doctorId) => {
 export const createDoctor = async (doctorData) => {
   const response = await api.post(
     "/admins/doctors",
-    doctorData
+    doctorData,
+    multipartConfig,
   );
 
   return response.data;
@@ -47,7 +57,8 @@ export const updateDoctor = async (
 ) => {
   const response = await api.put(
     `/admins/doctors/${doctorId}`,
-    doctorData
+    doctorData,
+    multipartConfig,
   );
 
   return response.data;

@@ -21,8 +21,6 @@ const restoreTabSession = () => {
 
   if (token) return { token, user };
 
-  // One-time migration for an existing login. New logins are tab-scoped and
-  // never read browser-wide localStorage.
   const legacyToken = localStorage.getItem(TOKEN_KEY);
   const legacyUser = localStorage.getItem(USER_KEY);
   if (legacyToken) {
@@ -42,7 +40,6 @@ export function AuthProvider({ children }) {
 
   const [user, setUser] = useState(() => {
     const storedUser = tabSession.user;
-
     return storedUser ? JSON.parse(storedUser) : null;
   });
 
@@ -63,10 +60,6 @@ export function AuthProvider({ children }) {
     setUser(null);
   };
 
-  // ==========================================
-  // Restore Session
-  // ==========================================
-
   useEffect(() => {
     const restoreSession = async () => {
       if (!token) {
@@ -76,13 +69,10 @@ export function AuthProvider({ children }) {
 
       try {
         const response = await getCurrentUser();
-
         sessionStorage.setItem(USER_KEY, JSON.stringify(response.user));
-
         setUser(response.user);
       } catch (error) {
         console.error(error);
-
         logout();
       } finally {
         setLoading(false);
@@ -90,13 +80,8 @@ export function AuthProvider({ children }) {
     };
 
     restoreSession();
-
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
-
-  // ==========================================
-  // Staff Login
-  // ==========================================
 
   const staffLogin = async (email, password) => {
     const response = await loginStaff({
@@ -105,50 +90,35 @@ export function AuthProvider({ children }) {
     });
 
     sessionStorage.setItem(TOKEN_KEY, response.token);
-
     setToken(response.token);
-
     sessionStorage.setItem(USER_KEY, JSON.stringify(response.user));
-
     setUser(response.user);
 
     return response.user;
   };
 
-  // ==========================================
-  // Patient Login
-  // ==========================================
-
   const patientLogin = async (email, otp) => {
-  try {
-    const response = await verifyPatientOtp(email, otp);
-    sessionStorage.setItem(TOKEN_KEY, response.token);
-    setToken(response.token);
+    try {
+      const response = await verifyPatientOtp(email, otp);
+      sessionStorage.setItem(TOKEN_KEY, response.token);
+      setToken(response.token);
 
-    const currentUser = await getCurrentUser();
+      const currentUser = await getCurrentUser();
+      sessionStorage.setItem(USER_KEY, JSON.stringify(currentUser.user));
+      setUser(currentUser.user);
 
-    sessionStorage.setItem(USER_KEY, JSON.stringify(currentUser.user));
-    setUser(currentUser.user);
+      return currentUser.user;
+    } catch (error) {
+      console.log("Status:", error.response?.status);
+      console.log("Response:", error.response?.data);
+      throw error;
+    }
+  };
 
-    return currentUser.user;
-  } catch (error) {
-    console.log("Status:", error.response?.status);
-    console.log("Response:", error.response?.data);
-    throw error;
-  }
-};
-
-  // ==========================================
-  // Save Registration Session
-  // ==========================================
   const saveRegistrationSession = (email, registrationToken) => {
     sessionStorage.setItem(REGISTRATION_EMAIL, email);
     sessionStorage.setItem(REGISTRATION_TOKEN, registrationToken);
   };
-
-  // ==========================================
-  // get Registration Session
-  // ==========================================
 
   const getRegistrationSession = () => {
     return {
@@ -157,28 +127,28 @@ export function AuthProvider({ children }) {
     };
   };
 
-  // ==========================================
-  // complete Patient Registration
-  // ==========================================
-
   const completePatientRegistration = async (profileData) => {
-  const { registrationToken } = getRegistrationSession();
+    const { registrationToken } = getRegistrationSession();
 
-  if (!registrationToken) {
-    throw new Error("Registration session expired.");
-  }
+    if (!registrationToken) {
+      throw new Error("Registration session expired.");
+    }
 
-  const response = await completePatientProfile(
-    profileData,
-    registrationToken
-  );
+    const response = await completePatientProfile(
+      profileData,
+      registrationToken
+    );
 
-  return response;
-};
+    return response;
+  };
 
-  // ==========================================
-  // Context Value
-  // ==========================================
+  const updateUser = (updatedUserData) => {
+    setUser((prev) => {
+      const nextUser = { ...prev, ...updatedUserData };
+      sessionStorage.setItem(USER_KEY, JSON.stringify(nextUser));
+      return nextUser;
+    });
+  };
 
   const value = {
     loading,
@@ -193,14 +163,15 @@ export function AuthProvider({ children }) {
     getRegistrationSession,
     clearRegistrationSession,
     completePatientRegistration,
+    updateUser,
     logout,
   };
 
   return (
-  <AuthContext.Provider value={value}>
-    {children}
-  </AuthContext.Provider>
-);
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
 export const useAuth = () => useContext(AuthContext);

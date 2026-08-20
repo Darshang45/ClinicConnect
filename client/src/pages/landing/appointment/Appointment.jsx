@@ -58,28 +58,28 @@ function Appointment() {
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Prefill authenticated user info & prefilled doctor/department state from location
+  // Keep the landing-page selection when the booking form is reached by scroll.
+  // Route state is still supported for the patient-dashboard booking route.
   useEffect(() => {
-    if (location.state?.doctorId && location.state?.departmentId) {
-      setFormData((prev) => ({
-        ...prev,
-        departmentId: location.state.departmentId,
-        doctorId: location.state.doctorId,
-      }));
-    } else if (isAuthenticated && user) {
-      setFormData((prev) => ({
-        ...prev,
-        fullName: user.fullName || user.name || "Patient",
-        email: user.email || "",
-      }));
-    } else if (!isAuthenticated && pendingAppointment && Object.values(pendingAppointment).some((val) => val !== "")) {
-      setFormData((prev) => ({
-        ...prev,
-        ...pendingAppointment,
-        consultationType: pendingAppointment.consultationType || "Offline",
-      }));
-    }
-  }, [isAuthenticated, user, location.state]);
+    const hasPendingAppointment = pendingAppointment && Object.values(pendingAppointment).some((value) => value !== "");
+
+    setFormData((prev) => ({
+      ...prev,
+      ...(hasPendingAppointment ? pendingAppointment : {}),
+      ...(location.state?.departmentId
+        ? { departmentId: location.state.departmentId }
+        : {}),
+      ...(location.state?.doctorId ? { doctorId: location.state.doctorId } : {}),
+      ...(isAuthenticated && user
+        ? {
+            fullName: user.fullName || user.name || "Patient",
+            email: user.email || "",
+          }
+        : {}),
+      consultationType:
+        pendingAppointment?.consultationType || prev.consultationType || "Offline",
+    }));
+  }, [isAuthenticated, user, location.state, pendingAppointment]);
 
   // Generic Input Handler
   const handleChange = (event) => {

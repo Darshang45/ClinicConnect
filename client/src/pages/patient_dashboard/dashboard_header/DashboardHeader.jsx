@@ -44,7 +44,7 @@ function DashboardHeader() {
   const profile = {
     name: user?.fullName || user?.name || "Patient",
     roleTitle: user?.roleTitle || "Patient Portal",
-    avatar: user?.avatar || patientPhoto,
+    avatar: user?.profilePhoto || user?.avatar || patientPhoto,
     email: user?.email || "",
   };
   const isInboxOpen = location.pathname === "/patient/inbox";
@@ -275,7 +275,14 @@ function DashboardHeader() {
               <strong>{profile.name}</strong>
               <small>{profile.roleTitle || profile.role}</small>
             </span>
-            <img src={profile.avatar || patientPhoto} alt={profile.name} />
+            <img
+              src={profile.avatar || patientPhoto}
+              alt={profile.name}
+              onError={(event) => {
+                event.currentTarget.onerror = null;
+                event.currentTarget.src = patientPhoto;
+              }}
+            />
           </SignOut>
         </div>
       </header>

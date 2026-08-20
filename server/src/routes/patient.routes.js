@@ -37,6 +37,7 @@ import {
   deleteMedicalReport,
 } from "../controllers/medicalReport.controller.js";
 import uploadReport from "../uploads/uploadReport.js";
+import uploadProfilePhoto from "../uploads/uploadProfilePhoto.js";
 
 const router = express.Router();
 
@@ -127,7 +128,13 @@ router.delete(
 
 router.get("/profile", authenticate, authorize("patient"), getMyProfile);
 
-router.put("/profile", authenticate, authorize("patient"), updateMyProfile);
+router.put(
+  "/profile",
+  authenticate,
+  authorize("patient"),
+  uploadProfilePhoto,
+  updateMyProfile,
+);
 
 router.get(
   "/appointments",
