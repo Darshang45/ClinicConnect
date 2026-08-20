@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Link, useLocation } from "react-router-dom";
 import { FiMessageSquare } from "react-icons/fi";
@@ -9,6 +9,7 @@ import getAssetUrl from "../../../utils/getAssetUrl";
 import Navbar from "../../../components/common/Navbar";
 import Notification from "../../../components/common/Notification/Notification";
 import SignOut from "../../../components/common/SignOut";
+import ChatUnreadToast from "../../../components/common/ChatUnreadToast";
 
 import useAuth from "../../../hooks/useAuth";
 import { useSocket } from "../../../context/SocketContext";
@@ -28,6 +29,25 @@ function DashboardHeader({
   notificationPanelRef,
 }) {
 
+  const [standaloneOpenPanel, setStandaloneOpenPanel] = useState(null);
+  const standaloneNotificationButtonRef = useRef(null);
+  const standaloneNotificationPanelRef = useRef(null);
+  const managesNotificationPanel = typeof onTogglePanel !== "function";
+  const activeOpenPanel = managesNotificationPanel ? standaloneOpenPanel : openPanel;
+  const activeNotificationButtonRef =
+    notificationButtonRef || standaloneNotificationButtonRef;
+  const activeNotificationPanelRef =
+    notificationPanelRef || standaloneNotificationPanelRef;
+
+  const toggleNotificationPanel = (panel) => {
+    if (managesNotificationPanel) {
+      setStandaloneOpenPanel((current) => (current === panel ? null : panel));
+      return;
+    }
+
+    onTogglePanel(panel);
+  };
+
   /* ==========================================================
      Router
   ========================================================== */
@@ -40,8 +60,38 @@ function DashboardHeader({
     "/doctor/inbox";
 
   const isNotificationOpen =
-    openPanel ===
+    activeOpenPanel ===
     "notifications";
+
+  useEffect(() => {
+    if (!managesNotificationPanel || !isNotificationOpen) return undefined;
+
+    const closeWhenOutside = (event) => {
+      if (
+        !activeNotificationPanelRef.current?.contains(event.target) &&
+        !activeNotificationButtonRef.current?.contains(event.target)
+      ) {
+        setStandaloneOpenPanel(null);
+      }
+    };
+
+    const closeOnEscape = (event) => {
+      if (event.key === "Escape") setStandaloneOpenPanel(null);
+    };
+
+    document.addEventListener("mousedown", closeWhenOutside);
+    document.addEventListener("keydown", closeOnEscape);
+
+    return () => {
+      document.removeEventListener("mousedown", closeWhenOutside);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [
+    activeNotificationButtonRef,
+    activeNotificationPanelRef,
+    isNotificationOpen,
+    managesNotificationPanel,
+  ]);
 
   /* ==========================================================
      Auth
@@ -50,7 +100,13 @@ function DashboardHeader({
   const { user } =
     useAuth();
 
-  const { notifications, unreadCount, markAllAsRead, markNotificationAsRead } = useSocket();
+  const {
+    notifications,
+    unreadCount,
+    unreadChatSenderCount,
+    markAllAsRead,
+    markNotificationAsRead,
+  } = useSocket();
 
   const formattedNotifications = notifications.map((n) => ({
     id: n._id || n.id || Math.random().toString(),
@@ -214,7 +270,7 @@ function DashboardHeader({
   ========================================================== */
 
   return (
-
+    <>
     <Navbar
       className="doc-dashboard-header"
       contentClassName="doc-header-content"
@@ -328,12 +384,12 @@ function DashboardHeader({
                 isNotificationOpen
               }
               onClick={() =>
-                onTogglePanel(
+                toggleNotificationPanel(
                   "notifications"
                 )
               }
               ref={
-                notificationButtonRef
+                activeNotificationButtonRef
               }
             >
 
@@ -355,7 +411,7 @@ function DashboardHeader({
                 id="doctor-notifications"
                 className="doc-notification-dropdown"
                 ref={
-                  notificationPanelRef
+                  activeNotificationPanelRef
                 }
                 aria-label="Notifications"
               >
@@ -443,6 +499,8 @@ function DashboardHeader({
 
       }
         />
+      <ChatUnreadToast senderCount={unreadChatSenderCount} />
+    </>
   );
 
 }

@@ -244,6 +244,12 @@
   box-shadow: 0 18px 42px rgba(25, 28, 28, .18);
 }
 
+.ph-notification-panel {
+  max-height: min(480px, calc(100vh - 96px));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
 .ph-notification-panel header {
   display: flex;
   align-items: center;

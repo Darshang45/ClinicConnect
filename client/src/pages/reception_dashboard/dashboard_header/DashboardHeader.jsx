@@ -11,6 +11,7 @@ import "../../../styles/reception_dashboard.css";
 import receptionistImage from "../../../assets/patients/elena-rodriguez.jpg";
 import logo from "../../../assets/logo/clinicconnect-logo.svg";
 import ReceptionNotificationPanel from "./ReceptionNotificationPanel";
+import ChatUnreadToast from "../../../components/common/ChatUnreadToast";
 
 const navigation = [
   { label: "Dashboard", href: "#welcome" },
@@ -25,7 +26,7 @@ function DashboardHeader({ openPanel, onTogglePanel, notificationButtonRef, noti
   const [activeLink, setActiveLink] = useState("#welcome");
   const [unreadChats, setUnreadChats] = useState(0);
   const { user } = useAuth();
-  const { unreadCount } = useSocket();
+  const { unreadCount, unreadChatSenderCount } = useSocket();
   const profile = user || {
     name: "Elena Rodriguez",
     roleTitle: "Lead Receptionist",
@@ -72,6 +73,7 @@ function DashboardHeader({ openPanel, onTogglePanel, notificationButtonRef, noti
   }, []);
 
   return (
+    <>
     <Navbar
       className="rc-dashboard-header"
       brand={(
@@ -161,6 +163,8 @@ function DashboardHeader({ openPanel, onTogglePanel, notificationButtonRef, noti
         </div>
       )}
     />
+    <ChatUnreadToast senderCount={unreadChatSenderCount} />
+    </>
   );
 }
 

@@ -6,6 +6,7 @@ import {
   markAllNotificationsRead,
   markNotificationRead,
 } from "../services/notificationService";
+import { getChats } from "../services/chatService";
 
 const SocketContext = createContext({
   socket: null,
@@ -13,6 +14,7 @@ const SocketContext = createContext({
   onlineUsers: [],
   notifications: [],
   unreadCount: 0,
+  unreadChatSenderCount: 0,
   fetchUnreadNotifications: () => {},
   markAllAsRead: () => {},
   markNotificationAsRead: () => {},
@@ -24,8 +26,10 @@ export const SocketProvider = ({ children }) => {
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [unreadChatSenderCount, setUnreadChatSenderCount] = useState(0);
   const notificationIdsRef = useRef(new Set());
   const notificationsRef = useRef([]);
+  const unreadChatRequestRef = useRef(0);
 
   useEffect(() => {
     notificationsRef.current = notifications;
@@ -91,6 +95,40 @@ export const SocketProvider = ({ children }) => {
     );
   }, []);
 
+  const fetchUnreadChatSenderCount = useCallback(async () => {
+    if (!isAuthenticated || !user) return;
+
+    if (!new Set(["patient", "doctor", "receptionist"]).has(user.role)) {
+      setUnreadChatSenderCount(0);
+      return;
+    }
+
+    const requestId = ++unreadChatRequestRef.current;
+    const currentUserId = String(user._id || user.id || "");
+
+    try {
+      const response = await getChats();
+      if (requestId !== unreadChatRequestRef.current) return;
+
+      const uniqueSenderIds = new Set();
+      (response.chats || []).forEach((chat) => {
+        if (!(Number(chat.unreadCount) > 0)) return;
+
+        const sender = chat.participants?.find(
+          (participant) => String(participant?._id || participant?.id) !== currentUserId,
+        );
+        const senderId = sender?._id || sender?.id;
+        if (senderId) uniqueSenderIds.add(String(senderId));
+      });
+
+      setUnreadChatSenderCount(uniqueSenderIds.size);
+    } catch (error) {
+      if (requestId === unreadChatRequestRef.current) {
+        console.error("Failed to fetch unread chat senders:", error);
+      }
+    }
+  }, [isAuthenticated, user]);
+
   useEffect(() => {
     if (!isAuthenticated || !token) {
       socketService.disconnect();
@@ -100,6 +138,7 @@ export const SocketProvider = ({ children }) => {
         setOnlineUsers([]);
         setNotifications([]);
         setUnreadCount(0);
+        setUnreadChatSenderCount(0);
       }, 0);
       return () => window.clearTimeout(timer);
     }
@@ -111,6 +150,10 @@ export const SocketProvider = ({ children }) => {
     );
 
     const fetchTimer = window.setTimeout(() => void fetchUnread(), 0);
+    const chatFetchTimer = window.setTimeout(
+      () => void fetchUnreadChatSenderCount(),
+      0,
+    );
 
     const handleOnlineUsers = (users) => {
       setOnlineUsers(users);
@@ -124,16 +167,27 @@ export const SocketProvider = ({ children }) => {
       setUnreadCount((count) => count + 1);
     };
 
+    const handleChatUnreadStateChanged = () => {
+      void fetchUnreadChatSenderCount();
+    };
+
     socketService.onOnlineUsers(handleOnlineUsers);
     socketService.onNotification(handleNewNotification);
+    socketService.onRefreshChats(handleChatUnreadStateChanged);
+    socketService.onReceiveMessage(handleChatUnreadStateChanged);
+    socketService.onMessagesSeen(handleChatUnreadStateChanged);
 
     return () => {
       window.clearTimeout(connectedTimer);
       window.clearTimeout(fetchTimer);
+      window.clearTimeout(chatFetchTimer);
       socketService.off("online-users", handleOnlineUsers);
       socketService.off("new-notification", handleNewNotification);
+      socketService.off("refresh-chats", handleChatUnreadStateChanged);
+      socketService.off("receive-message", handleChatUnreadStateChanged);
+      socketService.off("messages-seen", handleChatUnreadStateChanged);
     };
-  }, [isAuthenticated, token, user, fetchUnread]);
+  }, [isAuthenticated, token, user, fetchUnread, fetchUnreadChatSenderCount]);
 
   return (
     <SocketContext.Provider
@@ -143,6 +197,7 @@ export const SocketProvider = ({ children }) => {
         onlineUsers,
         notifications,
         unreadCount,
+        unreadChatSenderCount,
         fetchUnreadNotifications: fetchUnread,
         markAllAsRead: handleMarkAllRead,
         markNotificationAsRead: handleMarkSingleRead,

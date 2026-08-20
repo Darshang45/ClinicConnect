@@ -16,6 +16,7 @@ import {
 import patientPhoto from "../../../assets/images/hero/patient1.jpg";
 import Notification from "../../../components/common/Notification/Notification";
 import SignOut from "../../../components/common/SignOut";
+import ChatUnreadToast from "../../../components/common/ChatUnreadToast";
 import useAuth from "../../../hooks/useAuth";
 import { useSocket } from "../../../context/SocketContext";
 import { formatTime } from "../../../utils/formatTime";
@@ -40,7 +41,13 @@ function DashboardHeader() {
   const [unreadChats, setUnreadChats] = useState(0);
   const location = useLocation();
   const { user } = useAuth();
-  const { notifications, unreadCount, markAllAsRead, markNotificationAsRead } = useSocket();
+  const {
+    notifications,
+    unreadCount,
+    unreadChatSenderCount,
+    markAllAsRead,
+    markNotificationAsRead,
+  } = useSocket();
   const profile = {
     name: user?.fullName || user?.name || "Patient",
     roleTitle: user?.roleTitle || "Patient Portal",
@@ -296,6 +303,7 @@ function DashboardHeader() {
           <FiArrowUp />
         </button>
       )}
+      <ChatUnreadToast senderCount={unreadChatSenderCount} />
     </>
   );
 }
